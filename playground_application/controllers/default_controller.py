@@ -1,6 +1,7 @@
 import connexion
 import six
 import logging
+import time
 
 logger = logging.getLogger(__name__)
 
@@ -29,6 +30,7 @@ def three_get():  # noqa: E501
     :rtype: Number
     """
     logger.info('Executed three')
+    time.sleep(3)
     return Number(3)
 
 
@@ -40,4 +42,5 @@ def two_get():  # noqa: E501
 
     :rtype: Number
     """
+    time.sleep(2)
     return Number(2)
