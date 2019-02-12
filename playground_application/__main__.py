@@ -29,14 +29,12 @@ import asyncio
 import os
 import time
 
-print('hey')
-
 @flask_app.before_request
 def pyflame_profile():
     the_time = time.time()
     pid = os.getpid()
 
-    command = f"pyflame --threads --abi 36 -x -s 10 -o profile_{the_time} -p {pid} "
+    command = f"pyflame --threads --abi 36 -x -s 10 -o outputs/profile_{the_time} -p {pid} "
 
     process = subprocess.Popen(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, shell=True, encoding='utf8')
 

@@ -13,6 +13,7 @@ BASE_PATH = 'http://localhost:8080/norbert6/playground-application/0.0.1/'
 
 def main():
     logger.info('Starting requests simulator')
+    time.sleep(2)
 
     while True:
         i = random.randint(1, 3)
