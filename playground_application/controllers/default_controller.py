@@ -18,6 +18,7 @@ def one_get():  # noqa: E501
     :rtype: Number
     """
     #raise Exception('oh damn')
+    time.sleep(1)
     return Number(1)
 
 
