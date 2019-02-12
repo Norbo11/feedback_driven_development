@@ -15,6 +15,7 @@ def main():
     logger.info('Starting requests simulator')
     time.sleep(2)
 
+    reqs = 0
     while True:
         i = random.randint(1, 3)
         endpoint = ''
@@ -32,9 +33,15 @@ def main():
 
         logger.info(f'Sending requests to {endpoint}')
 
-        requests.get(endpoint)
+        try:
+            requests.get(endpoint)
+        except:
+            break
 
+        reqs += 1 
         time.sleep(1)
 
+    logger.info(f'Sent {reqs} requests')
+    
 if __name__ == '__main__':
     main()
