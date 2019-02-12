@@ -1,1 +1,1 @@
-kill $(cat runserver.pid)
+kill -9 $(cat runserver.pid)
