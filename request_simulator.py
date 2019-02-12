@@ -30,10 +30,10 @@ def main():
         endpoint = BASE_PATH + endpoint
 
         logger.info(f'Sending requests to {endpoint}')
+
         requests.get(endpoint)
 
         time.sleep(1)
-
 
 if __name__ == '__main__':
     main()

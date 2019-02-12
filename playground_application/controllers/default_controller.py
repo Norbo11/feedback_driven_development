@@ -17,7 +17,7 @@ def one_get():  # noqa: E501
 
     :rtype: Number
     """
-    raise Exception('oh damn')
+    #raise Exception('oh damn')
     return Number(1)
 
 
