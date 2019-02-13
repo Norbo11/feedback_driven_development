@@ -1,0 +1,25 @@
+<idea-plugin>
+    <id>uk.ac.ic.doc.np1815.feedback-driven-development</id>
+    <name>Feedback Driven Development</name>
+    <version>0.0.1</version>
+    <vendor email="dummy" url="dummy">dummy</vendor>
+
+    <description>
+        <![CDATA[
+        Feedback driven development!<br>
+        <em>most HTML tags may be used</em>
+        ]]>
+    </description>
+
+    <depends>com.intellij.modules.lang</depends>
+
+    <extensions defaultExtensionNs="com.intellij">
+    </extensions>
+
+    <actions>
+        <group id="MyPlugin.SampleMenu" text="Feedback" description="Feedback menu">
+            <add-to-group group-id="MainMenu" anchor="last"/>
+            <action id="Myplugin.Textboxes" class="DisplayFeedbackAction" text="Display feedback" description="Displays feedback"/>
+        </group>
+    </actions>
+</idea-plugin>
