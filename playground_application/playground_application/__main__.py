@@ -36,18 +36,20 @@ def pyflame_profile():
     pid = os.getpid()
 
     name = request.url[-3:]
-    command = f"pyflame-bleeding --threads --abi 36 -x -s 99999999 -o outputs/profile_{name}_{the_time} -p {pid} "
+    #command = f"pyflame-bleeding --threads --abi 36 -x -s 10 --flamechart -o outputs/profile_{name}_{the_time} -p {pid} "
+    command = f"pyflame-bleeding --threads --abi 36 -x -s 10 -p {pid} "
 
     flask_app.logger.error(f'Running {command}')
     process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    flask_app.logger.error(f'Ran')
 
     @after_this_request
     def pyflame_profile_end(response):
 
         def kill_process():
-            flask_app.logger.error('Terminating')
+            #flask_app.logger.error('Terminating')
             process.send_signal(signal.SIGINT)
-            flask_app.logger.error('Sent')
+            #flask_app.logger.error('Sent')
 
             try:
                 stdout, stderr = process.communicate(timeout=0.1)
@@ -55,13 +57,12 @@ def pyflame_profile():
             except subprocess.TimeoutExpired as e:
                 return kill_process()
 
-
         stdout, stderr = kill_process()
-        flask_app.logger.error(f'Returned: ' + str(process.poll()))
+        return_code = process.poll()
 
-        flask_app.logger.error(stdout)
-        flask_app.logger.error(stderr)
-        flask_app.logger.error('Done')
+        if return_code != 0:
+            flask_app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
+
         return response
 
 
