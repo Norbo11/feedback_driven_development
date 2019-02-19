@@ -28,7 +28,8 @@
     <servlet-api-version>2.5</servlet-api-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <db.url>jdbc:postgresql:feedback_driven_development</db.url>
-    <db.username>Norbz</db.username>
+    <db.username>metric_backend</db.username>
+    <db.password>imperial</db.password>
   </properties>
 
   <build>
@@ -131,6 +132,7 @@
         <configuration>
           <url>${db.url}</url>
           <user>${db.username}</user>
+          <password>${db.password}</password>
           <locations>
             <location>filesystem:src/main/resources/db/migration</location>
           </locations>
@@ -153,6 +155,7 @@
           <jdbc>
             <url>${db.url}</url>
             <user>${db.username}</user>
+            <password>${db.password}</password>
           </jdbc>
           <generator>
             <database>

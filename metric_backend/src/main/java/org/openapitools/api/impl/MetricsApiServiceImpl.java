@@ -31,8 +31,8 @@ import static uk.ac.ic.doc.np1815.jooq.requests.tables.ProfileLines.*;
 
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJerseyServerCodegen", date = "2019-02-19T01:29:50.436168Z[Europe/London]")
 public class MetricsApiServiceImpl extends MetricsApiService {
-    String userName = "Norbz";
-    String password = "";
+    String userName = "metric_backend";
+    String password = "imperial";
     String url = "jdbc:postgresql:feedback_driven_development";
 
     @Override
