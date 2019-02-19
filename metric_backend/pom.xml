@@ -13,7 +13,24 @@
       <distribution>repo</distribution>
     </license>
   </licenses>
-  
+
+  <properties>
+    <java.version>1.7</java.version>
+    <maven.compiler.source>${java.version}</maven.compiler.source>
+    <maven.compiler.target>${java.version}</maven.compiler.target>
+    <swagger-core-version>1.5.18</swagger-core-version>
+    <beanvalidation-version>1.1.0.Final</beanvalidation-version>
+    <jetty-version>9.2.9.v20150224</jetty-version>
+    <jersey2-version>2.22.2</jersey2-version>
+    <jackson-version>2.8.9</jackson-version>
+    <junit-version>4.12</junit-version>
+    <logback-version>1.1.7</logback-version>
+    <servlet-api-version>2.5</servlet-api-version>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <db.url>jdbc:postgresql:feedback_driven_development</db.url>
+    <db.username>Norbz</db.username>
+  </properties>
+
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
@@ -98,6 +115,57 @@
           </execution>
         </executions>
       </plugin>
+
+      <plugin>
+        <groupId>org.flywaydb</groupId>
+        <artifactId>flyway-maven-plugin</artifactId>
+        <version>3.0</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>migrate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <url>${db.url}</url>
+          <user>${db.username}</user>
+          <locations>
+            <location>filesystem:src/main/resources/db/migration</location>
+          </locations>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <groupId>org.jooq</groupId>
+        <artifactId>jooq-codegen-maven</artifactId>
+        <version>3.11.9</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <jdbc>
+            <url>${db.url}</url>
+            <user>${db.username}</user>
+          </jdbc>
+          <generator>
+            <database>
+              <includes>.*</includes>
+              <inputSchema>metrics</inputSchema>
+            </database>
+            <target>
+              <packageName>uk.ac.ic.doc.np1815.jooq</packageName>
+              <directory>src/gen/java</directory>
+            </target>
+          </generator>
+        </configuration>
+      </plugin>
     </plugins>
   </build>
   <dependencies>
@@ -165,6 +233,8 @@
         <version>${beanvalidation-version}</version>
         <scope>provided</scope>
     </dependency>
+
+    <!-- My own dependencies -->
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
@@ -181,6 +251,12 @@
       <version>3.11.9</version>
     </dependency>
 
+    <dependency>
+      <groupId>postgresql</groupId>
+      <artifactId>postgresql</artifactId>
+      <version>9.1-901-1.jdbc4</version>
+    </dependency>
+
   </dependencies>
   <repositories>
     <repository>
@@ -191,18 +267,4 @@
       </snapshots>
     </repository>
   </repositories>
-  <properties>
-    <java.version>1.7</java.version>
-    <maven.compiler.source>${java.version}</maven.compiler.source>
-    <maven.compiler.target>${java.version}</maven.compiler.target>
-    <swagger-core-version>1.5.18</swagger-core-version>
-    <beanvalidation-version>1.1.0.Final</beanvalidation-version>
-    <jetty-version>9.2.9.v20150224</jetty-version>
-    <jersey2-version>2.22.2</jersey2-version>
-    <jackson-version>2.8.9</jackson-version>
-    <junit-version>4.12</junit-version>
-    <logback-version>1.1.7</logback-version>
-    <servlet-api-version>2.5</servlet-api-version>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-  </properties>
 </project>
