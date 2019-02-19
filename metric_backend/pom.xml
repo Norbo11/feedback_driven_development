@@ -157,7 +157,14 @@
           <generator>
             <database>
               <includes>.*</includes>
-              <inputSchema>metrics</inputSchema>
+              <schemata>
+                <schema>
+                  <inputSchema>metrics</inputSchema>
+                </schema>
+                <schema>
+                  <inputSchema>requests</inputSchema>
+                </schema>
+              </schemata>
             </database>
             <target>
               <packageName>uk.ac.ic.doc.np1815.jooq</packageName>
