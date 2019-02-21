@@ -15,7 +15,7 @@
   </licenses>
 
   <properties>
-    <java.version>1.7</java.version>
+    <java.version>1.8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
     <swagger-core-version>1.5.18</swagger-core-version>
@@ -27,7 +27,7 @@
     <logback-version>1.1.7</logback-version>
     <servlet-api-version>2.5</servlet-api-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <db.url>jdbc:postgresql:feedback_driven_development</db.url>
+    <db.url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</db.url>
     <db.username>metric_backend</db.username>
     <db.password>imperial</db.password>
   </properties>
@@ -85,7 +85,6 @@
             </goals>
             <configuration>
               <scanIntervalSeconds>0</scanIntervalSeconds>
-              <daemon>true</daemon>
             </configuration>
           </execution>
           <execution>
@@ -120,7 +119,7 @@
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>
-        <version>3.0</version>
+        <version>5.2.4</version>
         <executions>
           <execution>
             <phase>generate-sources</phase>
@@ -136,6 +135,10 @@
           <locations>
             <location>filesystem:src/main/resources/db/migration</location>
           </locations>
+          <schemas>
+            <schema>metrics</schema>
+            <schema>requests</schema>
+          </schemas>
         </configuration>
       </plugin>
 
@@ -145,6 +148,7 @@
         <version>3.11.9</version>
         <executions>
           <execution>
+            <id>jooq-codegen</id>
             <phase>generate-sources</phase>
             <goals>
               <goal>generate</goal>
@@ -153,12 +157,16 @@
         </executions>
         <configuration>
           <jdbc>
+            <driver>org.postgresql.Driver</driver>
             <url>${db.url}</url>
             <user>${db.username}</user>
             <password>${db.password}</password>
           </jdbc>
+
           <generator>
+            <name>org.jooq.codegen.JavaGenerator</name>
             <database>
+              <name>org.jooq.meta.postgres.PostgresDatabase</name>
               <includes>.*</includes>
               <schemata>
                 <schema>
@@ -170,9 +178,12 @@
               </schemata>
             </database>
             <target>
-              <packageName>uk.ac.ic.doc.np1815.jooq</packageName>
+              <packageName>uk.ac.ic.doc.np1815.metricsbackend.db</packageName>
               <directory>src/gen/java</directory>
             </target>
+            <generate>
+              <!-- Generation flags: See advanced configuration properties -->
+            </generate>
           </generator>
         </configuration>
       </plugin>

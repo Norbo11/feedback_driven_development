@@ -25,9 +25,9 @@ import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.validation.constraints.*;
 
-import static uk.ac.ic.doc.np1815.jooq.metrics.tables.Performance.*;
-import static uk.ac.ic.doc.np1815.jooq.requests.tables.Profile.*;
-import static uk.ac.ic.doc.np1815.jooq.requests.tables.ProfileLines.*;
+import static uk.ac.ic.doc.np1815.metricsbackend.db.metrics.tables.Performance.*;
+import static uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.Profile.*;
+import static uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.ProfileLines.*;
 
 @javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJerseyServerCodegen", date = "2019-02-19T01:29:50.436168Z[Europe/London]")
 public class MetricsApiServiceImpl extends MetricsApiService {
@@ -44,6 +44,8 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
             conn = DriverManager.getConnection(url, userName, password);
             DSLContext jooq = DSL.using(conn);
+
+
 
             jooq.insertInto(PERFORMANCE).columns(PERFORMANCE.FILE_NAME, PERFORMANCE.AVERAGE_PERFORMANCE).values("test_file.py", 12.0).execute();
             return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "added")).build();
