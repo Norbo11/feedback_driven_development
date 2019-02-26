@@ -11,6 +11,7 @@ import javax.annotation.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -40,7 +41,7 @@ import uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.records.ProfileLine
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class ProfileLines extends TableImpl<ProfileLinesRecord> {
 
-    private static final long serialVersionUID = -1491211520;
+    private static final long serialVersionUID = -177916353;
 
     /**
      * The reference instance of <code>requests.profile_lines</code>
@@ -58,7 +59,7 @@ public class ProfileLines extends TableImpl<ProfileLinesRecord> {
     /**
      * The column <code>requests.profile_lines.id</code>.
      */
-    public final TableField<ProfileLinesRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ProfileLinesRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaultValue(org.jooq.impl.DSL.field("nextval('requests.profile_lines_id_seq'::regclass)", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>requests.profile_lines.profile_id</code>.
@@ -122,6 +123,14 @@ public class ProfileLines extends TableImpl<ProfileLinesRecord> {
     @Override
     public List<Index> getIndexes() {
         return Arrays.<Index>asList(Indexes.PK_PROFILE_LINES);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Identity<ProfileLinesRecord, Integer> getIdentity() {
+        return Keys.IDENTITY_PROFILE_LINES;
     }
 
     /**

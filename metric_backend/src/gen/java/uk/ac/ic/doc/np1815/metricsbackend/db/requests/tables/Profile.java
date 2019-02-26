@@ -4,6 +4,7 @@
 package uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables;
 
 
+import java.sql.Timestamp;
 import java.util.Arrays;
 import java.util.List;
 
@@ -11,6 +12,7 @@ import javax.annotation.Generated;
 
 import org.jooq.Field;
 import org.jooq.ForeignKey;
+import org.jooq.Identity;
 import org.jooq.Index;
 import org.jooq.Name;
 import org.jooq.Record;
@@ -40,7 +42,7 @@ import uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.records.ProfileReco
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Profile extends TableImpl<ProfileRecord> {
 
-    private static final long serialVersionUID = 1838549240;
+    private static final long serialVersionUID = 1692000110;
 
     /**
      * The reference instance of <code>requests.profile</code>
@@ -58,22 +60,22 @@ public class Profile extends TableImpl<ProfileRecord> {
     /**
      * The column <code>requests.profile.id</code>.
      */
-    public final TableField<ProfileRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false), this, "");
+    public final TableField<ProfileRecord, Integer> ID = createField("id", org.jooq.impl.SQLDataType.INTEGER.nullable(false).defaultValue(org.jooq.impl.DSL.field("nextval('requests.profile_id_seq'::regclass)", org.jooq.impl.SQLDataType.INTEGER)), this, "");
 
     /**
      * The column <code>requests.profile.duration</code>.
      */
-    public final TableField<ProfileRecord, String> DURATION = createField("duration", org.jooq.impl.SQLDataType.VARCHAR(100).nullable(false), this, "");
+    public final TableField<ProfileRecord, Double> DURATION = createField("duration", org.jooq.impl.SQLDataType.DOUBLE.nullable(false), this, "");
 
     /**
      * The column <code>requests.profile.start_timestamp</code>.
      */
-    public final TableField<ProfileRecord, String> START_TIMESTAMP = createField("start_timestamp", org.jooq.impl.SQLDataType.VARCHAR(100).nullable(false), this, "");
+    public final TableField<ProfileRecord, Timestamp> START_TIMESTAMP = createField("start_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false), this, "");
 
     /**
      * The column <code>requests.profile.end_timestamp</code>.
      */
-    public final TableField<ProfileRecord, Double> END_TIMESTAMP = createField("end_timestamp", org.jooq.impl.SQLDataType.DOUBLE.nullable(false), this, "");
+    public final TableField<ProfileRecord, Timestamp> END_TIMESTAMP = createField("end_timestamp", org.jooq.impl.SQLDataType.TIMESTAMP.nullable(false), this, "");
 
     /**
      * Create a <code>requests.profile</code> table reference
@@ -122,6 +124,14 @@ public class Profile extends TableImpl<ProfileRecord> {
     @Override
     public List<Index> getIndexes() {
         return Arrays.<Index>asList(Indexes.PK_PROFILE);
+    }
+
+    /**
+     * {@inheritDoc}
+     */
+    @Override
+    public Identity<ProfileRecord, Integer> getIdentity() {
+        return Keys.IDENTITY_PROFILE;
     }
 
     /**

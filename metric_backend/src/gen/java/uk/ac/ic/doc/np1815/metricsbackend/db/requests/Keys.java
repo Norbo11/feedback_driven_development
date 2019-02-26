@@ -6,6 +6,7 @@ package uk.ac.ic.doc.np1815.metricsbackend.db.requests;
 
 import javax.annotation.Generated;
 
+import org.jooq.Identity;
 import org.jooq.UniqueKey;
 import org.jooq.impl.Internal;
 
@@ -33,6 +34,8 @@ public class Keys {
     // IDENTITY definitions
     // -------------------------------------------------------------------------
 
+    public static final Identity<ProfileRecord, Integer> IDENTITY_PROFILE = Identities0.IDENTITY_PROFILE;
+    public static final Identity<ProfileLinesRecord, Integer> IDENTITY_PROFILE_LINES = Identities0.IDENTITY_PROFILE_LINES;
 
     // -------------------------------------------------------------------------
     // UNIQUE and PRIMARY KEY definitions
@@ -49,6 +52,11 @@ public class Keys {
     // -------------------------------------------------------------------------
     // [#1459] distribute members to avoid static initialisers > 64kb
     // -------------------------------------------------------------------------
+
+    private static class Identities0 {
+        public static Identity<ProfileRecord, Integer> IDENTITY_PROFILE = Internal.createIdentity(Profile.PROFILE, Profile.PROFILE.ID);
+        public static Identity<ProfileLinesRecord, Integer> IDENTITY_PROFILE_LINES = Internal.createIdentity(ProfileLines.PROFILE_LINES, ProfileLines.PROFILE_LINES.ID);
+    }
 
     private static class UniqueKeys0 {
         public static final UniqueKey<ProfileRecord> PK_PROFILE = Internal.createUniqueKey(Profile.PROFILE, "pk_profile", Profile.PROFILE.ID);

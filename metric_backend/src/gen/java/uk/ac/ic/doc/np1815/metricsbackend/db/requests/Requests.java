@@ -11,6 +11,7 @@ import java.util.List;
 import javax.annotation.Generated;
 
 import org.jooq.Catalog;
+import org.jooq.Sequence;
 import org.jooq.Table;
 import org.jooq.impl.SchemaImpl;
 
@@ -32,7 +33,7 @@ import uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.ProfileLines;
 @SuppressWarnings({ "all", "unchecked", "rawtypes" })
 public class Requests extends SchemaImpl {
 
-    private static final long serialVersionUID = 1039983927;
+    private static final long serialVersionUID = -800347356;
 
     /**
      * The reference instance of <code>requests</code>
@@ -63,6 +64,19 @@ public class Requests extends SchemaImpl {
     @Override
     public Catalog getCatalog() {
         return DefaultCatalog.DEFAULT_CATALOG;
+    }
+
+    @Override
+    public final List<Sequence<?>> getSequences() {
+        List result = new ArrayList();
+        result.addAll(getSequences0());
+        return result;
+    }
+
+    private final List<Sequence<?>> getSequences0() {
+        return Arrays.<Sequence<?>>asList(
+            Sequences.PROFILE_ID_SEQ,
+            Sequences.PROFILE_LINES_ID_SEQ);
     }
 
     @Override
