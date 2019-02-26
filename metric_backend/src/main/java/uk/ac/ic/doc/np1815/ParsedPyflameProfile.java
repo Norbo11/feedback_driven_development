@@ -1,21 +1,21 @@
 package uk.ac.ic.doc.np1815;
 
-import java.util.HashMap;
+import com.google.common.collect.ListMultimap;
 
 public class ParsedPyflameProfile {
 
-    private HashMap<String, Integer> samples;
+    private ListMultimap<String, LineProfile> profiles;
 
-    public ParsedPyflameProfile(HashMap<String, Integer> samples) {
+    public ParsedPyflameProfile(ListMultimap<String, LineProfile> profiles) {
 
-        this.samples = samples;
+        this.profiles = profiles;
     }
 
     public int size() {
-        return samples.size();
+        return profiles.size();
     }
 
-    public HashMap<String, Integer> getSamples() {
-        return samples;
+    public ListMultimap<String, LineProfile> getProfiles() {
+        return profiles;
     }
 }

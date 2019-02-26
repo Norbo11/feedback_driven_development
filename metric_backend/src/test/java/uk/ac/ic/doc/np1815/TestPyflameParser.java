@@ -1,6 +1,9 @@
 package uk.ac.ic.doc.np1815;
 
+import org.junit.Before;
 import org.junit.Test;
+
+import java.util.List;
 
 import static org.junit.Assert.assertEquals;
 
@@ -9,6 +12,7 @@ public class TestPyflameParser {
 
     private PyflameParser pyflameParser;
 
+    @Before
     public void setUp() {
         pyflameParser = new PyflameParser();
     }
@@ -20,7 +24,38 @@ public class TestPyflameParser {
                 "/home/np1815/miniconda3/envs/playground_application/lib/python3.6/runpy.py:_run_module_as_main:193;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/runpy.py:_run_code:85;/home/np1815/Individual-Project/playground_application/playground_application/__main__.py:<module>:71;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/site-packages/connexion/apps/flask_app.py:run:94;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/site-packages/flask/app.py:run:943;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/site-packages/werkzeug/serving.py:run_simple:814;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/site-packages/werkzeug/serving.py:inner:777;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/site-packages/werkzeug/serving.py:serve_forever:612;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/socketserver.py:serve_forever:236;/home/np1815/miniconda3/envs/playground_application/lib/python3.6/selectors.py:select:376 159";
 
         ParsedPyflameProfile profile = pyflameParser.parseFlamegraph(input);
+        assertEquals(50, profile.size());
 
-        assertEquals(10, profile.size());
+        List<LineProfile> p1 = profile.getProfiles().get("threading.py");
+        assertEquals(6, p1.size());
+
+        LineProfile p11 = p1.get(0);
+        assertEquals("threading.py", p11.getFilePath());
+        assertEquals("_bootstrap", p11.getFunction());
+        assertEquals(884, p11.getLineNumber());
+        assertEquals(1, p11.getNumberOfSamples());
+
+        LineProfile p12 = p1.get(1);
+        assertEquals("threading.py", p12.getFilePath());
+        assertEquals("_bootstrap_inner", p12.getFunction());
+        assertEquals(916, p12.getLineNumber());
+        assertEquals(1, p12.getNumberOfSamples());
+
+        LineProfile p13 = p1.get(2);
+        assertEquals("threading.py", p13.getFilePath());
+        assertEquals("run", p13.getFunction());
+        assertEquals(864, p13.getLineNumber());
+        assertEquals(1, p13.getNumberOfSamples());
+
+        List<LineProfile> p2 = profile.getProfiles().get("default_controller.py");
+        assertEquals(1, p2.size());
+
+        LineProfile p21 = p2.get(0);
+        assertEquals("default_controller.py", p21.getFilePath());
+        assertEquals("two_get", p21.getFunction());
+        assertEquals(46, p21.getLineNumber());
+        assertEquals(158, p21.getNumberOfSamples());
+
+
     }
 }

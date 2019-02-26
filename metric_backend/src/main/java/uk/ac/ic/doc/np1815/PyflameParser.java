@@ -1,14 +1,17 @@
 package uk.ac.ic.doc.np1815;
 
-import java.nio.file.Path;
+import com.google.common.collect.ListMultimap;
+import com.google.common.collect.MultimapBuilder;
+
 import java.nio.file.Paths;
 import java.util.HashMap;
+import java.util.List;
 
 public class PyflameParser {
 
     public ParsedPyflameProfile parseFlamegraph(String input) {
 
-        HashMap<String, Integer> samples = new HashMap<>();
+        ListMultimap<String, LineProfile> samples = MultimapBuilder.hashKeys().arrayListValues().build();
 
         // TODO: Convert to streams/functional (or regex)
         String[] lines = input.split("\n");
@@ -25,7 +28,7 @@ public class PyflameParser {
                 String function = lineParts2[1];
                 String lineNumber = lineParts2[2];
 
-                samples.put(path, Integer.valueOf(samplesHere));
+                samples.put(path, new LineProfile(path, function, Integer.valueOf(lineNumber), Integer.valueOf(samplesHere)));
             }
         }
 
