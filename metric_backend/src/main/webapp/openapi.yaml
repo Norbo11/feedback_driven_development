@@ -1,0 +1,62 @@
+openapi: 3.0.0
+info:
+  version: 0.0.1
+  title: Metric Handling Backend
+servers:
+  - url: http://localhost:8080/api
+paths:
+  /metrics/requests/profile/pyflame:
+    post:
+      summary: Add a new profile using the pyflame format
+      operationId: add_pyflame_profile
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PyflameProfile'
+      responses:
+        '400':
+          description: Error processing
+  /metrics/performance/for_file:
+    get:
+      summary: Get performance information for particular file
+      operationId: get_performance_for_file
+      parameters:
+        - name: filename
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PerformanceForFile'
+        '400':
+          description: Invalid filename
+components:
+  schemas:
+    PerformanceForFile:
+      type: object
+      properties:
+        lines:
+          type: object
+          additionalProperties:
+            type: object
+            properties:
+              global_average:
+                type: string
+    PyflameProfile:
+      type: object
+      properties:
+        start_timestamp:
+          type: integer
+          format: int64
+        end_timestamp:
+          type: integer
+          format: int64
+        pyflame_output:
+          type: string

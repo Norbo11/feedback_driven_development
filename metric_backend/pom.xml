@@ -30,16 +30,89 @@
     <db.url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</db.url>
     <db.username>metric_backend</db.username>
     <db.password>imperial</db.password>
+    <swagger-ui.version>3.20.9</swagger-ui.version>
   </properties>
 
   <build>
     <sourceDirectory>src/main/java</sourceDirectory>
     <plugins>
+
+      <!-- Dependency plugin: For unpacking the swagger UI webjar into our build -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-war-plugin</artifactId>
-        <version>3.1.0</version>
+        <artifactId>maven-dependency-plugin</artifactId>
+        <version>2.8</version>
+        <executions>
+          <execution>
+            <phase>generate-sources</phase>
+            <goals>
+              <goal>unpack</goal>
+            </goals>
+            <configuration>
+              <artifactItems>
+                <artifactItem>
+                  <groupId>org.webjars</groupId>
+                  <artifactId>swagger-ui</artifactId>
+                  <version>${swagger-ui.version}</version>
+                </artifactItem>
+              </artifactItems>
+              <outputDirectory>${project.build.directory}/swagger-ui</outputDirectory>
+            </configuration>
+          </execution>
+        </executions>
       </plugin>
+
+      <!-- Resources plugin: For copying the swagger UI static files into our deployed web app-->
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <version>2.6</version>
+        <executions>
+          <execution>
+            <id>copy-resources</id>
+            <phase>process-sources</phase>
+            <goals>
+              <goal>copy-resources</goal>
+            </goals>
+            <configuration>
+              <outputDirectory>target/${project.artifactId}-${project.version}</outputDirectory>
+              <resources>
+                <resource>
+                  <directory>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}</directory>
+                </resource>
+                <resource>
+                  <directory>src/main/webapp</directory>
+                  <includes>openapi.yaml</includes>
+                </resource>
+              </resources>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <!-- Replacer: for replacing the swagger spec URL with the local one -->
+      <plugin>
+        <groupId>com.google.code.maven-replacer-plugin</groupId>
+        <artifactId>replacer</artifactId>
+        <version>1.5.3</version>
+        <executions>
+          <execution>
+            <phase>process-resources</phase>
+            <goals>
+              <goal>replace</goal>
+            </goals>
+          </execution>
+        </executions>
+        <configuration>
+          <file>${project.build.directory}/swagger-ui/META-INF/resources/webjars/swagger-ui/${swagger-ui.version}/index.html</file>
+          <replacements>
+            <replacement>
+              <token>https://petstore.swagger.io/v2/swagger.json</token>
+              <value>/openapi.yaml</value>
+            </replacement>
+          </replacements>
+        </configuration>
+      </plugin>
+
+      <!-- Failsafe: for running integration tests -->
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
         <version>2.6</version>
@@ -52,6 +125,9 @@
           </execution>
         </executions>
       </plugin>
+
+
+      <!-- Jetty: for running our web server -->
       <plugin>
         <groupId>org.eclipse.jetty</groupId>
         <artifactId>jetty-maven-plugin</artifactId>
@@ -59,6 +135,7 @@
         <configuration>
           <webApp>
             <contextPath>/</contextPath>
+            <descriptor>src/main/webapp/WEB-INF/web.xml</descriptor>
           </webApp>
           <webAppSourceDirectory>target/${project.artifactId}-${project.version}</webAppSourceDirectory>
           <stopPort>8079</stopPort>
@@ -71,9 +148,9 @@
         </configuration>
         <dependencies>
           <dependency>
-              <groupId>javax.validation</groupId>
-              <artifactId>validation-api</artifactId>
-              <version>${beanvalidation-version}</version>
+            <groupId>javax.validation</groupId>
+            <artifactId>validation-api</artifactId>
+            <version>${beanvalidation-version}</version>
           </dependency>
         </dependencies>
         <executions>
@@ -96,6 +173,9 @@
           </execution>
         </executions>
       </plugin>
+
+
+      <!-- Build helper: For adding multiple source directories to the project -->
       <plugin>
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
@@ -116,13 +196,15 @@
         </executions>
       </plugin>
 
+
+      <!-- Flyway: For applying database migrations -->
       <plugin>
         <groupId>org.flywaydb</groupId>
         <artifactId>flyway-maven-plugin</artifactId>
         <version>5.2.4</version>
         <executions>
           <execution>
-            <phase>generate-sources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>migrate</goal>
             </goals>
@@ -142,6 +224,7 @@
         </configuration>
       </plugin>
 
+      <!-- JOOQ: For generating SQL objects from our database -->
       <plugin>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
@@ -149,7 +232,7 @@
         <executions>
           <execution>
             <id>jooq-codegen</id>
-            <phase>generate-sources</phase>
+            <phase>prepare-package</phase>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -190,50 +273,60 @@
     </plugins>
   </build>
   <dependencies>
+
+    <!-- Swagger -->
     <dependency>
       <groupId>io.swagger</groupId>
       <artifactId>swagger-jersey2-jaxrs</artifactId>
       <scope>compile</scope>
       <version>${swagger-core-version}</version>
     </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback-version}</version>
       <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback-version}</version>
       <scope>compile</scope>
     </dependency>
+
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit-version}</version>
       <scope>test</scope>
     </dependency>
+
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
       <version>${servlet-api-version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
       <version>${jersey2-version}</version>
     </dependency>
+
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-multipart</artifactId>
       <version>${jersey2-version}</version>
     </dependency>
+
     <dependency>
         <groupId>com.fasterxml.jackson.datatype</groupId>
         <artifactId>jackson-datatype-joda</artifactId>
         <version>${jackson-version}</version>
     </dependency>
+
     <dependency>
       <groupId>com.fasterxml.jackson.jaxrs</groupId>
       <artifactId>jackson-jaxrs-json-provider</artifactId>
@@ -283,8 +376,8 @@
         <artifactId>guava</artifactId>
         <version>27.0.1-jre</version>
     </dependency>
-
   </dependencies>
+
   <repositories>
     <repository>
       <id>sonatype-snapshots</id>
