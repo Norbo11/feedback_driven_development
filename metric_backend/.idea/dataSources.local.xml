@@ -1,14 +1,14 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
   <component name="dataSourceStorageLocal">
-    <data-source name="PostgreSQL - feedback_driven_development@localhost" uuid="4965217a-705c-4193-99a3-0d53f8758696">
-      <database-info product="PostgreSQL" version="11.1" jdbc-version="4.2" driver-name="PostgreSQL JDBC Driver" driver-version="42.2.2" dbms="POSTGRES" exact-version="11.1" exact-driver-version="42.2">
+    <data-source name="cloudvm_feedback_driven_development" uuid="4965217a-705c-4193-99a3-0d53f8758696">
+      <database-info product="PostgreSQL" version="10.6 (Ubuntu 10.6-0ubuntu0.18.04.1)" jdbc-version="4.2" driver-name="PostgreSQL JDBC Driver" driver-version="42.2.2" dbms="POSTGRES" exact-version="10.6" exact-driver-version="42.2">
         <identifier-quote-string>&quot;</identifier-quote-string>
       </database-info>
       <case-sensitivity plain-identifiers="lower" quoted-identifiers="exact" />
       <secret-storage>master_key</secret-storage>
-      <user-name>Norbz</user-name>
-      <introspection-schemas>@:@</introspection-schemas>
+      <user-name>metric_backend</user-name>
+      <introspection-schemas>@:@|feedback_driven_development:metrics,requests</introspection-schemas>
     </data-source>
   </component>
 </project>
