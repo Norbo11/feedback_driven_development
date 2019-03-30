@@ -20,6 +20,9 @@ import java.io.InputStream;
 import java.util.Map;
 
 import org.glassfish.jersey.media.multipart.FormDataContentDisposition;
+import uk.ac.ic.doc.np1815.LineProfile;
+import uk.ac.ic.doc.np1815.ParsedPyflameProfile;
+import uk.ac.ic.doc.np1815.PyflameParser;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -42,12 +45,28 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         try {
             System.out.println(pyflameProfile.getPyflameOutput());
 
+            PyflameParser parser = new PyflameParser();
+            ParsedPyflameProfile parsed = parser.parseFlamegraph(pyflameProfile.getPyflameOutput());
+
             conn = DriverManager.getConnection(url, userName, password);
             DSLContext jooq = DSL.using(conn);
 
+            Record1<Integer> id = jooq.insertInto(PROFILE)
+                    .columns(PROFILE.DURATION)
+                    .values(3.0)
+                    .returningResult(PROFILE.ID).fetchOne();
 
+            for (LineProfile line : parsed.getProfiles().values()) {
+                jooq.insertInto(PROFILE_LINES)
+                        .columns(PROFILE_LINES.PROFILE_ID,
+                                 PROFILE_LINES.FILE_NAME,
+                                 PROFILE_LINES.SAMPLES)
+                        .values(id.getValue(PROFILE.ID),
+                                line.getFilePath(),
+                                line.getNumberOfSamples())
+                        .execute();
+            }
 
-            jooq.insertInto(PERFORMANCE).columns(PERFORMANCE.FILE_NAME, PERFORMANCE.AVERAGE_PERFORMANCE).values("test_file.py", 12.0).execute();
             return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "added")).build();
         } catch (Exception e) {
             e.printStackTrace();
