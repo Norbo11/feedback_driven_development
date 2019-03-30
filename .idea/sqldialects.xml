@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="SqlDialectMappings">
+    <file url="file://$PROJECT_DIR$/metric_backend/src/main/resources/db/migration/V4__autoincrement_primary_keys.sql" dialect="PostgreSQL" />
+  </component>
+</project>
