@@ -5,25 +5,6 @@ from flask import Flask, after_this_request, request
 
 from openapi_client import DefaultApi, ApiClient, Configuration, PyflameProfile
 from playground_application import encoder
-#from elasticapm.contrib.flask import ElasticAPM
-
-app = connexion.App(__name__, specification_dir='./swagger/')
-app.add_api('swagger.yaml', arguments={'title': 'Playground Application'})
-
-flask_app = app.app
-flask_app.json_encoder = encoder.JSONEncoder
-#flask.config['ELASTIC_APM'] = {
-#    'SERVICE_NAME': 'PG',
-#    'SECRET_TOKEN': 'vLVGtdBxiqrwadhotd',
-#    'SERVER_URL': 'https://a30fe51d3dcb486c99b519a7836d5b84.apm.eu-central-1.aws.cloud.es.io:443',
-#    'DEBUG': True,
-#}
-
-flask_app.config.update(
-    ENV='development',
-    )
-
-#apm = ElasticAPM(flask, logging=True)
 
 import subprocess
 import asyncio
@@ -31,8 +12,18 @@ import os
 import time
 import signal
 
+app = connexion.App(__name__, specification_dir='./swagger/')
+app.add_api('swagger.yaml', arguments={'title': 'Playground Application'})
+
+flask_app = app.app
+flask_app.json_encoder = encoder.JSONEncoder
+flask_app.config.update(
+    ENV='development',
+    DEBUG=True,
+)
+
 config = Configuration()
-config.host = "http://localhost:8080"
+config.host = "http://host.docker.internal:8080/api"
 metric_handling_api = DefaultApi(ApiClient(config))
 
 @flask_app.before_request
@@ -65,17 +56,18 @@ def pyflame_profile():
 
         stdout, stderr = kill_process()
         return_code = process.poll()
+        flask_app.logger.error(f'Finished')
 
         if return_code != 0:
             flask_app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
 
         end_time = time.time()
         pyflame_profile = PyflameProfile(start_timestamp=start_time, end_timestamp=end_time, pyflame_output=stdout)
+        flask_app.logger.error(f'Stdout: ')
+        flask_app.logger.error(stdout)
         metric_handling_api.add_pyflame_profile(pyflame_profile)
 
         return response
 
-
-
 if __name__ == '__main__':
-    app.run(host='localhost', port=8081)
+    app.run(host='0.0.0.0', port=8081, debug=True)

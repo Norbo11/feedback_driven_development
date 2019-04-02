@@ -4,8 +4,7 @@ info:
   description: "For the Production Metrics project"
   version: "0.0.1"
   title: "Playground Application"
-host: "virtserver.swaggerhub.com"
-basePath: "/norbert6/playground-application/0.0.1"
+basePath: "/api"
 schemes:
 - "https"
 paths:
