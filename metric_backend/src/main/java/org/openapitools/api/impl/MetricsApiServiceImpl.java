@@ -12,6 +12,8 @@ import org.openapitools.model.PyflameProfile;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import org.openapitools.api.NotFoundException;
@@ -24,6 +26,7 @@ import uk.ac.ic.doc.np1815.LineProfile;
 import uk.ac.ic.doc.np1815.ParsedPyflameProfile;
 import uk.ac.ic.doc.np1815.PyflameParser;
 
+import javax.ws.rs.Path;
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.validation.constraints.*;
@@ -32,11 +35,10 @@ import static uk.ac.ic.doc.np1815.metricsbackend.db.metrics.tables.Performance.*
 import static uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.Profile.*;
 import static uk.ac.ic.doc.np1815.metricsbackend.db.requests.tables.ProfileLines.*;
 
-@javax.annotation.Generated(value = "org.openapitools.codegen.languages.JavaJerseyServerCodegen", date = "2019-02-19T01:29:50.436168Z[Europe/London]")
 public class MetricsApiServiceImpl extends MetricsApiService {
-    String userName = "metric_backend";
-    String password = "imperial";
-    String url = "jdbc:postgresql:feedback_driven_development";
+    private String userName = "metric_backend";
+    private String password = "imperial";
+    private String url = "jdbc:postgresql:feedback_driven_development";
 
     @Override
     public Response addPyflameProfile(PyflameProfile pyflameProfile, SecurityContext securityContext) throws NotFoundException {
@@ -51,9 +53,11 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             conn = DriverManager.getConnection(url, userName, password);
             DSLContext jooq = DSL.using(conn);
 
+            double duration = pyflameProfile.getEndTimestamp() - pyflameProfile.getStartTimestamp();
+
             Record1<Integer> id = jooq.insertInto(PROFILE)
-                    .columns(PROFILE.DURATION)
-                    .values(3.0)
+                    .columns(PROFILE.DURATION, PROFILE.START_TIMESTAMP, PROFILE.END_TIMESTAMP)
+                    .values(duration, Timestamp.from(Instant.now()), Timestamp.from(Instant.now()))
                     .returningResult(PROFILE.ID).fetchOne();
 
             for (LineProfile line : parsed.getProfiles().values()) {
