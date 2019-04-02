@@ -1,0 +1,34 @@
+version: "3"
+services:
+  playground_application:
+    # image: norbo11/playground_application:latest
+    build: playground_application/
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "4000:8081"
+    networks:
+      - feedback_network
+  playground_application:
+    # image: norbo11/playground_application:latest
+    build: metric_backend/
+    deploy:
+      replicas: 1
+      resources:
+        limits:
+          cpus: "0.2"
+          memory: 50M
+      restart_policy:
+        condition: on-failure
+    ports:
+      - "4000:8080"
+    networks:
+      - feedback_network
+networks:
+  feedback_network:
