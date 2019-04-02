@@ -1,3 +1,4 @@
+```
 curl -L https://repo.anaconda.com/miniconda/Miniconda3-latest-Linux-x86_64.sh --output Miniconda3.sh
 ./Miniconda3.sh
 
@@ -8,9 +9,17 @@ git clone https://github.com/brendangregg/FlameGraph.git
 git clone https://github.com/Norbo11/playground_application.git
 
 curl -L https://github.com/uber/pyflame/archive/v1.6.7.tar.gz --output pyflame-1.6.7
+
 tar xvzf pyflame-1.6.7
 
 conda activate playground_environment
+```
+
+Set ptrace permissions (need to later change this to make pyflame launch the child process)
+
+```
+sudo sysctl -w kernel.yama.ptrace_scope=0
+```
 
 
 # Postgres setup
