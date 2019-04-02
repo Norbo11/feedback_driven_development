@@ -18,19 +18,24 @@
     <java.version>1.8</java.version>
     <maven.compiler.source>${java.version}</maven.compiler.source>
     <maven.compiler.target>${java.version}</maven.compiler.target>
+
+    <!-- Taken from auto-generated pom.xml -->
     <swagger-core-version>1.5.18</swagger-core-version>
     <beanvalidation-version>1.1.0.Final</beanvalidation-version>
     <jetty-version>9.2.9.v20150224</jetty-version>
-    <jersey2-version>2.22.2</jersey2-version>
+    <jersey2-version>2.22.4</jersey2-version>
     <jackson-version>2.8.9</jackson-version>
     <junit-version>4.12</junit-version>
     <logback-version>1.1.7</logback-version>
     <servlet-api-version>2.5</servlet-api-version>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <!-- ............................................. -->
+
+    <swagger-ui.version>3.20.9</swagger-ui.version>
+
     <db.url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</db.url>
     <db.username>metric_backend</db.username>
     <db.password>imperial</db.password>
-    <swagger-ui.version>3.20.9</swagger-ui.version>
   </properties>
 
   <build>
@@ -112,6 +117,44 @@
         </configuration>
       </plugin>
 
+      <!-- OpenAPI generator: for generating server stub -->
+      <plugin>
+        <groupId>org.openapitools</groupId>
+        <artifactId>openapi-generator-maven-plugin</artifactId>
+        <version>3.3.4</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <generatorName>jaxrs-jersey</generatorName>
+
+              <inputSpec>${project.basedir}/src/main/webapp/openapi.yaml</inputSpec>
+              <output>${project.basedir}/src/gen/openapi</output>
+              <validateSpec>true</validateSpec>
+
+              <modelPackage>uk.ac.ic.doc.np1815.feedback.model</modelPackage>
+              <apiPackage>uk.ac.ic.doc.np1815.feedback.api</apiPackage>
+
+              <addCompileSourceRoot>true</addCompileSourceRoot>
+              <!--<generateSupportingFiles>false</generateSupportingFiles>-->
+
+              <configOptions>
+                <sourceFolder>java</sourceFolder>
+                <implFolder>impl</implFolder>
+
+                <java8>true</java8>
+                <dateLibrary>java8</dateLibrary>
+
+                <modelPackage>np1815.feedback.metricsbackend.model</modelPackage>
+                <apiPackage>np1815.feedback.metricsbackend.api</apiPackage>
+              </configOptions>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
       <!-- Failsafe: for running integration tests -->
       <plugin>
         <artifactId>maven-failsafe-plugin</artifactId>
@@ -162,6 +205,7 @@
             </goals>
             <configuration>
               <scanIntervalSeconds>0</scanIntervalSeconds>
+              <daemon>true</daemon>
             </configuration>
           </execution>
           <execution>
@@ -173,7 +217,6 @@
           </execution>
         </executions>
       </plugin>
-
 
       <!-- Build helper: For adding multiple source directories to the project -->
       <plugin>
@@ -189,13 +232,13 @@
             </goals>
             <configuration>
               <sources>
-                <source>src/gen/java</source>
+                <source>src/gen/jooq/java</source>
+                <source>src/gen/openapi/java</source>
               </sources>
             </configuration>
           </execution>
         </executions>
       </plugin>
-
 
       <!-- Flyway: For applying database migrations -->
       <plugin>
@@ -204,7 +247,7 @@
         <version>5.2.4</version>
         <executions>
           <execution>
-            <phase>prepare-package</phase>
+            <phase>generate-sources</phase>
             <goals>
               <goal>migrate</goal>
             </goals>
@@ -228,11 +271,11 @@
       <plugin>
         <groupId>org.jooq</groupId>
         <artifactId>jooq-codegen-maven</artifactId>
-        <version>3.11.9</version>
+        <version>3.11.10</version>
         <executions>
           <execution>
             <id>jooq-codegen</id>
-            <phase>prepare-package</phase>
+            <phase>generate-sources</phase>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -261,8 +304,8 @@
               </schemata>
             </database>
             <target>
-              <packageName>uk.ac.ic.doc.np1815.metricsbackend.db</packageName>
-              <directory>src/gen/java</directory>
+              <packageName>np1815.feedback.metricsbackend.db</packageName>
+              <directory>src/gen/jooq/java</directory>
             </target>
             <generate>
               <!-- Generation flags: See advanced configuration properties -->
@@ -274,59 +317,51 @@
   </build>
   <dependencies>
 
-    <!-- Swagger -->
+    <!-- Taken from auto-generated pom.xml -->
     <dependency>
       <groupId>io.swagger</groupId>
       <artifactId>swagger-jersey2-jaxrs</artifactId>
       <scope>compile</scope>
       <version>${swagger-core-version}</version>
     </dependency>
-
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-classic</artifactId>
       <version>${logback-version}</version>
       <scope>compile</scope>
     </dependency>
-
     <dependency>
       <groupId>ch.qos.logback</groupId>
       <artifactId>logback-core</artifactId>
       <version>${logback-version}</version>
       <scope>compile</scope>
     </dependency>
-
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <version>${junit-version}</version>
       <scope>test</scope>
     </dependency>
-
     <dependency>
       <groupId>javax.servlet</groupId>
       <artifactId>servlet-api</artifactId>
       <version>${servlet-api-version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.containers</groupId>
       <artifactId>jersey-container-servlet-core</artifactId>
       <version>${jersey2-version}</version>
     </dependency>
-
     <dependency>
       <groupId>org.glassfish.jersey.media</groupId>
       <artifactId>jersey-media-multipart</artifactId>
       <version>${jersey2-version}</version>
     </dependency>
-
     <dependency>
-        <groupId>com.fasterxml.jackson.datatype</groupId>
-        <artifactId>jackson-datatype-joda</artifactId>
-        <version>${jackson-version}</version>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-jsr310</artifactId>
+      <version>${jackson-version}</version>
     </dependency>
-
     <dependency>
       <groupId>com.fasterxml.jackson.jaxrs</groupId>
       <artifactId>jackson-jaxrs-json-provider</artifactId>
@@ -338,17 +373,24 @@
       <artifactId>migbase64</artifactId>
       <version>2.2</version>
     </dependency>
-
-  
     <!-- Bean Validation API support -->
     <dependency>
-        <groupId>javax.validation</groupId>
-        <artifactId>validation-api</artifactId>
-        <version>${beanvalidation-version}</version>
-        <scope>provided</scope>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>${beanvalidation-version}</version>
+      <scope>provided</scope>
     </dependency>
+    <!-- ...................................................................... -->
+
 
     <!-- My own dependencies -->
+
+    <dependency>
+      <groupId>com.fasterxml.jackson.datatype</groupId>
+      <artifactId>jackson-datatype-joda</artifactId>
+      <version>${jackson-version}</version>
+    </dependency>
+    <!-- JOOQ: for generating database classes -->
     <dependency>
       <groupId>org.jooq</groupId>
       <artifactId>jooq</artifactId>
@@ -364,13 +406,13 @@
       <artifactId>jooq-codegen</artifactId>
       <version>3.11.9</version>
     </dependency>
-
+    <!-- For database connection (via JOOQ context) -->
     <dependency>
-      <groupId>postgresql</groupId>
+      <groupId>org.postgresql</groupId>
       <artifactId>postgresql</artifactId>
-      <version>9.1-901-1.jdbc4</version>
+      <version>42.2.5</version>
     </dependency>
-
+    <!-- For various utility classes -->
     <dependency>
         <groupId>com.google.guava</groupId>
         <artifactId>guava</artifactId>

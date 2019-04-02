@@ -61,6 +61,10 @@ def pyflame_profile():
         if return_code != 0:
             flask_app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
 
+            if return_code == -2:
+                flask_app.logger.error(f'Request possibly ran for too short')
+            return response
+
         end_time = time.time()
         pyflame_profile = PyflameProfile(start_timestamp=start_time, end_timestamp=end_time, pyflame_output=stdout)
         flask_app.logger.error(f'Stdout: ')

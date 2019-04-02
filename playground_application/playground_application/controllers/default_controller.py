@@ -18,6 +18,7 @@ def one_get():  # noqa: E501
     :rtype: Number
     """
     #raise Exception('oh damn')
+    logger.error('Executed one')
     time.sleep(1)
     return Number(1)
 
@@ -30,7 +31,7 @@ def three_get():  # noqa: E501
 
     :rtype: Number
     """
-    logger.info('Executed three')
+    logger.error('Executed three')
     time.sleep(3)
     return Number(3)
 
@@ -43,5 +44,6 @@ def two_get():  # noqa: E501
 
     :rtype: Number
     """
+    logger.error('Executed two')
     time.sleep(2)
     return Number(2)

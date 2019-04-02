@@ -1,6 +1,8 @@
 # Project specific
 scripts/outputs
 .DS_Store
+metric_backend/src/gen
+!metric_backend/src/gen/openapi/.openapi-generator-ignore
 
 
 Created by https://www.gitignore.io/api/python,intellij
