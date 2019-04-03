@@ -36,56 +36,43 @@ import static np1815.feedback.metricsbackend.db.requests.tables.Profile.*;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.*;
 
 public class MetricsApiServiceImpl extends MetricsApiService {
-    private String userName = "metric_backend";
-    private String password = "imperial";
-    private String url = "jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development";
+
+    private final DslContextFactory dslContextFactory;
+
+    public MetricsApiServiceImpl(DslContextFactory dslContextFactory) {
+        this.dslContextFactory = dslContextFactory;
+    }
 
     @Override
     public Response addPyflameProfile(PyflameProfile pyflameProfile, SecurityContext securityContext) throws NotFoundException {
-        Connection conn = null;
+        System.out.println("Hello again");
 
-        try {
-            System.out.println(pyflameProfile.getPyflameOutput());
+        PyflameParser parser = new PyflameParser();
+        ParsedPyflameProfile parsed = parser.parseFlamegraph(pyflameProfile.getPyflameOutput());
 
-            PyflameParser parser = new PyflameParser();
-            ParsedPyflameProfile parsed = parser.parseFlamegraph(pyflameProfile.getPyflameOutput());
+        Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
 
-            Class.forName("org.postgresql.Driver");
-            conn = DriverManager.getConnection(url, userName, password);
-            DSLContext jooq = DSL.using(conn);
+        DSLContext dslContext = dslContextFactory.create();
 
-            Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
+        Record1<Integer> id = dslContext.insertInto(PROFILE)
+                .columns(PROFILE.DURATION, PROFILE.START_TIMESTAMP, PROFILE.END_TIMESTAMP)
+                .values(duration.toMillis(),
+                        dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
+                        dateTimeToTimestamp(pyflameProfile.getEndTimestamp()))
+                .returningResult(PROFILE.ID).fetchOne();
 
-            Record1<Integer> id = jooq.insertInto(PROFILE)
-                    .columns(PROFILE.DURATION, PROFILE.START_TIMESTAMP, PROFILE.END_TIMESTAMP)
-                    .values(duration.toMillis(),
-                            dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
-                            dateTimeToTimestamp(pyflameProfile.getEndTimestamp()))
-                    .returningResult(PROFILE.ID).fetchOne();
-
-            for (LineProfile line : parsed.getProfiles().values()) {
-                jooq.insertInto(PROFILE_LINES)
-                        .columns(PROFILE_LINES.PROFILE_ID,
-                                 PROFILE_LINES.FILE_NAME,
-                                 PROFILE_LINES.SAMPLES)
-                        .values(id.getValue(PROFILE.ID),
-                                line.getFilePath(),
-                                line.getNumberOfSamples())
-                        .execute();
-            }
-
-            return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "added")).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
+        for (LineProfile line : parsed.getProfiles().values()) {
+            dslContext.insertInto(PROFILE_LINES)
+                    .columns(PROFILE_LINES.PROFILE_ID,
+                             PROFILE_LINES.FILE_NAME,
+                             PROFILE_LINES.SAMPLES)
+                    .values(id.getValue(PROFILE.ID),
+                            line.getFilePath(),
+                            line.getNumberOfSamples())
+                    .execute();
         }
 
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "error occurred")).build();
+        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.OK, "added")).build();
     }
 
     private static Timestamp dateTimeToTimestamp(LocalDateTime startTimestamp) {
@@ -94,30 +81,14 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
     @Override
     public Response getPerformanceForFile( @NotNull String filename, SecurityContext securityContext) throws NotFoundException {
-        Connection conn = null;
+        System.out.println(filename);
+        Record1<Double> result = dslContextFactory.create().select(PERFORMANCE.AVERAGE_PERFORMANCE).from(PERFORMANCE).where(PERFORMANCE.FILE_NAME.eq(filename)).fetchOne();
+        System.out.println(result);
 
-        try {
-            conn = DriverManager.getConnection(url, userName, password);
-            DSLContext jooq = DSL.using(conn);
+        Double performance = result.getValue(PERFORMANCE.AVERAGE_PERFORMANCE);
+        Map<String, PerformanceForFileLines> map = new HashMap<>();
+        map.put("1", new PerformanceForFileLines().globalAverage(performance.toString()));
 
-            System.out.println(filename);
-            Record1<Double> result = jooq.select(PERFORMANCE.AVERAGE_PERFORMANCE).from(PERFORMANCE).where(PERFORMANCE.FILE_NAME.eq(filename)).fetchOne();
-            System.out.println(result);
-            Double performance = result.getValue(PERFORMANCE.AVERAGE_PERFORMANCE);
-            Map<String, PerformanceForFileLines> map = new HashMap<>();
-            map.put("1", new PerformanceForFileLines().globalAverage(performance.toString()));
-
-            return Response.ok().entity(new PerformanceForFile().lines(map)).build();
-        } catch (Exception e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                conn.close();
-            } catch (SQLException e) {
-                e.printStackTrace();
-            }
-        }
-
-        return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "error occurred")).build();
+        return Response.ok().entity(new PerformanceForFile().lines(map)).build();
     }
 }
