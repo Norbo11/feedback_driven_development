@@ -53,10 +53,10 @@ components:
       type: object
       properties:
         start_timestamp:
-          type: integer
-          format: int64
+          type: string
+          format: date-time
         end_timestamp:
-          type: integer
-          format: int64
+          type: string
+          format: date-time
         pyflame_output:
           type: string

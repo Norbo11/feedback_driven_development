@@ -15,7 +15,10 @@ import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
 import java.sql.Timestamp;
+import java.time.Duration;
 import java.time.Instant;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.HashMap;
 
 import java.util.Map;
@@ -51,11 +54,13 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             conn = DriverManager.getConnection(url, userName, password);
             DSLContext jooq = DSL.using(conn);
 
-            double duration = pyflameProfile.getEndTimestamp() - pyflameProfile.getStartTimestamp();
+            Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
 
             Record1<Integer> id = jooq.insertInto(PROFILE)
                     .columns(PROFILE.DURATION, PROFILE.START_TIMESTAMP, PROFILE.END_TIMESTAMP)
-                    .values(duration, Timestamp.from(Instant.now()), Timestamp.from(Instant.now()))
+                    .values(duration.toMillis(),
+                            dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
+                            dateTimeToTimestamp(pyflameProfile.getEndTimestamp()))
                     .returningResult(PROFILE.ID).fetchOne();
 
             for (LineProfile line : parsed.getProfiles().values()) {
@@ -81,6 +86,10 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         }
 
         return Response.ok().entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "error occurred")).build();
+    }
+
+    private static Timestamp dateTimeToTimestamp(LocalDateTime startTimestamp) {
+        return Timestamp.from(startTimestamp.toInstant(ZoneOffset.UTC));
     }
 
     @Override
