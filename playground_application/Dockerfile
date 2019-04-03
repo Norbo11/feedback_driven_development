@@ -4,7 +4,7 @@ COPY requirements.txt /app/requirements.txt
 RUN pip install --trusted-host pypi.python.org -r requirements.txt
 RUN apt-get update && apt-get install --yes vim
 COPY pyflame-bleeding /app/pyflame-bleeding
-COPY openapi_client /app/openapi_client
+COPY metric_backend_client /app/metric_backend_client
 COPY playground_application /app/playground_application
 COPY scripts/example.py /app/example.py
 EXPOSE 8081

@@ -3,6 +3,8 @@ scripts/outputs
 .DS_Store
 metric_backend/src/gen
 !metric_backend/src/gen/openapi/.openapi-generator-ignore
+playground_application/metric_backend_client
+playground_application/.openapi-generator
 
 
 Created by https://www.gitignore.io/api/python,intellij

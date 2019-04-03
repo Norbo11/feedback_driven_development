@@ -3,8 +3,9 @@
 import connexion
 from flask import Flask, after_this_request, request
 
-from openapi_client import DefaultApi, ApiClient, Configuration, PyflameProfile
+from metric_backend_client import DefaultApi, ApiClient, Configuration, PyflameProfile
 from playground_application import encoder
+from datetime import datetime
 
 import subprocess
 import asyncio
@@ -28,13 +29,12 @@ metric_handling_api = DefaultApi(ApiClient(config))
 
 @flask_app.before_request
 def pyflame_profile():
-    the_time = time.time()
     pid = os.getpid()
 
     name = request.url[-3:]
     #command = f"pyflame-bleeding --threads --abi 36 -x -s 10 --flamechart -o outputs/profile_{name}_{the_time} -p {pid} "
     command = f"pyflame-bleeding --threads --abi 36 -x -s 10 -p {pid} "
-    start_time = time.time()
+    start_time = datetime.now()
 
     flask_app.logger.error(f'Running {command}')
     process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
@@ -65,7 +65,7 @@ def pyflame_profile():
                 flask_app.logger.error(f'Request possibly ran for too short')
             return response
 
-        end_time = time.time()
+        end_time = datetime.now()
         pyflame_profile = PyflameProfile(start_timestamp=start_time, end_timestamp=end_time, pyflame_output=stdout)
         flask_app.logger.error(f'Stdout: ')
         flask_app.logger.error(stdout)

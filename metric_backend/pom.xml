@@ -124,6 +124,7 @@
         <version>3.3.4</version>
         <executions>
           <execution>
+            <id>generate-metric-backend-stub</id>
             <goals>
               <goal>generate</goal>
             </goals>
@@ -145,10 +146,34 @@
                 <implFolder>impl</implFolder>
 
                 <java8>true</java8>
-                <dateLibrary>java8</dateLibrary>
+                <dateLibrary>java8-localdatetime</dateLibrary>
 
                 <modelPackage>np1815.feedback.metricsbackend.model</modelPackage>
                 <apiPackage>np1815.feedback.metricsbackend.api</apiPackage>
+              </configOptions>
+            </configuration>
+          </execution>
+
+          <execution>
+            <id>generate-python-client</id>
+            <goals>
+              <goal>generate</goal>
+            </goals>
+            <configuration>
+              <generatorName>python</generatorName>
+
+              <inputSpec>${project.basedir}/src/main/webapp/openapi.yaml</inputSpec>
+              <output>${project.basedir}/../playground_application</output>
+              <validateSpec>true</validateSpec>
+
+              <!-- Needed in order to generate api_client.py, configuration.py, etc. -->
+              <generateSupportingFiles>true</generateSupportingFiles>
+
+              <configOptions>
+                <packageName>metric_backend_client</packageName>
+
+                <!-- Get rid of setup.py and other junk files -->
+                <generateSourceCodeOnly>true</generateSourceCodeOnly>
               </configOptions>
             </configuration>
           </execution>
@@ -205,7 +230,6 @@
             </goals>
             <configuration>
               <scanIntervalSeconds>0</scanIntervalSeconds>
-              <daemon>true</daemon>
             </configuration>
           </execution>
           <execution>
