@@ -2,38 +2,34 @@ package np1815.feedback.metricsbackend.api.impl;
 
 import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.ApiResponseMessage;
-import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.NotFoundException;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.metricsbackend.model.PyflameProfile;
-import org.jooq.DSLContext;
-import org.jooq.Record1;
-import org.jooq.impl.DSL;
+import np1815.feedback.metricsbackend.profile.Profile;
+import np1815.feedback.metricsbackend.profile.parsing.FlaskPyflameParser;
+import org.jooq.*;
 
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.SQLException;
+import java.math.BigDecimal;
 import java.sql.Timestamp;
 import java.time.Duration;
-import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashMap;
 
 import java.util.Map;
 
-import np1815.feedback.metricsbackend.util.LineProfile;
-import np1815.feedback.metricsbackend.util.ParsedPyflameProfile;
-import np1815.feedback.metricsbackend.util.PyflameParser;
+import np1815.feedback.metricsbackend.profile.ProfiledLine;
+import np1815.feedback.metricsbackend.profile.parsing.RawPyflameParser;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
 import javax.validation.constraints.*;
 
-import static np1815.feedback.metricsbackend.db.metrics.tables.Performance.*;
 import static np1815.feedback.metricsbackend.db.requests.tables.Profile.*;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.*;
+
+import static org.jooq.impl.DSL.*;
 
 public class MetricsApiServiceImpl extends MetricsApiService {
 
@@ -47,8 +43,10 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     public Response addPyflameProfile(PyflameProfile pyflameProfile, SecurityContext securityContext) throws NotFoundException {
         System.out.println("Hello again");
 
-        PyflameParser parser = new PyflameParser();
-        ParsedPyflameProfile parsed = parser.parseFlamegraph(pyflameProfile.getPyflameOutput());
+        FlaskPyflameParser parser = new FlaskPyflameParser();
+
+        //TODO: Get base path from project configuration
+        Profile profile = parser.parseFlamegraph(pyflameProfile.getPyflameOutput(), "/app");
 
         Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
 
@@ -61,14 +59,24 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                         dateTimeToTimestamp(pyflameProfile.getEndTimestamp()))
                 .returningResult(PROFILE.ID).fetchOne();
 
-        for (LineProfile line : parsed.getProfiles().values()) {
+        //TODO: Get the paths to store in DB from project configuration
+        for (ProfiledLine line : profile.getAllLineProfiles("playground_application")) {
+            double fractionSpent = (line.getNumberOfSamples() / (double) profile.getTotalSamples());
+            long sampleTime = Math.round(fractionSpent * duration.toMillis());
+
             dslContext.insertInto(PROFILE_LINES)
                     .columns(PROFILE_LINES.PROFILE_ID,
                              PROFILE_LINES.FILE_NAME,
-                             PROFILE_LINES.SAMPLES)
+                             PROFILE_LINES.SAMPLES,
+                             PROFILE_LINES.LINE_NUMBER,
+                             PROFILE_LINES.SAMPLE_TIME
+                            )
                     .values(id.getValue(PROFILE.ID),
                             line.getFilePath(),
-                            line.getNumberOfSamples())
+                            line.getNumberOfSamples(),
+                            line.getLineNumber(),
+                            sampleTime
+                            )
                     .execute();
         }
 

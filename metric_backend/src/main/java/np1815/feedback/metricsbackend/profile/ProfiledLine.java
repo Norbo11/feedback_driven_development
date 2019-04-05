@@ -1,11 +1,10 @@
-package np1815.feedback.metricsbackend.util;
+package np1815.feedback.metricsbackend.profile;
 
-public class LineProfile {
-    public LineProfile(String filePath, String function, int lineNumber, int numberOfSamples) {
+public class ProfiledLine {
+    public ProfiledLine(String filePath, String function, int lineNumber) {
         this.filePath = filePath;
         this.function = function;
         this.lineNumber = lineNumber;
-        this.numberOfSamples = numberOfSamples;
     }
 
     private String filePath;
@@ -27,5 +26,9 @@ public class LineProfile {
 
     public String getFunction() {
         return function;
+    }
+
+    public void addSamples(int samples) {
+        numberOfSamples += samples;
     }
 }
