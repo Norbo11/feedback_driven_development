@@ -18,6 +18,7 @@ import java.time.ZoneOffset;
 import java.util.HashMap;
 
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
 import np1815.feedback.metricsbackend.profile.parsing.RawPyflameParser;
@@ -88,14 +89,24 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
+    /*
+     Currently a global average
+     */
     public Response getPerformanceForFile( @NotNull String filename, SecurityContext securityContext) throws NotFoundException {
-        System.out.println(filename);
-        Record1<Double> result = dslContextFactory.create().select(PERFORMANCE.AVERAGE_PERFORMANCE).from(PERFORMANCE).where(PERFORMANCE.FILE_NAME.eq(filename)).fetchOne();
-        System.out.println(result);
+        Result<Record2<Integer, BigDecimal>> result = dslContextFactory.create()
+            .select(PROFILE_LINES.LINE_NUMBER,
+                    avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
+            )
+            .from(PROFILE_LINES)
+            .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
+            .fetch();
 
-        Double performance = result.getValue(PERFORMANCE.AVERAGE_PERFORMANCE);
-        Map<String, PerformanceForFileLines> map = new HashMap<>();
-        map.put("1", new PerformanceForFileLines().globalAverage(performance.toString()));
+        Map<String, PerformanceForFileLines> map =
+                result.stream().collect(Collectors.toMap(
+                        x -> x.getValue(PROFILE_LINES.LINE_NUMBER).toString(),
+                        x -> new PerformanceForFileLines().globalAverage(x.getValue("avg").toString())
+                ));
 
         return Response.ok().entity(new PerformanceForFile().lines(map)).build();
     }
