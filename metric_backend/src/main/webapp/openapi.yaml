@@ -42,13 +42,17 @@ components:
     PerformanceForFile:
       type: object
       properties:
+        global_average_for_file:
+          type: number
+          format: double
         lines:
           type: object
           additionalProperties:
             type: object
             properties:
               global_average:
-                type: string
+                type: number
+                format: double
     PyflameProfile:
       type: object
       properties:

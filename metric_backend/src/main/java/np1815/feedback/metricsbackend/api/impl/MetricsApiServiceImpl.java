@@ -102,12 +102,17 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch();
 
-        Map<String, PerformanceForFileLines> map =
-                result.stream().collect(Collectors.toMap(
-                        x -> x.getValue(PROFILE_LINES.LINE_NUMBER).toString(),
-                        x -> new PerformanceForFileLines().globalAverage(x.getValue("avg").toString())
-                ));
+        Map<String, PerformanceForFileLines> lines = result.stream().collect(Collectors.toMap(
+            x -> x.getValue(PROFILE_LINES.LINE_NUMBER).toString(),
+            x -> new PerformanceForFileLines().globalAverage(x.get("avg", Double.class))
+        ));
 
-        return Response.ok().entity(new PerformanceForFile().lines(map)).build();
+        double globalAverageForFile = lines.values().stream().mapToDouble(PerformanceForFileLines::getGlobalAverage).sum();
+
+        PerformanceForFile entity = new PerformanceForFile()
+            .lines(lines)
+            .globalAverageForFile(globalAverageForFile);
+
+        return Response.ok().entity(entity).build();
     }
 }
