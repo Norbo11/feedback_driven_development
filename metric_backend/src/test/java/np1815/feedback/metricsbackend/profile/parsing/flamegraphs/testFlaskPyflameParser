@@ -1,0 +1,3 @@
+/random_module/main.py:main:1;/random_module/function.py:function:5 10
+/python/threading.py:run:864;/python/socketserver.py:process_request_thread:639;/app/my_app_main.py:main:4 15
+/python/threading.py:run:864;/python/socketserver.py:process_request_thread:639;/app/my_app_main.py:function:10 22

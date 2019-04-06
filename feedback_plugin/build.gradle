@@ -3,17 +3,21 @@ plugins {
     id 'org.jetbrains.intellij' version '0.4.2'
 }
 
-group 'uk.ac.ic.doc.np1815'
+group 'np1815.feedback'
 version '1.0-SNAPSHOT'
 
 sourceCompatibility = 1.8
 
 repositories {
     mavenCentral()
+    mavenLocal()
 }
 
 dependencies {
-    testCompile group: 'junit', name: 'junit', version: '4.12'
+    implementation group: 'np1815.feedback', name: 'metric_backend', version: '0.0.1'
+    
+    testImplementation group: 'junit', name: 'junit', version: '4.12'
+
 }
 
 intellij {
