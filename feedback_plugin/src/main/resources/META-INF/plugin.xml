@@ -1,5 +1,5 @@
 <idea-plugin>
-    <id>uk.ac.ic.doc.np1815.feedback-driven-development</id>
+    <id>np1815.feedback</id>
     <name>Feedback Driven Development</name>
     <version>0.0.1</version>
     <vendor email="dummy" url="dummy">dummy</vendor>
@@ -14,12 +14,13 @@
     <depends>com.intellij.modules.lang</depends>
 
     <extensions defaultExtensionNs="com.intellij">
+        <applicationService serviceImplementation="np1815.feedback.plugin.actions.MetricsBackendService"/>
     </extensions>
 
     <actions>
         <group id="MyPlugin.SampleMenu" text="Feedback" description="Feedback menu">
             <add-to-group group-id="MainMenu" anchor="last"/>
-            <action id="Myplugin.Textboxes" class="DisplayFeedbackAction" text="Display feedback" description="Displays feedback"/>
+            <action id="Myplugin.Textboxes" class="np1815.feedback.plugin.actions.DisplayFeedbackAction" text="Display feedback" description="Displays feedback"/>
         </group>
     </actions>
 </idea-plugin>

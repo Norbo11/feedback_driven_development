@@ -10,6 +10,8 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
+      <module name="feedback-driven-development_main" target="1.8" />
+      <module name="feedback-driven-development_test" target="1.8" />
       <module name="metric_backend" target="1.8" />
     </bytecodeTargetLevel>
   </component>
