@@ -75,7 +75,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                     .values(id.getValue(PROFILE.ID),
                             line.getFilePath(),
                             line.getNumberOfSamples(),
-                            line.getLineNumber(),
+                            line.getLineNumber() - 1, // Pyflame starts counting lines from 1, IntelliJ counts from 0, want DB to be consistent with IntelliJ
                             sampleTime
                             )
                     .execute();

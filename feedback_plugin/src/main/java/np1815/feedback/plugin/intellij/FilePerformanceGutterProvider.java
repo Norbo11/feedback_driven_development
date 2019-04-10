@@ -6,31 +6,24 @@ import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import np1815.feedback.metricsbackend.model.PerformanceForFile;
-import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
-import np1815.feedback.plugin.util.PerformanceColorProvider;
+import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.List;
 
-public class PerformanceGutterProvider implements TextAnnotationGutterProvider {
+public class FilePerformanceGutterProvider implements TextAnnotationGutterProvider {
 
-    private final String filePath;
-    private final PerformanceForFile performance;
-    private final PerformanceColorProvider colors;
+    private final FilePerformanceDisplayProvider performanceDisplayProvider;
 
-    public PerformanceGutterProvider(String filePath, PerformanceForFile performance, PerformanceColorProvider colors) {
-        this.filePath = filePath;
-        this.performance = performance;
-        this.colors = colors;
+    public FilePerformanceGutterProvider(FilePerformanceDisplayProvider performanceDisplayProvider) {
+        this.performanceDisplayProvider = performanceDisplayProvider;
     }
 
     @Nullable
     @Override
     public String getLineText(int line, Editor editor) {
-        PerformanceForFileLines perf = performance.getLines().get(String.valueOf(line));
-        return perf == null ? null : perf.getGlobalAverage().toString();
+        return performanceDisplayProvider.getGlobalAverageForLine(line).orElse(null);
     }
 
     @Nullable
@@ -53,11 +46,7 @@ public class PerformanceGutterProvider implements TextAnnotationGutterProvider {
     @Nullable
     @Override
     public Color getBgColor(int line, Editor editor) {
-        if (performance.getLines().containsKey(String.valueOf(line))) {
-            return colors.getColorForLine(filePath, line);
-        } else {
-            return null;
-        }
+        return performanceDisplayProvider.getColorForLine(line).orElse(null);
     }
 
     @Override

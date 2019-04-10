@@ -1,0 +1,7 @@
+.git
+.gitignore
+.idea
+.DS_Store
+feedback_plugin
+metric_backend
+

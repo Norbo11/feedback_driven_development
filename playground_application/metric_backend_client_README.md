@@ -52,15 +52,15 @@ All URIs are relative to *http://localhost:8080/api*
 
 Class | Method | HTTP request | Description
 ------------ | ------------- | ------------- | -------------
-*DefaultApi* | [**add_pyflame_profile**](metric_backend_client/docs/DefaultApi.md#add_pyflame_profile) | **POST** /metrics/requests/profile/pyflame | Add a new profile using the pyflame format
-*DefaultApi* | [**get_performance_for_file**](metric_backend_client/docs/DefaultApi.md#get_performance_for_file) | **GET** /metrics/performance/for_file | Get performance information for particular file
+*DefaultApi* | [**add_pyflame_profile**](../feedback_wrapper/feedback_wrapper/metric_backend_client/docs/DefaultApi.md#add_pyflame_profile) | **POST** /metrics/requests/profile/pyflame | Add a new profile using the pyflame format
+*DefaultApi* | [**get_performance_for_file**](../feedback_wrapper/feedback_wrapper/metric_backend_client/docs/DefaultApi.md#get_performance_for_file) | **GET** /metrics/performance/for_file | Get performance information for particular file
 
 
 ## Documentation For Models
 
- - [PerformanceForFile](metric_backend_client/docs/PerformanceForFile.md)
- - [PerformanceForFileLines](metric_backend_client/docs/PerformanceForFileLines.md)
- - [PyflameProfile](metric_backend_client/docs/PyflameProfile.md)
+ - [PerformanceForFile](../feedback_wrapper/feedback_wrapper/metric_backend_client/docs/PerformanceForFile.md)
+ - [PerformanceForFileLines](../feedback_wrapper/feedback_wrapper/metric_backend_client/docs/PerformanceForFileLines.md)
+ - [PyflameProfile](../feedback_wrapper/feedback_wrapper/metric_backend_client/docs/PyflameProfile.md)
 
 
 ## Documentation For Authorization

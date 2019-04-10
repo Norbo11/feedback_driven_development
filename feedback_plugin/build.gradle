@@ -1,6 +1,6 @@
 plugins {
     id 'java'
-    id 'org.jetbrains.intellij' version '0.4.2'
+    id 'org.jetbrains.intellij' version '0.4.7'
 }
 
 group 'np1815.feedback'
@@ -21,8 +21,11 @@ dependencies {
 }
 
 intellij {
-    version '2018.3.4'
+    version '2018.3.6'
+    plugins = ['Pythonid:2018.3.183.6156.11']
+    type 'IU'
 }
+
 patchPluginXml {
     changeNotes """
       Add change notes here.<br>

@@ -16,7 +16,7 @@
           </list>
         </option>
         <option name="commandLineOptions" value="--cap-add=SYS_PTRACE" />
-        <option name="sourceFilePath" value="playground_application/Dockerfile" />
+        <option name="sourceFilePath" value="Dockerfile" />
       </settings>
     </deployment>
     <method v="2" />

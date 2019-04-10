@@ -161,7 +161,7 @@
 
               <inputSpec>${project.basedir}/src/main/webapp/openapi.yaml</inputSpec>
               <!-- TODO: Generate to directory inside metric_backend -->
-              <output>${project.basedir}/../playground_application</output>
+              <output>${project.basedir}/../feedback_wrapper/playground_application</output>
               <validateSpec>true</validateSpec>
 
               <!-- Needed in order to generate api_client.py, configuration.py, etc. -->
@@ -302,7 +302,7 @@
             </goals>
             <configuration>
               <sources>
-                <source>src/gen/jooq/java</source>
+                <source>src/gen/, start_timejooq/java</source>
                 <source>src/gen/openapi/java</source>
                 <source>src/gen/metric_backend_client/java</source>
               </sources>
@@ -360,6 +360,7 @@
             <password>${db.password}</password>
           </jdbc>
 
+          <logging>WARN</logging>
           <generator>
             <name>org.jooq.codegen.JavaGenerator</name>
             <database>
@@ -373,6 +374,8 @@
                   <inputSchema>requests</inputSchema>
                 </schema>
               </schemata>
+              <catalogVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</catalogVersionProvider>
+              <schemaVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</schemaVersionProvider>
             </database>
             <target>
               <packageName>np1815.feedback.metricsbackend.db</packageName>
