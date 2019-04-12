@@ -10,7 +10,6 @@ import java.util.stream.Collectors;
 public class FlaskPyflameParser implements PyflameParser {
 
     //TODO: Make paths relative to project
-
     private static final String DEFUALT_ROOT_STRING = "/usr/local/lib/python3.6/socketserver.py:process_request_thread:\\d*";
 
     private final RawPyflameParser rawPyflameParser;

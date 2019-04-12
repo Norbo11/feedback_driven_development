@@ -5,6 +5,7 @@ import com.google.common.collect.Table;
 
 import java.util.Collection;
 import java.util.Set;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
@@ -46,8 +47,16 @@ public class Profile {
         return samples.values();
     }
 
-    public Collection<ProfiledLine> getAllLineProfiles(String pathRegex) {
-        Set<String> filteredKeys = samples.rowKeySet().stream().filter(Pattern.compile(pathRegex).asPredicate()).collect(Collectors.toSet());
+    public Collection<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {
+        return getAllLineProfilesSatisfyingPredicate(Pattern.compile(pathRegex).asPredicate());
+    }
+
+    public Collection<ProfiledLine> getAllLineProfilesStartingWith(String startPath) {
+        return getAllLineProfilesSatisfyingPredicate(s -> s.startsWith(startPath));
+    }
+
+    private Collection<ProfiledLine> getAllLineProfilesSatisfyingPredicate(Predicate<String> p) {
+        Set<String> filteredKeys = samples.rowKeySet().stream().filter(p).collect(Collectors.toSet());
         return filteredKeys.stream().flatMap(key -> samples.row(key).values().stream()).collect(Collectors.toList());
     }
 
