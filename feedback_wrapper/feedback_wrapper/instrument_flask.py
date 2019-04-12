@@ -97,8 +97,6 @@ def pyflame_profile_end(process, response, start_time, base_path, current_versio
         version=current_version
     )
 
-    app.logger.info(f'Stdout: ')
-    app.logger.info(stdout)
     metric_handling_api.add_pyflame_profile(pyflame_profile)
 
     return response

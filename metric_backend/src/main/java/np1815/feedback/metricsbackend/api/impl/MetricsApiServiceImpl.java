@@ -59,7 +59,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                 .returningResult(PROFILE.ID).fetchOne();
 
         //TODO: Get the paths to store in DB from project configuration
-        for (ProfiledLine line : profile.getAllLineProfilesStartingWith(pyflameProfile.getBasePath())) {
+        for (ProfiledLine line : profile.getAllLineProfilesStartingWith("playground_application")) {
             double fractionSpent = (line.getNumberOfSamples() / (double) profile.getTotalSamples());
             long sampleTime = Math.round(fractionSpent * duration.toMillis());
 
