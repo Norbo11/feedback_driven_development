@@ -1,6 +1,5 @@
 package np1815.feedback.metricsbackend.profile.parsing;
 
-import com.sun.javaws.exceptions.InvalidArgumentException;
 import np1815.feedback.metricsbackend.profile.Profile;
 
 import java.nio.file.Path;
