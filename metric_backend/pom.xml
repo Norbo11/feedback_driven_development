@@ -166,6 +166,8 @@
 
               <!-- Needed in order to generate api_client.py, configuration.py, etc. -->
               <generateSupportingFiles>true</generateSupportingFiles>
+              <generateApiDocumentation>false</generateApiDocumentation>
+              <generateModelDocumentation>false</generateModelDocumentation>
 
               <configOptions>
                 <packageName>metric_backend_client</packageName>
