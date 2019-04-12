@@ -15,13 +15,11 @@ import java.sql.Timestamp;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.HashMap;
 
 import java.util.Map;
 import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
-import np1815.feedback.metricsbackend.profile.parsing.RawPyflameParser;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -42,26 +40,26 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
     @Override
     public Response addPyflameProfile(PyflameProfile pyflameProfile, SecurityContext securityContext) throws NotFoundException {
-        System.out.println("Hello again");
-
         FlaskPyflameParser parser = new FlaskPyflameParser();
-
-        //TODO: Get base path from project configuration
-        Profile profile = parser.parseFlamegraph(pyflameProfile.getPyflameOutput(), "/app");
-
+        Profile profile = parser.parseFlamegraph(pyflameProfile.getPyflameOutput(), pyflameProfile.getBasePath());
         Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
-
         DSLContext dslContext = dslContextFactory.create();
 
         Record1<Integer> id = dslContext.insertInto(PROFILE)
-                .columns(PROFILE.DURATION, PROFILE.START_TIMESTAMP, PROFILE.END_TIMESTAMP)
+                .columns(PROFILE.DURATION,
+                         PROFILE.START_TIMESTAMP,
+                         PROFILE.END_TIMESTAMP,
+                         PROFILE.VERSION
+                        )
                 .values(duration.toMillis(),
                         dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
-                        dateTimeToTimestamp(pyflameProfile.getEndTimestamp()))
+                        dateTimeToTimestamp(pyflameProfile.getEndTimestamp()),
+                        pyflameProfile.getVersion()
+                )
                 .returningResult(PROFILE.ID).fetchOne();
 
         //TODO: Get the paths to store in DB from project configuration
-        for (ProfiledLine line : profile.getAllLineProfiles("playground_application")) {
+        for (ProfiledLine line : profile.getAllLineProfilesStartingWith(pyflameProfile.getBasePath())) {
             double fractionSpent = (line.getNumberOfSamples() / (double) profile.getTotalSamples());
             long sampleTime = Math.round(fractionSpent * duration.toMillis());
 

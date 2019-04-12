@@ -161,7 +161,7 @@
 
               <inputSpec>${project.basedir}/src/main/webapp/openapi.yaml</inputSpec>
               <!-- TODO: Generate to directory inside metric_backend -->
-              <output>${project.basedir}/../feedback_wrapper/playground_application</output>
+              <output>${project.basedir}/../feedback_wrapper</output>
               <validateSpec>true</validateSpec>
 
               <!-- Needed in order to generate api_client.py, configuration.py, etc. -->

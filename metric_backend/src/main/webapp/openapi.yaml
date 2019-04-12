@@ -62,5 +62,9 @@ components:
         end_timestamp:
           type: string
           format: date-time
+        base_path:
+          type: string
+        version:
+          type: string
         pyflame_output:
           type: string

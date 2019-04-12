@@ -34,7 +34,7 @@ def instrument_flask(flask_app, base_path):
     global app
     app = flask_app
 
-    app.logger.info("Repository path: " + base_path)
+    app.logger.info("Base path: " + base_path)
     current_version = get_current_version(base_path)
     app.logger.info(f'Current version: {current_version}')
 
@@ -46,7 +46,7 @@ def instrument_flask(flask_app, base_path):
 
         @after_this_request
         def after(response):
-            return pyflame_profile_end(process, response, start_time)
+            return pyflame_profile_end(process, response, start_time, base_path, current_version)
 
 
 def pyflame_profile_start(request):
@@ -65,7 +65,7 @@ def pyflame_profile_start(request):
     return process, start_time
 
 
-def pyflame_profile_end(process, response, start_time):
+def pyflame_profile_end(process, response, start_time, base_path, current_version):
 
     def kill_process():
         process.send_signal(signal.SIGINT)
@@ -88,7 +88,15 @@ def pyflame_profile_end(process, response, start_time):
         return response
 
     end_time = datetime.now()
-    pyflame_profile = PyflameProfile(start_timestamp=start_time, end_timestamp=end_time, pyflame_output=stdout)
+
+    pyflame_profile = PyflameProfile(
+        start_timestamp=start_time,
+        end_timestamp=end_time,
+        pyflame_output=stdout,
+        base_path=base_path,
+        version=current_version
+    )
+
     app.logger.info(f'Stdout: ')
     app.logger.info(stdout)
     metric_handling_api.add_pyflame_profile(pyflame_profile)
