@@ -12,10 +12,13 @@ from metric_backend_client.api_client import ApiClient
 from metric_backend_client.api.default_api import DefaultApi
 from metric_backend_client.models.pyflame_profile import PyflameProfile
 
+from feedback_wrapper.version_provider import get_current_version
+
 config = Configuration()
 config.host = "http://host.docker.internal:8080/api"
 metric_handling_api = DefaultApi(ApiClient(config))
 app = None
+current_version = None
 
 def main():
     parser = argparse.ArgumentParser(
@@ -27,9 +30,13 @@ def main():
     wrap_flask(args.command)
 
 
-def instrument_flask(flask_app):
+def instrument_flask(flask_app, base_path):
     global app
     app = flask_app
+
+    app.logger.info("Repository path: " + base_path)
+    current_version = get_current_version(base_path)
+    app.logger.info(f'Current version: {current_version}')
 
     @flask_app.before_request
     def before():
