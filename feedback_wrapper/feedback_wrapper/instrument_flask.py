@@ -20,6 +20,12 @@ metric_handling_api = DefaultApi(ApiClient(config))
 app = None
 current_version = None
 
+PYFLAME_ARGS = {
+    'abi': 36, # Without this, error code 1 is returned
+    'seconds': 9999,
+    'rate': 0.001, # Default is 0.01
+}
+
 def main():
     parser = argparse.ArgumentParser(
         description="Feedback Driven Development wrapper: Flask",
@@ -55,7 +61,17 @@ def pyflame_profile_start(request):
     # TODO: Run forever instead of 10 seconds
     # TODO: Don't hardcode ABI
     # TODO: Use pyspy
-    command = f"pyflame-bleeding --threads --abi 36 -x -s 10 -p {pid} "
+    # TODO: Look into the effects of "idle" time
+    # TODO: Look into the effects of rate
+    command = f"pyflame-bleeding " \
+        f"--threads " \
+        f"--exclude-idle " \
+        f"--abi {PYFLAME_ARGS['abi']} " \
+        f"--rate {PYFLAME_ARGS['rate']} " \
+        f"--seconds {PYFLAME_ARGS['seconds']} " \
+        f"-p {pid} "
+        # f"--flamechart "
+
     start_time = datetime.now()
 
     app.logger.info(f'Running {command}')
@@ -85,6 +101,7 @@ def pyflame_profile_end(process, response, start_time, base_path, current_versio
 
         if return_code == -2:
             app.logger.error(f'Request possibly ran for too short')
+
         return response
 
     end_time = datetime.now()
@@ -97,10 +114,26 @@ def pyflame_profile_end(process, response, start_time, base_path, current_versio
         version=current_version
     )
 
-    metric_handling_api.add_pyflame_profile(pyflame_profile)
+    added_profile_response = metric_handling_api.add_pyflame_profile(pyflame_profile)
+    generate_flamegraph(base_path, stdout, added_profile_response.id)
 
     return response
 
+
+def generate_flamegraph(base_path, pyflame_output, profile_id):
+    command = 'flamegraph.pl'
+    process = subprocess.Popen(command.split(' '), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+    stdout, stderr = process.communicate(input=pyflame_output)
+
+    filename = os.path.join(base_path, 'flamegraphs', f'{profile_id}.svg')
+    with open(filename, 'w') as file:
+        file.write(stdout)
+
+    filename = os.path.join(base_path, 'flamegraphs', f'{profile_id}.txt')
+    with open(filename, 'w') as file:
+        file.write(pyflame_output)
+
+    app.logger.info(f'Wrote flamegraph to: {filename}')
 
 if __name__ == "__main__":
     main()

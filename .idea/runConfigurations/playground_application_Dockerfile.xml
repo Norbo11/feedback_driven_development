@@ -22,6 +22,10 @@
             <DockerVolumeBindingImpl>
               <option name="containerPath" value="/app/playground_application" />
               <option name="hostPath" value="$PROJECT_DIR$/playground_application" />
+            </DockerVolumeBindingImpl>
+            <DockerVolumeBindingImpl>
+              <option name="containerPath" value="/app/feedback_wrapper" />
+              <option name="hostPath" value="$PROJECT_DIR$/feedback_wrapper" />
               <option name="readOnly" value="true" />
             </DockerVolumeBindingImpl>
           </list>
