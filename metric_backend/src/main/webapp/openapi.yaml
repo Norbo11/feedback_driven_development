@@ -18,6 +18,12 @@ paths:
       responses:
         '400':
           description: Error processing
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AddedEntityResponse'
   /metrics/performance/for_file:
     get:
       summary: Get performance information for particular file
@@ -73,3 +79,9 @@ components:
           type: string
         pyflame_output:
           type: string
+    AddedEntityResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+          format: int32

@@ -17,16 +17,18 @@ public class DslContextFactory {
     private String userName = "metric_backend";
     private String password = "imperial";
     private String url = "jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development";
+    private final BasicDataSource dataSource;
 
-    public DSLContext create() {
-        BasicDataSource dataSource = new BasicDataSource();
+    public DslContextFactory() {
+        dataSource = new BasicDataSource();
         dataSource.setDriverClassName(Driver.class.getName());
         dataSource.setUrl(url);
         dataSource.setUsername(userName);
         dataSource.setPassword(password);
+        LOG.info(String.format("Creating a DslContextFactory: %s", url));
+    }
 
-        LOG.info(String.format("Creating a DB connection: %s", url));
-
+    public DSLContext create() {
         return DSL.using(dataSource, SQLDialect.POSTGRES_9_5);
     }
 }

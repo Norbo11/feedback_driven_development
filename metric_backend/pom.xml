@@ -147,6 +147,8 @@
 
                 <modelPackage>np1815.feedback.metricsbackend.model</modelPackage>
                 <apiPackage>np1815.feedback.metricsbackend.api</apiPackage>
+
+                <useBeanValidation>true</useBeanValidation>
               </configOptions>
             </configuration>
           </execution>
