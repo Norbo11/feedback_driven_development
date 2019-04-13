@@ -90,13 +90,15 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     /*
      Currently a global average
      */
-    public Response getPerformanceForFile( @NotNull String filename, SecurityContext securityContext) throws NotFoundException {
+    public Response getPerformanceForFile(String filename, String version, SecurityContext securityContext) throws NotFoundException {
         Result<Record2<Integer, BigDecimal>> result = dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                     avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
             )
             .from(PROFILE_LINES)
+            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
             .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch();
 
