@@ -1,3 +1,5 @@
+import org.jetbrains.intellij.tasks.RunIdeTask
+
 plugins {
     id 'java'
     id 'org.jetbrains.intellij' version '0.4.7'
@@ -30,4 +32,9 @@ patchPluginXml {
     changeNotes """
       Add change notes here.<br>
       <em>most HTML tags may be used</em>"""
+}
+
+runIde {
+    jvmArgs = ['-XXaltjvm=dcevm',
+               '-javaagent:/Users/Norbz/Library/Application Support/IntelliJIdea2018.3/hotswap-agent-intellij-plugin/lib/agent/hotswap-agent-1.3.0.jar']
 }
