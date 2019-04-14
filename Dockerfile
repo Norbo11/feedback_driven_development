@@ -11,7 +11,7 @@ RUN pip install --trusted-host pypi.python.org -r playground_application/require
 # Sources
 COPY playground_application/.git /app/playground_application/.git
 COPY playground_application/playground_application /app/playground_application/playground_application
-COPY playground_application/flamegraphs /app/playground_application/flamegraphs
+RUN mkdir /app/playground_application/flamegraphs
 
 COPY feedback_wrapper/pyflame-bleeding /app/feedback_wrapper/pyflame-bleeding
 COPY feedback_wrapper/flamegraph.pl /app/feedback_wrapper/flamegraph.pl
