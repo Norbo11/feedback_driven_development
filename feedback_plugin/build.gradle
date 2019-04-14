@@ -24,7 +24,10 @@ dependencies {
 
 intellij {
     version '2018.3.6'
-    plugins = ['Pythonid:2018.3.183.6156.11']
+    plugins = [
+        'Pythonid:2018.3.183.6156.11',
+        'git4idea'
+    ]
     type 'IU'
 }
 
