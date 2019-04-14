@@ -2,6 +2,10 @@ package np1815.feedback.plugin.actions;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -12,6 +16,7 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
@@ -20,6 +25,7 @@ import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.IOException;
 import java.nio.file.Paths;
 import java.util.Map;
 
@@ -32,6 +38,8 @@ public class DisplayFeedbackAction extends AnAction {
         super("Feedback");
 
         this.metricsBackend = MetricsBackendService.getInstance();
+
+        NotificationGroup.balloonGroup("FeedbackDrivenDevelopment.Error");
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -53,27 +61,34 @@ public class DisplayFeedbackAction extends AnAction {
         // A markup model represents the text effects on a particular document
         MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
-        String basePath = project.getBasePath();
-        assert basePath != null;
-
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
 
-        String currentVersion = repository.getCurrentRevision();
-        LOG.debug("Version: " + currentVersion);
+        PerformanceForFile performance = null;
+        try {
+            performance = metricsBackend.getPerformance(project, repository, file);
+        } catch (IOException e) {
+            Notifications.Bus.notify(new Notification(
+                "FeedbackDrivenDevelopment.Error",
+                "Could not fetch feedback",
+                "There was an error connecting to the metric handling backend. Is it running?",
+                NotificationType.ERROR
+            ));
+        } catch (VcsException e) {
+            Notifications.Bus.notify(new Notification(
+                "FeedbackDrivenDevelopment.Error",
+                "Could not fetch feedback",
+                "There was an error using git: " + e.getMessage(),
+                NotificationType.ERROR
+            ));
+        }
 
-        String latestAvailableVersion = metricsBackend.determineLastAvailableVersionInBackend(project, repository, currentVersion);
-        LOG.debug("Determined latest available version: " + latestAvailableVersion);
+        if (performance != null) {
+            FilePerformanceDisplayProvider displayProvider = new FilePerformanceDisplayProvider(performance);
+            FilePerformanceGutterProvider textAnnotationProvider = new FilePerformanceGutterProvider(displayProvider);
 
-        String path = Paths.get(basePath).relativize(Paths.get(file.getPath())).toString();
-        LOG.debug("File path: " + path);
-
-        PerformanceForFile performance = metricsBackend.getPerformance(path, currentVersion);
-
-        FilePerformanceDisplayProvider displayProvider = new FilePerformanceDisplayProvider(performance);
-        FilePerformanceGutterProvider textAnnotationProvider = new FilePerformanceGutterProvider(displayProvider);
-
-        displayGlobalPerformance(editor, markupModel, performance, displayProvider, textAnnotationProvider);
+            displayGlobalPerformance(editor, markupModel, performance, displayProvider, textAnnotationProvider);
+        }
     }
 
     public void displayGlobalPerformance(
