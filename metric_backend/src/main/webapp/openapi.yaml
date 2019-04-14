@@ -24,6 +24,17 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AddedEntityResponse'
+  /metrics/application/version:
+    get:
+      summary: Get all versions of an application
+      operationId: get_application_versions
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AllApplicationVersions'
   /metrics/performance/for_file:
     get:
       summary: Get performance information for particular file
@@ -85,3 +96,10 @@ components:
         id:
           type: integer
           format: int32
+    AllApplicationVersions:
+      type: object
+      properties:
+        versions:
+          type: array
+          items:
+            type: string

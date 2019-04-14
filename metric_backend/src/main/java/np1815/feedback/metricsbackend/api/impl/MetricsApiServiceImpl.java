@@ -2,10 +2,7 @@ package np1815.feedback.metricsbackend.api.impl;
 
 import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.NotFoundException;
-import np1815.feedback.metricsbackend.model.AddedEntityResponse;
-import np1815.feedback.metricsbackend.model.PerformanceForFile;
-import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
-import np1815.feedback.metricsbackend.model.PyflameProfile;
+import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.metricsbackend.persistance.MetricsBackendOperations;
 import np1815.feedback.metricsbackend.profile.Profile;
 import np1815.feedback.metricsbackend.profile.parsing.FlaskPyflameParser;
@@ -13,7 +10,9 @@ import np1815.feedback.metricsbackend.util.DateTimeUtil;
 
 import java.time.Duration;
 
+import java.util.ArrayList;
 import java.util.Map;
+import java.util.Set;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
 
@@ -58,19 +57,20 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
-    /*
-     Currently a global average
-     */
+    public Response getApplicationVersions(SecurityContext securityContext) throws NotFoundException {
+        Set<String> versions = metricsBackendOperations.getApplicationVersions();
+        return Response.ok().entity(new AllApplicationVersions().versions(new ArrayList<>(versions))).build();
+    }
+
+    @Override
     public Response getPerformanceForFile(String filename, String version, SecurityContext securityContext) throws NotFoundException {
         Map<String, PerformanceForFileLines> lines = metricsBackendOperations.getGlobalAveragePerLine(filename, version);
 
         double globalAverageForFile = lines.values().stream().mapToDouble(PerformanceForFileLines::getGlobalAverage).sum();
 
-        PerformanceForFile entity = new PerformanceForFile()
+        return Response.ok().entity(new PerformanceForFile()
             .lines(lines)
-            .globalAverageForFile(globalAverageForFile);
-
-        return Response.ok().entity(entity).build();
+            .globalAverageForFile(globalAverageForFile)).build();
     }
 
 }

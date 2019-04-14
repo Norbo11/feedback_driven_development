@@ -4,6 +4,7 @@ import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 
 import java.sql.Timestamp;
 import java.util.Map;
+import java.util.Set;
 
 public interface MetricsBackendOperations {
     public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime);
@@ -11,4 +12,6 @@ public interface MetricsBackendOperations {
     public int addProfile(Timestamp startTime, Timestamp endTime, long duration, String version);
 
     public Map<String, PerformanceForFileLines> getGlobalAveragePerLine(String filename, String version);
+
+    public Set<String> getApplicationVersions();
 }
