@@ -1,6 +1,7 @@
 package np1815.feedback.metricsbackend.profile.parsing;
 
 import np1815.feedback.metricsbackend.profile.Profile;
+import np1815.feedback.metricsbackend.profile.ProfiledLineKey;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -34,6 +35,8 @@ public class RawPyflameParser implements PyflameParser {
             int samplesHere = Integer.valueOf(matcher.group("numSamples"));
             totalSamples += samplesHere;
 
+            ProfiledLineKey previousKey = null;
+
             for (String pathFunctionLineNumber : matcher.group("stackTrace").split(";")) {
                 Matcher pathFunctionLineNumberMatcher = pathFunctionLineNumberRegex.matcher(pathFunctionLineNumber);
 
@@ -54,7 +57,7 @@ public class RawPyflameParser implements PyflameParser {
                 String function = pathFunctionLineNumberMatcher.group("function");
                 int lineNumber = Integer.valueOf(pathFunctionLineNumberMatcher.group("lineNumber"));
 
-                profile.addProfileForLine(relativePath, lineNumber, function, samplesHere);
+                previousKey = profile.addProfileForLine(relativePath, lineNumber, function, previousKey, samplesHere);
             }
         }
 

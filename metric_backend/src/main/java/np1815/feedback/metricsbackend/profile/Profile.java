@@ -1,66 +1,85 @@
 package np1815.feedback.metricsbackend.profile;
 
-import com.google.common.collect.HashBasedTable;
-import com.google.common.collect.Table;
-
-import java.util.Collection;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Profile {
-    private Table<String, Integer, ProfiledLine> samples;
+    private LinkedHashMap<ProfiledLineKey, ProfiledLine> samples;
     private long totalSamples;
 
     public Profile() {
-        samples = HashBasedTable.create();
+        samples = new LinkedHashMap<>();
     }
 
     public int numberOfUniqueLines() {
         return samples.size();
     }
 
-    public ProfiledLine getProfileForLine(String path, int lineNumber) {
-        return samples.get(path, lineNumber);
-    }
-
-    public ProfiledLine addProfileForLine(String path, int lineNumber, String function, int samplesForLine) {
-        ProfiledLine profiledLine;
-
-        if (samples.contains(path, lineNumber)) {
-            profiledLine = samples.get(path, lineNumber);
-        } else {
-            profiledLine = new ProfiledLine(path, function, lineNumber);
-            samples.put(path, lineNumber, profiledLine);
-        }
-
-        profiledLine.addSamples(samplesForLine);
-        return profiledLine;
-    }
-
     public long getTotalSamples() {
         return totalSamples;
     }
 
-    public Collection<ProfiledLine> getAllLineProfiles() {
-        return samples.values();
-    }
-
-    public Collection<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {
-        return getAllLineProfilesSatisfyingPredicate(Pattern.compile(pathRegex).asPredicate());
-    }
-
-    public Collection<ProfiledLine> getAllLineProfilesStartingWith(String startPath) {
-        return getAllLineProfilesSatisfyingPredicate(s -> s.startsWith(startPath));
-    }
-
-    private Collection<ProfiledLine> getAllLineProfilesSatisfyingPredicate(Predicate<String> p) {
-        Set<String> filteredKeys = samples.rowKeySet().stream().filter(p).collect(Collectors.toSet());
-        return filteredKeys.stream().flatMap(key -> samples.row(key).values().stream()).collect(Collectors.toList());
-    }
-
     public void setTotalSamples(int totalSamples) {
         this.totalSamples = totalSamples;
+    }
+
+    public ProfiledLineKey addProfileForLine(String path, int lineNumber, String function, ProfiledLineKey parentKey, int samplesForLine) {
+        ProfiledLineKey newKey = new ProfiledLineKey(path, lineNumber, parentKey);
+
+        ProfiledLine profiledLine;
+
+        if (samples.containsKey(newKey)) {
+            profiledLine = samples.get(newKey);
+        } else {
+            profiledLine = new ProfiledLine(newKey);
+            samples.put(newKey, profiledLine);
+        }
+
+        profiledLine.addSamples(samplesForLine);
+        return newKey;
+    }
+
+    public ProfiledLine getProfileForLine(String path, int lineNumber, ProfiledLineKey parentKey) {
+        return samples.get(new ProfiledLineKey(path, lineNumber, parentKey));
+    }
+
+    public ProfiledLine getProfileForLine(String path, int lineNumber) {
+        List<ProfiledLine> lines = getAllLineProfilesSatisfyingPredicate(p -> p.getFilePath().equals(path) && p.getLineNumber() == lineNumber);
+        if (lines.size() != 1) {
+            throw new MoreThanOneProfileException("Expected only one profile, found " + lines.size());
+        }
+        return new ArrayList<>(lines).get(0);
+    }
+
+    public List<ProfiledLine> getAllLineProfiles() {
+        return new ArrayList<>(samples.values());
+    }
+
+    public List<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {
+        return getAllLineProfilesSatisfyingPredicate(s -> Pattern.compile(pathRegex).asPredicate().test(s.getFilePath()));
+    }
+
+    public List<ProfiledLine> getAllLineProfilesStartingWith(String startPath) {
+        return getAllLineProfilesSatisfyingPredicate(s -> s.getFilePath().startsWith(startPath));
+    }
+
+    private List<ProfiledLine> getAllLineProfilesSatisfyingPredicate(Predicate<ProfiledLineKey> p) {
+        Set<ProfiledLineKey> filteredKeys = samples.keySet().stream().filter(p).collect(Collectors.toSet());
+        return filteredKeys.stream().map(key -> samples.get(key)).collect(Collectors.toList());
+    }
+
+    public class MoreThanOneProfileException extends Error {
+        private final String message;
+
+        public MoreThanOneProfileException(String message) {
+            this.message = message;
+        }
+
+        @Override
+        public String getMessage() {
+            return message;
+        }
     }
 }
