@@ -1,35 +1,30 @@
 package np1815.feedback.plugin.services;
 
 import com.intellij.dvcs.repo.Repository;
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.actions.ShowChangeMarkerAction;
-import com.intellij.openapi.vcs.actions.VcsContext;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
-import com.intellij.openapi.vcs.history.VcsHistoryUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitContentRevision;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import git4idea.diff.GitDiffProvider;
 import np1815.feedback.metricsbackend.api.DefaultApi;
 import np1815.feedback.metricsbackend.client.ApiClient;
 import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.plugin.actions.DisplayFeedbackAction;
+import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,7 +34,6 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Collectors;
 
 public class MetricsBackendService {
     public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
@@ -58,11 +52,12 @@ public class MetricsBackendService {
         return client.defaultApi();
     }
 
-    public PerformanceForFile getPerformance(Project project, Repository repository, VirtualFile file) throws IOException, VcsException {
+    public FilePerformanceDisplayProvider getPerformance(Project project, Repository repository, VirtualFile file) throws IOException, VcsException {
         String basePath = project.getBasePath();
         assert basePath != null;
 
         String currentVersion = repository.getCurrentRevision();
+        assert currentVersion != null;
         LOG.debug("Version: " + currentVersion);
 
         String latestAvailableVersion = determineLastAvailableVersionInBackend(project, repository, currentVersion);
@@ -72,7 +67,13 @@ public class MetricsBackendService {
         LOG.debug("File path: " + path);
 
         PerformanceForFile performance = getClient().getPerformanceForFile(path, latestAvailableVersion);
+        Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, performance);
 
+        boolean stale = !currentVersion.equals(latestAvailableVersion);
+        return new FilePerformanceDisplayProvider(performance, stale, translatedLineNumbers);
+    }
+
+    private Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(Project project, VirtualFile file, String latestAvailableVersion, PerformanceForFile performance) throws VcsException {
         GitVcs vcs = GitVcs.getInstance(project);
         FilePath vcsFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
         VcsRevisionNumber latestRevisionNumber = vcs.parseRevisionNumber(latestAvailableVersion);
@@ -82,6 +83,9 @@ public class MetricsBackendService {
         List<Change> changes = VcsDiffUtil.createChangesWithCurrentContentForFile(vcsFile, beforeContentRevision);
 
         assert changes.size() == 1;
+
+        Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
+
         for (Change change : changes) {
             LOG.info(change.getDescription());
             try {
@@ -90,17 +94,23 @@ public class MetricsBackendService {
                 final Diff.Change c = Diff.buildChanges(before, after);
 
                 // Translate lines based on the change
-                Map<String, PerformanceForFileLines> lines = performance.getLines().entrySet().stream().collect(Collectors.toMap(
-                    x -> String.valueOf(Diff.translateLine(c, Integer.valueOf(x.getKey()))),
-                    Map.Entry::getValue
-                ));
+                for (Map.Entry<String, PerformanceForFileLines> entry : performance.getLines().entrySet()) {
+                    int oldLineNumber = Integer.valueOf(entry.getKey());
+                    int newLineNumber = Diff.translateLine(c, oldLineNumber);
+                    boolean veryStale = false;
 
-                performance.setLines(lines);
+                    if (newLineNumber == -1) {
+                        newLineNumber = Diff.translateLine(c, oldLineNumber, true);
+                        veryStale = true;
+                    }
+
+                    translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale));
+                }
             } catch (FilesTooBigForDiffException ignored) {
             }
         }
 
-        return performance;
+        return translatedLineNumbers;
     }
 
     private String determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException, VcsException {
@@ -116,4 +126,5 @@ public class MetricsBackendService {
 
         return result.getOutputOrThrow();
     }
+
 }

@@ -29,11 +29,20 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Nullable
     @Override
     public String getToolTip(int line, Editor editor) {
-        return "Global Average";
+        String lineVeryStale = performanceDisplayProvider.isLineVeryStale(line) ? "Very " : "";
+        return "Global Average" + (performanceDisplayProvider.isStale() ? " (" + lineVeryStale + "Stale)" : "");
     }
 
     @Override
     public EditorFontType getStyle(int line, Editor editor) {
+        if (performanceDisplayProvider.isLineVeryStale(line)) {
+            return EditorFontType.BOLD_ITALIC;
+        }
+
+        if (performanceDisplayProvider.isStale()) {
+            return EditorFontType.ITALIC;
+        }
+
         return EditorFontType.PLAIN;
     }
 

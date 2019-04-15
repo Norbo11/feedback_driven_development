@@ -3,33 +3,61 @@ package np1815.feedback.plugin.util;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
+import np1815.feedback.plugin.services.TranslatedLineNumber;
 
 import java.awt.*;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class FilePerformanceDisplayProvider {
 
     private final PerformanceForFile performance;
+    private final boolean stale;
+    // TODO: Rename this field and class (maybe?)
+    private final Map<Integer, TranslatedLineNumber> translatedLineNumbers;
 
-    public FilePerformanceDisplayProvider(PerformanceForFile performance) {
+    public FilePerformanceDisplayProvider(PerformanceForFile performance, boolean stale, Map<Integer, TranslatedLineNumber> translatedLineNumbers) {
         this.performance = performance;
+        this.stale = stale;
+        this.translatedLineNumbers = translatedLineNumbers;
     }
 
     public Optional<Color> getColorForLine(int line) {
-        PerformanceForFileLines perf = performance.getLines().get(String.valueOf(line));
+        Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
 
-        if (perf == null) {
+        if (!lineNumber.isPresent()) {
             return Optional.empty();
         }
 
+        PerformanceForFileLines perf = performance.getLines().get(lineNumber.get());
         double fractionalPerformance = perf.getGlobalAverage() / performance.getGlobalAverageForFile();
 
         // 0 = red
         return Optional.of(JBColor.getHSBColor(0, (float) fractionalPerformance, 1));
     }
 
+    private Optional<String> getLineNumberBeforeTranslation(int line) {
+        TranslatedLineNumber translatedLineNumber = translatedLineNumbers.get(line);
+        return translatedLineNumber != null ? Optional.of(translatedLineNumber.getNewLineNumber()) : Optional.empty();
+    }
+
+    public boolean isLineVeryStale(int line) {
+        return translatedLineNumbers.get(line).isVeryStale();
+    }
+
     public Optional<String> getGlobalAverageForLine(int line) {
-        PerformanceForFileLines perf = performance.getLines().get(String.valueOf(line));
-        return perf == null ? Optional.empty() : Optional.of(perf.getGlobalAverage().toString());
+        Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
+        return lineNumber.map(s -> performance.getLines().get(s).getGlobalAverage().toString());
+
+    }
+
+    public List<Integer> getLines() {
+        return translatedLineNumbers.keySet().stream().map(Integer::valueOf).collect(Collectors.toList());
+    }
+
+    public boolean isStale() {
+        return stale;
     }
 }

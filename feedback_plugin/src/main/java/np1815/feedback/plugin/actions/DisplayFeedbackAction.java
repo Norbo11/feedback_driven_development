@@ -66,9 +66,9 @@ public class DisplayFeedbackAction extends AnAction {
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
 
-        PerformanceForFile performance = null;
+        FilePerformanceDisplayProvider displayProvider = null;
         try {
-            performance = metricsBackend.getPerformance(project, repository, file);
+            displayProvider = metricsBackend.getPerformance(project, repository, file);
         } catch (IOException e) {
             Notifications.Bus.notify(new Notification(
                 "FeedbackDrivenDevelopment.Error",
@@ -85,18 +85,16 @@ public class DisplayFeedbackAction extends AnAction {
             ));
         }
 
-        if (performance != null) {
-            FilePerformanceDisplayProvider displayProvider = new FilePerformanceDisplayProvider(performance);
+        if (displayProvider != null) {
             FilePerformanceGutterProvider textAnnotationProvider = new FilePerformanceGutterProvider(displayProvider);
 
-            displayGlobalPerformance(editor, markupModel, performance, displayProvider, textAnnotationProvider);
+            displayGlobalPerformance(editor, markupModel, displayProvider, textAnnotationProvider);
         }
     }
 
     public void displayGlobalPerformance(
         Editor editor,
         MarkupModel markupModel,
-        PerformanceForFile performance,
         FilePerformanceDisplayProvider displayProvider,
         FilePerformanceGutterProvider textAnnotationProvider) {
 
@@ -104,9 +102,7 @@ public class DisplayFeedbackAction extends AnAction {
         editor.getGutter().closeAllAnnotations();
         editor.getGutter().registerTextAnnotation(textAnnotationProvider);
 
-        for (Map.Entry<String, PerformanceForFileLines> line : performance.getLines().entrySet()) {
-            int lineNumber = Integer.valueOf(line.getKey());
-
+        for (int lineNumber : displayProvider.getLines()) {
             TextAttributes attributes = new TextAttributes(
                     null,
                     displayProvider.getColorForLine(lineNumber).orElse(null),
