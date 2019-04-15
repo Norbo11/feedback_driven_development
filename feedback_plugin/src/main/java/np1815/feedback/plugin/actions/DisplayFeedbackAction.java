@@ -21,12 +21,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.plugin.intellij.FilePerformanceGutterProvider;
+import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.nio.file.Paths;
 import java.util.Map;
 
 public class DisplayFeedbackAction extends AnAction {
@@ -43,6 +43,8 @@ public class DisplayFeedbackAction extends AnAction {
     }
 
     public void actionPerformed(AnActionEvent event) {
+        LOG.debug("Action hit");
+
         // A project is the current project being edited
         Project project = event.getProject();
         assert project != null;

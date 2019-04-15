@@ -15,7 +15,7 @@
     <depends>Git4Idea</depends>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="np1815.feedback.plugin.actions.MetricsBackendService"/>
+        <applicationService serviceImplementation="np1815.feedback.plugin.services.MetricsBackendService"/>
     </extensions>
 
     <actions>
