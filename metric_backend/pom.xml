@@ -132,11 +132,16 @@
               <generatorName>jaxrs-jersey</generatorName>
 
               <inputSpec>${project.basedir}/src/main/webapp/openapi.yaml</inputSpec>
-              <output>${project.basedir}/src/gen/openapi</output>
+              <output>${project.basedir}/src/gen/metric_backend_server_stub</output>
               <validateSpec>true</validateSpec>
 
               <addCompileSourceRoot>true</addCompileSourceRoot>
-              <!--<generateSupportingFiles>false</generateSupportingFiles>-->
+              <generateSupportingFiles>true</generateSupportingFiles>
+              <supportingFilesToGenerate>
+                ApiException.java,ApiOriginFilter.java,ApiResponseMessage.java,JacksonJsonProvider.java,LocalDateProvider.java,MetricsApi.java,MetricsApiService.java,NotFoundException.java,OffsetDateTimeProvider.java,RFC3339DateFormat.java,StringUtil.java
+              </supportingFilesToGenerate>
+
+              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
 
               <configOptions>
                 <sourceFolder>java</sourceFolder>
@@ -170,6 +175,7 @@
               <generateSupportingFiles>true</generateSupportingFiles>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateModelDocumentation>false</generateModelDocumentation>
+              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
 
               <configOptions>
                 <packageName>metric_backend_client</packageName>
@@ -205,10 +211,10 @@
               <generateModelTests>false</generateModelTests>
               <supportingFilesToGenerate>
                 ApiClient.java,RFC3339DateFormat.java
-                <!-- ,RFC3339DateFormat.java,StringUtil.java -->
               </supportingFilesToGenerate>
 
               <addCompileSourceRoot>true</addCompileSourceRoot>
+              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
 
               <configOptions>
                 <modelPackage>np1815.feedback.metricsbackend.model</modelPackage>
@@ -306,8 +312,8 @@
             </goals>
             <configuration>
               <sources>
-                <source>src/gen/, start_timejooq/java</source>
-                <source>src/gen/openapi/java</source>
+                <source>src/gen/jooq/java</source>
+                <source>src/gen/metric_backend_server_stub/java</source>
                 <source>src/gen/metric_backend_client/java</source>
               </sources>
             </configuration>
