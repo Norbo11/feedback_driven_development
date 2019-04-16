@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.intellij;
+package np1815.feedback.plugin.ui;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.editor.Editor;
@@ -30,7 +30,11 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Override
     public String getToolTip(int line, Editor editor) {
         String lineVeryStale = performanceDisplayProvider.isLineVeryStale(line) ? "Very " : "";
-        return "Global Average" + (performanceDisplayProvider.isStale() ? " (" + lineVeryStale + "Stale)" : "");
+
+        if (performanceDisplayProvider.isLineVeryStale(line))  {
+            return "Global Average (Very Stale)";
+        }
+        return "Global Average" + (performanceDisplayProvider.isStale() ? " (Stale)" : "");
     }
 
     @Override

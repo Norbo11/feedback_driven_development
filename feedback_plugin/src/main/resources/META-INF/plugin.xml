@@ -7,15 +7,23 @@
     <description>
         <![CDATA[
         Feedback driven development!<br>
-        <em>most HTML tags may be used</em>
+        A front-end plugin for displaying feedback in the IDE.
         ]]>
     </description>
 
     <depends>com.intellij.modules.lang</depends>
     <depends>Git4Idea</depends>
 
+    <project-components>
+        <component>
+            <implementation-class>np1815.feedback.plugin.components.FeedbackDrivenDevelopment</implementation-class>
+        </component>
+    </project-components>
+
     <extensions defaultExtensionNs="com.intellij">
         <applicationService serviceImplementation="np1815.feedback.plugin.services.MetricsBackendService"/>
+        <projectConfigurable id="FeedbackDrivenDevelopment" displayName="Feedback Driven Development"
+                             instance="np1815.feedback.plugin.components.ProjectConfiguration" />
     </extensions>
 
     <actions>

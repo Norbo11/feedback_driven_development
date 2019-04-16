@@ -38,7 +38,7 @@ import java.util.Map;
 public class MetricsBackendService {
     public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
 
-    private final ApiClient client;
+    private ApiClient client;
 
     public static MetricsBackendService getInstance() {
         return ServiceManager.getService(MetricsBackendService.class);
@@ -48,8 +48,12 @@ public class MetricsBackendService {
         client = new ApiClient("http://localhost:8080/api", null, null, null);
     }
 
-    public DefaultApi getClient() {
+    public DefaultApi getApiClient() {
         return client.defaultApi();
+    }
+
+    public void setClient(ApiClient client) {
+        this.client = client;
     }
 
     public FilePerformanceDisplayProvider getPerformance(Project project, Repository repository, VirtualFile file) throws IOException, VcsException {
@@ -66,7 +70,7 @@ public class MetricsBackendService {
         String path = Paths.get(basePath).relativize(Paths.get(file.getPath())).toString();
         LOG.debug("File path: " + path);
 
-        PerformanceForFile performance = getClient().getPerformanceForFile(path, latestAvailableVersion);
+        PerformanceForFile performance = getApiClient().getPerformanceForFile(path, latestAvailableVersion);
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, performance);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
@@ -87,7 +91,6 @@ public class MetricsBackendService {
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
 
         for (Change change : changes) {
-            LOG.info(change.getDescription());
             try {
                 String before = change.getBeforeRevision().getContent();
                 String after = change.getAfterRevision().getContent();
@@ -116,7 +119,7 @@ public class MetricsBackendService {
     private String determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException, VcsException {
         Git git = Git.getInstance();
 
-        AllApplicationVersions versions = getClient().getApplicationVersions();
+        AllApplicationVersions versions = getApiClient().getApplicationVersions();
         List<String> versionsWithHead = new ArrayList<>(versions.getVersions());
         versionsWithHead.add(0, currentVersion);
 

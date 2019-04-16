@@ -34,8 +34,10 @@ public class FilePerformanceDisplayProvider {
         PerformanceForFileLines perf = performance.getLines().get(lineNumber.get());
         double fractionalPerformance = perf.getGlobalAverage() / performance.getGlobalAverageForFile();
 
+        float brightness = isLineVeryStale(line) ? 0.5f : 1f;
+
         // 0 = red
-        return Optional.of(JBColor.getHSBColor(0, (float) fractionalPerformance, 1));
+        return Optional.of(JBColor.getHSBColor(0, (float) fractionalPerformance, brightness));
     }
 
     private Optional<String> getLineNumberBeforeTranslation(int line) {
@@ -44,7 +46,8 @@ public class FilePerformanceDisplayProvider {
     }
 
     public boolean isLineVeryStale(int line) {
-        return translatedLineNumbers.get(line).isVeryStale();
+        TranslatedLineNumber translatedLineNumber = translatedLineNumbers.get(line);
+        return translatedLineNumber != null && translatedLineNumber.isVeryStale();
     }
 
     public Optional<String> getGlobalAverageForLine(int line) {
