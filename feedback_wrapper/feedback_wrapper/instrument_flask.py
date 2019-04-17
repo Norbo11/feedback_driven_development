@@ -4,22 +4,17 @@ import logging
 import os
 import signal
 import sys
+import pathlib
+
 from typing import List
 from datetime import datetime
 
-from metric_backend_client.configuration import Configuration
-from metric_backend_client.api_client import ApiClient
-from metric_backend_client.api.default_api import DefaultApi
 from metric_backend_client.models.pyflame_profile import PyflameProfile
 
-from feedback_wrapper.version_provider import get_current_version
+from feedback_wrapper.configuration import FeedbackConfiguration
 
-config = Configuration()
-config.host = "http://host.docker.internal:8080/api"
-metric_handling_api = DefaultApi(ApiClient(config))
 app = None
-current_version = None
-
+feedback_config = None
 PYFLAME_ARGS = {
     'abi': 36, # Without this, error code 1 is returned
     'seconds': 9999,
@@ -36,13 +31,10 @@ def main():
     wrap_flask(args.command)
 
 
-def instrument_flask(flask_app, base_path):
-    global app
+def instrument_flask(flask_app, feedback_config_filename):
+    global app, feedback_config
     app = flask_app
-
-    app.logger.info("Base path: " + base_path)
-    current_version = get_current_version(base_path)
-    app.logger.info(f'Current version: {current_version}')
+    feedback_config = FeedbackConfiguration(flask_app, feedback_config_filename)
 
     @flask_app.before_request
     def before():
@@ -52,7 +44,7 @@ def instrument_flask(flask_app, base_path):
 
         @after_this_request
         def after(response):
-            return pyflame_profile_end(process, response, start_time, base_path, current_version)
+            return pyflame_profile_end(process, response, start_time)
 
 
 def pyflame_profile_start(request):
@@ -81,7 +73,7 @@ def pyflame_profile_start(request):
     return process, start_time
 
 
-def pyflame_profile_end(process, response, start_time, base_path, current_version):
+def pyflame_profile_end(process, response, start_time):
 
     def kill_process():
         process.send_signal(signal.SIGINT)
@@ -107,29 +99,31 @@ def pyflame_profile_end(process, response, start_time, base_path, current_versio
     end_time = datetime.now()
 
     pyflame_profile = PyflameProfile(
+        application_name=feedback_config.application_name,
+        version=feedback_config.current_version,
         start_timestamp=start_time,
         end_timestamp=end_time,
         pyflame_output=stdout,
-        base_path=base_path,
-        version=current_version
+        base_path=str(feedback_config.source_base_path),
+        instrument_directories=[str(d) for d in feedback_config.instrument_directories]
     )
 
-    added_profile_response = metric_handling_api.add_pyflame_profile(pyflame_profile)
-    generate_flamegraph(base_path, stdout, added_profile_response.id)
+    added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
+    generate_flamegraph(feedback_config.git_base_path, stdout, added_profile_response.id)
 
     return response
 
 
-def generate_flamegraph(base_path, pyflame_output, profile_id):
+def generate_flamegraph(directory, pyflame_output, profile_id):
     command = 'flamegraph.pl'
     process = subprocess.Popen(command.split(' '), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
     stdout, stderr = process.communicate(input=pyflame_output)
 
-    filename = os.path.join(base_path, 'flamegraphs', f'{profile_id}.svg')
+    filename = os.path.join(directory, 'flamegraphs', f'{profile_id}.svg')
     with open(filename, 'w') as file:
         file.write(stdout)
 
-    filename = os.path.join(base_path, 'flamegraphs', f'{profile_id}.txt')
+    filename = os.path.join(directory, 'flamegraphs', f'{profile_id}.txt')
     with open(filename, 'w') as file:
         file.write(pyflame_output)
 
