@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static np1815.feedback.metricsbackend.db.requests.Tables.APPLICATION;
 import static np1815.feedback.metricsbackend.db.requests.tables.Profile.PROFILE;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.PROFILE_LINES;
 import static org.jooq.impl.DSL.avg;
@@ -41,17 +42,21 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public int addProfile(Timestamp startTime, Timestamp endTime, long duration, String version) {
+    public int addProfile(String applicationName, String version, Timestamp startTime, Timestamp endTime, long duration) {
         return dslContextFactory.create().insertInto(PROFILE)
-            .columns(PROFILE.DURATION,
+            .columns(
+                PROFILE.APPLICATION_NAME,
+                PROFILE.VERSION,
+                PROFILE.DURATION,
                 PROFILE.START_TIMESTAMP,
-                PROFILE.END_TIMESTAMP,
-                PROFILE.VERSION
+                PROFILE.END_TIMESTAMP
             )
-            .values(duration,
+            .values(
+                applicationName,
+                version,
+                duration,
                 startTime,
-                endTime,
-                version
+                endTime
             )
             .returningResult(PROFILE.ID)
             .fetchOne()
@@ -59,7 +64,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Map<String, PerformanceForFileLines> getGlobalAveragePerLine(String filename, String version) {
+    public Map<String, PerformanceForFileLines> getGlobalAveragePerLine(String applicationName, String version, String filename) {
         Result<Record2<Integer, BigDecimal>> result = dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                 avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
@@ -67,6 +72,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .from(PROFILE_LINES)
             .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
             .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch();
@@ -80,12 +86,26 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Set<String> getApplicationVersions() {
+    public Set<String> getApplicationVersions(String applicationName) {
         Result<Record1<String>> result = dslContextFactory.create()
             .select(PROFILE.VERSION)
             .from(PROFILE)
+            .where(PROFILE.APPLICATION_NAME.eq(applicationName))
             .fetch();
 
         return result.intoSet(PROFILE.VERSION);
+    }
+
+    @Override
+    public void addApplicationIfDoesntExist(String applicationName) {
+        if (dslContextFactory.create().fetchExists(APPLICATION, APPLICATION.NAME.eq(applicationName))) {
+            return;
+        }
+
+        dslContextFactory.create()
+            .insertInto(APPLICATION)
+            .columns(APPLICATION.NAME)
+            .values(applicationName)
+            .execute();
     }
 }

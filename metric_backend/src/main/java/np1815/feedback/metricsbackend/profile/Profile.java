@@ -1,16 +1,21 @@
 package np1815.feedback.metricsbackend.profile;
 
+import java.io.File;
+import java.nio.file.FileSystems;
+import java.nio.file.Path;
+import java.nio.file.PathMatcher;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 public class Profile {
-    private LinkedHashMap<ProfiledLineKey, ProfiledLine> samples;
+    private HashMap<ProfiledLineKey, ProfiledLine> samples;
     private long totalSamples;
 
     public Profile() {
-        samples = new LinkedHashMap<>();
+        samples = new HashMap<>();
     }
 
     public int numberOfUniqueLines() {
@@ -46,28 +51,38 @@ public class Profile {
     }
 
     public ProfiledLine getProfileForLine(String path, int lineNumber) {
-        List<ProfiledLine> lines = getAllLineProfilesSatisfyingPredicate(p -> p.getFilePath().equals(path) && p.getLineNumber() == lineNumber);
+        Set<ProfiledLine> lines = getAllLineProfilesSatisfyingPredicate(p -> p.getFilePath().equals(path) && p.getLineNumber() == lineNumber);
         if (lines.size() != 1) {
             throw new MoreThanOneProfileException("Expected only one profile, found " + lines.size());
         }
         return new ArrayList<>(lines).get(0);
     }
 
-    public List<ProfiledLine> getAllLineProfiles() {
-        return new ArrayList<>(samples.values());
+    public Set<ProfiledLine> getAllLineProfiles() {
+        return new HashSet<>(samples.values());
     }
 
-    public List<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {
+    public Set<ProfiledLine> getAllLineProfilesMatchingGlobs(List<String> globs) {
+        return getAllLineProfilesSatisfyingPredicate(s ->
+            globs.stream().anyMatch(g -> {
+                Path path = Paths.get(s.getFilePath());
+                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + g);
+                return matcher.matches(path);
+            })
+        );
+    }
+
+    public Set<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {
         return getAllLineProfilesSatisfyingPredicate(s -> Pattern.compile(pathRegex).asPredicate().test(s.getFilePath()));
     }
 
-    public List<ProfiledLine> getAllLineProfilesStartingWith(String startPath) {
-        return getAllLineProfilesSatisfyingPredicate(s -> s.getFilePath().startsWith(startPath));
+    public Set<ProfiledLine> getAllLineProfilesStartingWith(List<Path> paths) {
+        return getAllLineProfilesSatisfyingPredicate(s -> paths.stream().anyMatch(p -> Paths.get(s.getFilePath()).startsWith(p)));
     }
 
-    private List<ProfiledLine> getAllLineProfilesSatisfyingPredicate(Predicate<ProfiledLineKey> p) {
+    private Set<ProfiledLine> getAllLineProfilesSatisfyingPredicate(Predicate<ProfiledLineKey> p) {
         Set<ProfiledLineKey> filteredKeys = samples.keySet().stream().filter(p).collect(Collectors.toSet());
-        return filteredKeys.stream().map(key -> samples.get(key)).collect(Collectors.toList());
+        return filteredKeys.stream().map(key -> samples.get(key)).collect(Collectors.toSet());
     }
 
     public class MoreThanOneProfileException extends Error {

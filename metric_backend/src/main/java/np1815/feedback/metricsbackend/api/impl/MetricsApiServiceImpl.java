@@ -8,11 +8,12 @@ import np1815.feedback.metricsbackend.profile.Profile;
 import np1815.feedback.metricsbackend.profile.parsing.FlaskPyflameParser;
 import np1815.feedback.metricsbackend.util.DateTimeUtil;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.time.Duration;
 
-import java.util.ArrayList;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
 
@@ -33,14 +34,17 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         Profile profile = parser.parseFlamegraph(pyflameProfile.getPyflameOutput(), pyflameProfile.getBasePath());
         Duration duration = Duration.between(pyflameProfile.getStartTimestamp(), pyflameProfile.getEndTimestamp());
 
+        metricsBackendOperations.addApplicationIfDoesntExist(pyflameProfile.getApplicationName());
+
         int addedProfileId = metricsBackendOperations.addProfile(
+            pyflameProfile.getApplicationName(),
+            pyflameProfile.getVersion(),
             DateTimeUtil.dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
             DateTimeUtil.dateTimeToTimestamp(pyflameProfile.getEndTimestamp()),
-            duration.toMillis(),
-            pyflameProfile.getVersion());
+            duration.toMillis()
+        );
 
-        //TODO: Get the paths to store in DB from project configuration
-        for (ProfiledLine line : profile.getAllLineProfilesStartingWith("playground_application")) {
+        for (ProfiledLine line : profile.getAllLineProfilesMatchingGlobs(pyflameProfile.getInstrumentDirectories())) {
             double fractionSpent = (line.getNumberOfSamples() / (double) profile.getTotalSamples());
             long sampleTime = Math.round(fractionSpent * duration.toMillis());
 
@@ -57,14 +61,14 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
-    public Response getApplicationVersions(SecurityContext securityContext) throws NotFoundException {
-        Set<String> versions = metricsBackendOperations.getApplicationVersions();
+    public Response getApplicationVersions(String applicationName, SecurityContext securityContext) throws NotFoundException {
+        Set<String> versions = metricsBackendOperations.getApplicationVersions(applicationName);
         return Response.ok().entity(new AllApplicationVersions().versions(new ArrayList<>(versions))).build();
     }
 
     @Override
-    public Response getPerformanceForFile(String filename, String version, SecurityContext securityContext) throws NotFoundException {
-        Map<String, PerformanceForFileLines> lines = metricsBackendOperations.getGlobalAveragePerLine(filename, version);
+    public Response getPerformanceForFile(String applicationName, String version, String filename, SecurityContext securityContext) throws NotFoundException {
+        Map<String, PerformanceForFileLines> lines = metricsBackendOperations.getGlobalAveragePerLine(applicationName, version, filename);
 
         double globalAverageForFile = lines.values().stream().mapToDouble(PerformanceForFileLines::getGlobalAverage).sum();
 

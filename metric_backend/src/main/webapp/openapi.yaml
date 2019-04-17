@@ -28,6 +28,12 @@ paths:
     get:
       summary: Get all versions of an application
       operationId: get_application_versions
+      parameters:
+        - name: application_name
+          in: query
+          required: true
+          schema:
+            type: string
       responses:
         '200':
           description: OK
@@ -40,12 +46,17 @@ paths:
       summary: Get performance information for particular file
       operationId: get_performance_for_file
       parameters:
-        - name: filename
+        - name: application_name
           in: query
           required: true
           schema:
             type: string
         - name: version
+          in: query
+          required: true
+          schema:
+            type: string
+        - name: filename
           in: query
           required: true
           schema:
@@ -78,6 +89,10 @@ components:
     PyflameProfile:
       type: object
       properties:
+        application_name:
+          type: string
+        version:
+          type: string
         start_timestamp:
           type: string
           format: date-time
@@ -86,8 +101,10 @@ components:
           format: date-time
         base_path:
           type: string
-        version:
-          type: string
+        instrument_directories:
+          type: array
+          items:
+            type: string
         pyflame_output:
           type: string
     AddedEntityResponse:
