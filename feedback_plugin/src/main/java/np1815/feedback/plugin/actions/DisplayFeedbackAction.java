@@ -25,6 +25,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Optional;
 
 public class DisplayFeedbackAction extends AnAction {
 
@@ -63,9 +64,25 @@ public class DisplayFeedbackAction extends AnAction {
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
 
+        String currentVersion = repository.getCurrentRevision();
+        assert currentVersion != null;
+        LOG.debug("Current Version: " + currentVersion);
+
         FilePerformanceDisplayProvider displayProvider = null;
         try {
-            displayProvider = metricsBackend.getPerformance(project, repository, file);
+            Optional<String> latestAvailableVersion = metricsBackend.determineLastAvailableVersionInBackend(project, repository, currentVersion);
+            LOG.debug("Determined latest available version: " + latestAvailableVersion);
+
+            if (latestAvailableVersion.isPresent()) {
+                displayProvider = metricsBackend.getPerformance(project, repository, file, currentVersion, latestAvailableVersion.get());
+            } else {
+                Notifications.Bus.notify(new Notification(
+                    "FeedbackDrivenDevelopment.Info",
+                    "Feedback not available",
+                    "No feedback versions are available for this application",
+                    NotificationType.INFORMATION
+                ));
+            }
         } catch (IOException e) {
             Notifications.Bus.notify(new Notification(
                 "FeedbackDrivenDevelopment.Error",

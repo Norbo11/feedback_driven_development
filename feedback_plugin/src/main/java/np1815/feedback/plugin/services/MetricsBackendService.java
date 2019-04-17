@@ -24,59 +24,43 @@ import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.plugin.actions.DisplayFeedbackAction;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class MetricsBackendService {
     public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
-
-    private ApiClient client;
 
     public static MetricsBackendService getInstance() {
         return ServiceManager.getService(MetricsBackendService.class);
     }
 
-    public MetricsBackendService() {
-        client = new ApiClient("http://localhost:8080/api", null, null, null);
-    }
-
-    public DefaultApi getApiClient() {
-        return client.defaultApi();
-    }
-
-    public void setClient(ApiClient client) {
-        this.client = client;
-    }
-
-    public FilePerformanceDisplayProvider getPerformance(Project project, Repository repository, VirtualFile file) throws IOException, VcsException {
+    public FilePerformanceDisplayProvider getPerformance(Project project, Repository repository, VirtualFile file,
+                                                         String currentVersion, String latestAvailableVersion) throws IOException,
+        VcsException {
         String basePath = project.getBasePath();
         assert basePath != null;
-
-        String currentVersion = repository.getCurrentRevision();
-        assert currentVersion != null;
-        LOG.debug("Version: " + currentVersion);
-
-        String latestAvailableVersion = determineLastAvailableVersionInBackend(project, repository, currentVersion);
-        LOG.debug("Determined latest available version: " + latestAvailableVersion);
 
         String path = Paths.get(basePath).relativize(Paths.get(file.getPath())).toString();
         LOG.debug("File path: " + path);
 
-        PerformanceForFile performance = getApiClient().getPerformanceForFile(path, latestAvailableVersion);
-        Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, performance);
+        String applicationName = FeedbackDrivenDevelopment.getInstance(project).getFeedbackConfiguration().getApplicationName();
+
+        PerformanceForFile performance = FeedbackDrivenDevelopment.getInstance(project).getApiClient()
+            .getPerformanceForFile(applicationName, latestAvailableVersion, path);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
+        Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, performance);
+
         return new FilePerformanceDisplayProvider(performance, stale, translatedLineNumbers);
     }
 
+    /* Translate the performance data into the new file view according to the edited changes */
     private Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(Project project, VirtualFile file, String latestAvailableVersion, PerformanceForFile performance) throws VcsException {
         GitVcs vcs = GitVcs.getInstance(project);
         FilePath vcsFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
@@ -116,18 +100,26 @@ public class MetricsBackendService {
         return translatedLineNumbers;
     }
 
-    private String determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException, VcsException {
+    public Optional<String> determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException,
+        VcsException {
         Git git = Git.getInstance();
 
-        AllApplicationVersions versions = getApiClient().getApplicationVersions();
-        List<String> versionsWithHead = new ArrayList<>(versions.getVersions());
-        versionsWithHead.add(0, currentVersion);
+        FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
 
-        GitLineHandler gitLineHandler = new GitLineHandler(project, repository.getRoot(), GitCommand.MERGE_BASE);
-        gitLineHandler.addParameters(versionsWithHead);
-        GitCommandResult result = git.runCommand(gitLineHandler);
+        AllApplicationVersions versions = feedback.getApiClient().getApplicationVersions(feedback.getFeedbackConfiguration().getApplicationName());
 
-        return result.getOutputOrThrow();
+        if (versions.getVersions().size() > 0) {
+            List<String> versionsWithHead = new ArrayList<>(versions.getVersions());
+            versionsWithHead.add(0, currentVersion);
+
+            GitLineHandler gitLineHandler = new GitLineHandler(project, repository.getRoot(), GitCommand.MERGE_BASE);
+            gitLineHandler.addParameters(versionsWithHead);
+            GitCommandResult result = git.runCommand(gitLineHandler);
+
+            return Optional.of(result.getOutputOrThrow());
+        }
+
+        return Optional.empty();
     }
 
 }
