@@ -25,7 +25,7 @@ import java.util.Set;
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
 
-    static class State {
+    public static class State {
         public String feedbackConfigPath;
         public String metricBackendUrl;
         public boolean takeMetricBackendUrlFromConfig;
@@ -35,6 +35,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
 
         public State() {
             this.feedbackConfigPath = "";
+            this.metricBackendUrl = "";
+            this.takeMetricBackendUrlFromConfig = true;
         }
 
         @Override
@@ -60,8 +62,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         return project.getComponent(FeedbackDrivenDevelopment.class);
     }
 
-    @Nullable
     @Override
+    @Nullable
     public State getState() {
         return state;
     }

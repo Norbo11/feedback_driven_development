@@ -24,12 +24,14 @@ import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.plugin.actions.DisplayFeedbackAction;
+import np1815.feedback.plugin.components.FeedbackConfiguration;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 
@@ -43,15 +45,20 @@ public class MetricsBackendService {
     public FilePerformanceDisplayProvider getPerformance(Project project, Repository repository, VirtualFile file,
                                                          String currentVersion, String latestAvailableVersion) throws IOException,
         VcsException {
-        String basePath = project.getBasePath();
-        assert basePath != null;
 
-        String path = Paths.get(basePath).relativize(Paths.get(file.getPath())).toString();
+        FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
+        FeedbackConfiguration config = feedback.getFeedbackConfiguration();
+
+        assert feedback.getState() != null;
+        Path basePath = Paths.get(feedback.getState().feedbackConfigPath).getParent().resolve(feedback.getFeedbackConfiguration().getSourceBasePath());
+        basePath = basePath.normalize();
+
+        String path = basePath.relativize(Paths.get(file.getPath())).toString();
         LOG.debug("File path: " + path);
 
-        String applicationName = FeedbackDrivenDevelopment.getInstance(project).getFeedbackConfiguration().getApplicationName();
+        String applicationName = config.getApplicationName();
 
-        PerformanceForFile performance = FeedbackDrivenDevelopment.getInstance(project).getApiClient()
+        PerformanceForFile performance = feedback.getApiClient()
             .getPerformanceForFile(applicationName, latestAvailableVersion, path);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
