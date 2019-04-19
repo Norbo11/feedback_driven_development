@@ -8,12 +8,10 @@ import np1815.feedback.metricsbackend.profile.Profile;
 import np1815.feedback.metricsbackend.profile.parsing.FlaskPyflameParser;
 import np1815.feedback.metricsbackend.util.DateTimeUtil;
 
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.Duration;
 
 import java.util.*;
-import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
 
@@ -55,6 +53,25 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                 line.getNumberOfSamples(),
                 sampleTime
             );
+        }
+
+        if (pyflameProfile.getException() != null) {
+            int addedExceptionId = metricsBackendOperations.addException(
+                addedProfileId,
+                pyflameProfile.getException().getExceptionType(),
+                pyflameProfile.getException().getExceptionMessage()
+            );
+
+            Integer addedFrameId = null;
+            for (NewExceptionFrames frame : pyflameProfile.getException().getFrames()) {
+                addedFrameId = metricsBackendOperations.addExceptionFrame(
+                    addedExceptionId,
+                    Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(frame.getFilename())).toString(),
+                    frame.getLineNumber(),
+                    frame.getFunctionName(),
+                    addedFrameId
+                );
+            }
         }
 
         return Response.ok().entity(new AddedEntityResponse().id(addedProfileId)).build();

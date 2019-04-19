@@ -107,6 +107,8 @@ components:
             type: string
         pyflame_output:
           type: string
+        exception:
+          $ref: '#/components/schemas/NewException'
     AddedEntityResponse:
       type: object
       properties:
@@ -120,3 +122,22 @@ components:
           type: array
           items:
             type: string
+    NewException:
+      type: object
+      properties:
+        exception_type:
+          type: string
+        exception_message:
+          type: string
+        frames:
+          type: array
+          items:
+            type: object
+            properties:
+              filename:
+                type: string
+              line_number:
+                type: integer
+                format: int32
+              function_name:
+                type: string

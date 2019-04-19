@@ -6,7 +6,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -18,8 +19,6 @@ import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
-import np1815.feedback.metricsbackend.api.DefaultApi;
-import np1815.feedback.metricsbackend.client.ApiClient;
 import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
@@ -62,6 +61,7 @@ public class MetricsBackendService {
             .getPerformanceForFile(applicationName, latestAvailableVersion, path);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
+
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, performance);
 
         return new FilePerformanceDisplayProvider(performance, stale, translatedLineNumbers);
@@ -122,6 +122,7 @@ public class MetricsBackendService {
             GitLineHandler gitLineHandler = new GitLineHandler(project, repository.getRoot(), GitCommand.MERGE_BASE);
             gitLineHandler.addParameters(versionsWithHead);
             GitCommandResult result = git.runCommand(gitLineHandler);
+
 
             return Optional.of(result.getOutputOrThrow());
         }

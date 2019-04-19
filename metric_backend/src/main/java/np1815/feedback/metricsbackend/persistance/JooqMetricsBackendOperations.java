@@ -11,6 +11,8 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 import static np1815.feedback.metricsbackend.db.requests.Tables.APPLICATION;
+import static np1815.feedback.metricsbackend.db.requests.Tables.EXCEPTION_FRAMES;
+import static np1815.feedback.metricsbackend.db.requests.tables.Exception.EXCEPTION;
 import static np1815.feedback.metricsbackend.db.requests.tables.Profile.PROFILE;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.PROFILE_LINES;
 import static org.jooq.impl.DSL.avg;
@@ -107,5 +109,33 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .columns(APPLICATION.NAME)
             .values(applicationName)
             .execute();
+    }
+
+    @Override
+    public int addException(int profileId, String exceptionType, String message) {
+        return dslContextFactory.create()
+            .insertInto(EXCEPTION)
+            .columns( EXCEPTION.PROFILE_ID, EXCEPTION.EXCEPTION_TYPE, EXCEPTION.EXCEPTION_MESSAGE)
+            .values(profileId, exceptionType, message)
+            .returning(EXCEPTION.ID)
+            .fetchOne()
+            .get(EXCEPTION.ID);
+    }
+
+    @Override
+    public Integer addExceptionFrame(int exceptionId, String filename, Integer lineNumber, String functionName, Integer parentFrameId) {
+        return dslContextFactory.create()
+            .insertInto(EXCEPTION_FRAMES)
+            .columns(
+                EXCEPTION_FRAMES.EXCEPTION_ID,
+                EXCEPTION_FRAMES.FILENAME,
+                EXCEPTION_FRAMES.LINE_NUMBER,
+                EXCEPTION_FRAMES.FUNCTION_NAME,
+                EXCEPTION_FRAMES.PARENT_ID
+            )
+            .values(exceptionId, filename, lineNumber, functionName, parentFrameId)
+            .returning(EXCEPTION_FRAMES.ID)
+            .fetchOne()
+            .get(EXCEPTION_FRAMES.ID);
     }
 }

@@ -16,4 +16,8 @@ public interface MetricsBackendOperations {
     public Set<String> getApplicationVersions(String applicationName);
 
     public void addApplicationIfDoesntExist(String applicationName);
+
+    int addException(int profileId, String exceptionType, String message);
+
+    Integer addExceptionFrame(int exceptionId, String filename, Integer lineNumber, String functionName, Integer parentFrameId);
 }

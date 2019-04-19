@@ -384,8 +384,9 @@
                   <inputSchema>requests</inputSchema>
                 </schema>
               </schemata>
-              <catalogVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</catalogVersionProvider>
-              <schemaVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</schemaVersionProvider>
+              <!-- Does not pick up new tables for some reason -->
+              <!--<catalogVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</catalogVersionProvider>-->
+              <!--<schemaVersionProvider>SELECT max(version) FROM metrics.flyway_schema_history</schemaVersionProvider>-->
             </database>
             <target>
               <packageName>np1815.feedback.metricsbackend.db</packageName>
