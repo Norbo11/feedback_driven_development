@@ -1,5 +1,6 @@
 package np1815.feedback.metricsbackend.api.impl;
 
+import com.google.common.collect.Sets;
 import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.NotFoundException;
 import np1815.feedback.metricsbackend.model.*;
@@ -12,6 +13,7 @@ import java.nio.file.Paths;
 import java.time.Duration;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
 
@@ -85,13 +87,22 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
     @Override
     public Response getPerformanceForFile(String applicationName, String version, String filename, SecurityContext securityContext) throws NotFoundException {
-        Map<String, PerformanceForFileLines> lines = metricsBackendOperations.getGlobalAveragePerLine(applicationName, version, filename);
+        Map<Integer, FilePerformance> performance = metricsBackendOperations.getGlobalAveragePerLine(applicationName, version, filename);
+        Map<Integer, List<FileException>> exceptions = metricsBackendOperations.getExceptionsForLine(applicationName, version, filename);
 
-        double globalAverageForFile = lines.values().stream().mapToDouble(PerformanceForFileLines::getGlobalAverage).sum();
+        double globalAverageForFile = performance.values().stream().mapToDouble(FilePerformance::getGlobalAverage).sum();
+
+        Map<String, PerformanceForFileLines> lines = Sets.union(performance.keySet(), exceptions.keySet()).stream().collect(Collectors.toMap(
+            k -> k.toString(),
+            k -> new PerformanceForFileLines()
+                .performance(performance.get(k))
+                .exceptions(exceptions.get(k))
+        ));
 
         return Response.ok().entity(new PerformanceForFile()
             .lines(lines)
-            .globalAverageForFile(globalAverageForFile)).build();
+            .globalAverageForFile(globalAverageForFile)
+        ).build();
     }
 
 }

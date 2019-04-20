@@ -1,14 +1,14 @@
 package np1815.feedback.metricsbackend.persistance;
 
 import np1815.feedback.metricsbackend.api.impl.DslContextFactory;
-import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
+import np1815.feedback.metricsbackend.model.FileException;
+import np1815.feedback.metricsbackend.model.FilePerformance;
 import org.jooq.*;
 
-import java.math.BigDecimal;
 import java.sql.Timestamp;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import static np1815.feedback.metricsbackend.db.requests.Tables.APPLICATION;
 import static np1815.feedback.metricsbackend.db.requests.Tables.EXCEPTION_FRAMES;
@@ -66,8 +66,8 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Map<String, PerformanceForFileLines> getGlobalAveragePerLine(String applicationName, String version, String filename) {
-        Result<Record2<Integer, BigDecimal>> result = dslContextFactory.create()
+    public Map<Integer, FilePerformance> getGlobalAveragePerLine(String applicationName, String version, String filename) {
+        return dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                 avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
             )
@@ -77,14 +77,8 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
-            .fetch();
-
-        Map<String, PerformanceForFileLines> lines = result.stream().collect(Collectors.toMap(
-            x -> x.getValue(PROFILE_LINES.LINE_NUMBER).toString(),
-            x -> new PerformanceForFileLines().globalAverage(x.get("avg", Double.class))
-        ));
-
-        return lines;
+            .fetch()
+            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new FilePerformance().globalAverage(r.get("avg", Double.class)));
     }
 
     @Override
@@ -137,5 +131,27 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .returning(EXCEPTION_FRAMES.ID)
             .fetchOne()
             .get(EXCEPTION_FRAMES.ID);
+    }
+
+    @Override
+    public Map<Integer, List<FileException>> getExceptionsForLine(String applicationName, String version, String filename) {
+        return dslContextFactory.create()
+            .select(
+                EXCEPTION_FRAMES.LINE_NUMBER,
+                PROFILE.END_TIMESTAMP,
+                EXCEPTION.EXCEPTION_TYPE,
+                EXCEPTION.EXCEPTION_MESSAGE
+            )
+            .from(EXCEPTION_FRAMES)
+            .join(EXCEPTION).on(EXCEPTION_FRAMES.EXCEPTION_ID.eq(EXCEPTION.ID))
+            .join(PROFILE).on(EXCEPTION.PROFILE_ID.eq(PROFILE.ID))
+            .where(EXCEPTION_FRAMES.FILENAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .fetchGroups(EXCEPTION_FRAMES.LINE_NUMBER, r -> new FileException()
+                .exceptionTime(r.get(PROFILE.END_TIMESTAMP).toLocalDateTime())
+                .exceptionType(r.get(EXCEPTION.EXCEPTION_TYPE))
+                .exceptionMessage(r.get(EXCEPTION.EXCEPTION_MESSAGE))
+            );
     }
 }

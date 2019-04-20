@@ -83,9 +83,35 @@ components:
           additionalProperties:
             type: object
             properties:
-              global_average:
-                type: number
-                format: double
+              performance:
+                $ref: '#/components/schemas/FilePerformance'
+              exceptions:
+                type: array
+                items:
+                  $ref: '#/components/schemas/FileException'
+    ExceptionsForFile:
+      type: object
+      properties:
+        lines:
+          type: object
+          additionalProperties:
+            $ref: '#/components/schemas/FileException'
+    FilePerformance:
+      type: object
+      properties:
+        global_average:
+          type: number
+          format: double
+    FileException:
+      type: object
+      properties:
+        exception_type:
+          type: string
+        exception_message:
+          type: string
+        exception_time:
+          type: string
+          format: date-time
     PyflameProfile:
       type: object
       properties:
