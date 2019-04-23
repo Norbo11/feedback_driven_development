@@ -33,7 +33,8 @@
 
     <swagger-ui.version>3.20.9</swagger-ui.version>
 
-    <db.url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</db.url>
+    <!--<db.url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</db.url>-->
+    <db.url>jdbc:postgresql://localhost:5432/feedback_driven_development</db.url>
     <db.username>metric_backend</db.username>
     <db.password>imperial</db.password>
   </properties>

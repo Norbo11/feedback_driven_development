@@ -16,7 +16,8 @@ public class DslContextFactory {
 
     private String userName = "metric_backend";
     private String password = "imperial";
-    private String url = "jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development";
+//    private String url = "jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development";
+    private String url = "jdbc:postgresql://localhost:5432/feedback_driven_development";
     private final BasicDataSource dataSource;
 
     public DslContextFactory() {
