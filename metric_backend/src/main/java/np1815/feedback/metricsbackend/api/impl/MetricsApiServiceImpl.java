@@ -69,7 +69,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                 addedFrameId = metricsBackendOperations.addExceptionFrame(
                     addedExceptionId,
                     Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(frame.getFilename())).toString(),
-                    frame.getLineNumber(),
+                    frame.getLineNumber() - 1,
                     frame.getFunctionName(),
                     addedFrameId
                 );
@@ -95,8 +95,8 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         Map<String, PerformanceForFileLines> lines = Sets.union(performance.keySet(), exceptions.keySet()).stream().collect(Collectors.toMap(
             k -> k.toString(),
             k -> new PerformanceForFileLines()
-                .performance(performance.get(k))
-                .exceptions(exceptions.get(k))
+                .performance(performance.getOrDefault(k, new FilePerformance().status(FilePerformance.StatusEnum.NOT_PROFILED)))
+                .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
         ));
 
         return Response.ok().entity(new PerformanceForFile()

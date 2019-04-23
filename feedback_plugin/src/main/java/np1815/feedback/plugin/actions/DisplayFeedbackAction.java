@@ -13,6 +13,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,9 @@ import java.util.Optional;
 
 public class DisplayFeedbackAction extends AnAction {
 
-    public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
+    private static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
+    private static final int HIGHLIGHTER_LAYER = HighlighterLayer.SELECTION - 1;
+
     private final MetricsBackendService metricsBackend;
 
     public DisplayFeedbackAction() {
@@ -38,6 +41,15 @@ public class DisplayFeedbackAction extends AnAction {
         this.metricsBackend = MetricsBackendService.getInstance();
 
         NotificationGroup.balloonGroup("FeedbackDrivenDevelopment.Error");
+    }
+
+    @Override
+    public void update(AnActionEvent event) {
+        Project project = event.getProject();
+        Editor editor = event.getData(CommonDataKeys.EDITOR);
+        VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
+
+        event.getPresentation().setEnabledAndVisible(project != null && editor != null && file != null);
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -116,15 +128,15 @@ public class DisplayFeedbackAction extends AnAction {
         editor.getGutter().closeAllAnnotations();
         editor.getGutter().registerTextAnnotation(textAnnotationProvider);
 
-        for (int lineNumber : displayProvider.getLines()) {
+        for (int lineNumber : displayProvider.getLineNumbers()) {
             TextAttributes attributes = new TextAttributes(
-                    null,
-                    displayProvider.getColorForLine(lineNumber).orElse(null),
+                    displayProvider.getForegroundColourForLine(lineNumber).orElse(null),
+                    displayProvider.getBackgroundColourForLine(lineNumber).orElse(null),
                     null,
                     null,
                     EditorFontType.PLAIN.ordinal());
 
-            markupModel.addLineHighlighter(lineNumber, 1, attributes);
+            markupModel.addLineHighlighter(lineNumber, HIGHLIGHTER_LAYER, attributes);
         }
     }
 }

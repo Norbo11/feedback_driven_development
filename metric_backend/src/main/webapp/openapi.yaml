@@ -99,6 +99,11 @@ components:
     FilePerformance:
       type: object
       properties:
+        status:
+          type: string
+          enum:
+            - not_profiled
+            - profiled
         global_average:
           type: number
           format: double

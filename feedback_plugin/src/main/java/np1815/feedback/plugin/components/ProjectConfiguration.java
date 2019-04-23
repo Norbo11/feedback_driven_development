@@ -33,6 +33,10 @@ public class ProjectConfiguration implements Configurable {
         this.project = project;
         this.feedbackDrivenDevelopmentComponent = FeedbackDrivenDevelopment.getInstance(project);
         this.initialState = feedbackDrivenDevelopmentComponent.getState();
+
+        if (this.initialState == null) {
+            this.initialState = new FeedbackDrivenDevelopment.State();
+        }
     }
 
     @Nls(capitalization = Nls.Capitalization.Title)

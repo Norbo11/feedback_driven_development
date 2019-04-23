@@ -1,14 +1,15 @@
 package np1815.feedback.plugin.util;
 
 import com.intellij.ui.JBColor;
+import np1815.feedback.metricsbackend.model.FileException;
+import np1815.feedback.metricsbackend.model.FilePerformance;
 import np1815.feedback.metricsbackend.model.PerformanceForFile;
 import np1815.feedback.metricsbackend.model.PerformanceForFileLines;
 import np1815.feedback.plugin.services.TranslatedLineNumber;
 
 import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class FilePerformanceDisplayProvider {
@@ -24,7 +25,7 @@ public class FilePerformanceDisplayProvider {
         this.translatedLineNumbers = translatedLineNumbers;
     }
 
-    public Optional<Color> getColorForLine(int line) {
+    public Optional<Color> getBackgroundColourForLine(int line) {
         Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
 
         if (!lineNumber.isPresent()) {
@@ -32,12 +33,30 @@ public class FilePerformanceDisplayProvider {
         }
 
         PerformanceForFileLines perf = performance.getLines().get(lineNumber.get());
-        double fractionalPerformance = perf.getGlobalAverage() / performance.getGlobalAverageForFile();
+        FilePerformance linePerf = perf.getPerformance();
+
+        if (linePerf.getStatus() == FilePerformance.StatusEnum.NOT_PROFILED) {
+            return Optional.empty();
+        }
+
+        double fractionalPerformance = linePerf.getGlobalAverage() / performance.getGlobalAverageForFile();
 
         float brightness = isLineVeryStale(line) ? 0.5f : 1f;
 
         // 0 = red
         return Optional.of(JBColor.getHSBColor(0, (float) fractionalPerformance, brightness));
+    }
+
+    public Optional<Color> getForegroundColourForLine(int line) {
+        Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
+
+        if (!lineNumber.isPresent()) {
+            return Optional.empty();
+        }
+
+        List<FileException> exceptions = performance.getLines().get(lineNumber.get()).getExceptions();
+
+        return exceptions.size() > 0 ? Optional.of(JBColor.RED) : Optional.empty();
     }
 
     private Optional<String> getLineNumberBeforeTranslation(int line) {
@@ -52,12 +71,23 @@ public class FilePerformanceDisplayProvider {
 
     public Optional<String> getGlobalAverageForLine(int line) {
         Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
-        return lineNumber.map(s -> performance.getLines().get(s).getGlobalAverage().toString());
 
+        if (!lineNumber.isPresent()) {
+            return Optional.empty();
+        }
+
+        FilePerformance per = performance.getLines().get(lineNumber.get()).getPerformance();
+
+        if (per.getStatus() == FilePerformance.StatusEnum.PROFILED) {
+            return Optional.of(per.getGlobalAverage().toString());
+        }
+
+        return Optional.empty();
     }
 
-    public List<Integer> getLines() {
-        return translatedLineNumbers.keySet().stream().map(Integer::valueOf).collect(Collectors.toList());
+    // IntelliJ editor starts counting from 0
+    public Set<Integer> getLineNumbers() {
+        return translatedLineNumbers.keySet();
     }
 
     public boolean isStale() {

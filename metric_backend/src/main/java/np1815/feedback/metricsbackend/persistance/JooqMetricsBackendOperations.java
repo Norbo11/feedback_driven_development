@@ -78,7 +78,10 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch()
-            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new FilePerformance().globalAverage(r.get("avg", Double.class)));
+            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new FilePerformance()
+                .globalAverage(r.get("avg", Double.class))
+                .status(FilePerformance.StatusEnum.PROFILED)
+            );
     }
 
     @Override

@@ -59,7 +59,7 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Nullable
     @Override
     public Color getBgColor(int line, Editor editor) {
-        return performanceDisplayProvider.getColorForLine(line).orElse(null);
+        return performanceDisplayProvider.getBackgroundColourForLine(line).orElse(null);
     }
 
     @Override
