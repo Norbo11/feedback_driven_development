@@ -18,12 +18,15 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Paths;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
+
+    private final Project project;
 
     public static class State {
         public String feedbackConfigPath;
@@ -56,6 +59,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     private State state;
 
     public FeedbackDrivenDevelopment(Project project) {
+        this.project = project;
     }
 
     public static FeedbackDrivenDevelopment getInstance(Project project) {
@@ -88,7 +92,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
             Notifications.Bus.notify(new Notification(
                 "FeedbackDrivenDevelopment.Info",
                 "Reloaded feedback configuration",
-                state.feedbackConfigPath,
+                Paths.get(project.getBasePath()).relativize(Paths.get(state.feedbackConfigPath)).toString(),
                 NotificationType.INFORMATION
             ));
         } catch (IOException e) {
