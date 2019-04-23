@@ -93,4 +93,8 @@ public class FilePerformanceDisplayProvider {
     public boolean isStale() {
         return stale;
     }
+
+    public boolean containsFeedbackForLine(int lineNumber) {
+        return translatedLineNumbers.containsKey(lineNumber);
+    }
 }

@@ -19,6 +19,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import np1815.feedback.plugin.ui.FeedbackMouseMotionListener;
 import np1815.feedback.plugin.ui.FilePerformanceGutterProvider;
 import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
@@ -32,15 +33,18 @@ public class DisplayFeedbackAction extends AnAction {
 
     private static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
     private static final int HIGHLIGHTER_LAYER = HighlighterLayer.SELECTION - 1;
+    private static final NotificationGroup NOTIFICATIONS_GROUP_ERROR = NotificationGroup.balloonGroup("FeedbackDrivenDevelopment.Error");
 
     private final MetricsBackendService metricsBackend;
+    private FeedbackMouseMotionListener mouseMotionListener;
+    private boolean displayed;
+    private MarkupModel markupModel;
 
     public DisplayFeedbackAction() {
         super("Feedback");
 
         this.metricsBackend = MetricsBackendService.getInstance();
-
-        NotificationGroup.balloonGroup("FeedbackDrivenDevelopment.Error");
+        this.displayed = false;
     }
 
     @Override
@@ -52,26 +56,12 @@ public class DisplayFeedbackAction extends AnAction {
         event.getPresentation().setEnabledAndVisible(project != null && editor != null && file != null);
     }
 
-    public void actionPerformed(AnActionEvent event) {
-        LOG.debug("Action hit");
-
-        // A project is the current project being edited
-        Project project = event.getProject();
-        assert project != null;
-
-        // An editor is the editor that was open when the action was launched (what happens with split editors?)
-        Editor editor = event.getData(CommonDataKeys.EDITOR);
-        assert editor != null;
-
-        // A virtual file is an abstraction over the file system
-        VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
-        assert file != null;
-
+    public void display(Project project, Editor editor, VirtualFile file) {
         // A document is an editable sequence of characters
         Document document = editor.getDocument();
 
         // A markup model represents the text effects on a particular document
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
+        markupModel = DocumentMarkupModel.forDocument(document, project, true);
 
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
@@ -89,7 +79,7 @@ public class DisplayFeedbackAction extends AnAction {
                 displayProvider = metricsBackend.getPerformance(project, repository, file, currentVersion, latestAvailableVersion.get());
             } else {
                 Notifications.Bus.notify(new Notification(
-                    "FeedbackDrivenDevelopment.Info",
+                    NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
                     "Feedback not available",
                     "No feedback versions are available for this application",
                     NotificationType.INFORMATION
@@ -97,14 +87,14 @@ public class DisplayFeedbackAction extends AnAction {
             }
         } catch (IOException e) {
             Notifications.Bus.notify(new Notification(
-                "FeedbackDrivenDevelopment.Error",
+                NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
                 "Could not fetch feedback",
                 "There was an error connecting to the metric handling backend. Is it running?",
                 NotificationType.ERROR
             ));
         } catch (VcsException e) {
             Notifications.Bus.notify(new Notification(
-                "FeedbackDrivenDevelopment.Error",
+                NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
                 "Could not fetch feedback",
                 "There was an error using git: " + e.getMessage(),
                 NotificationType.ERROR
@@ -115,6 +105,39 @@ public class DisplayFeedbackAction extends AnAction {
             FilePerformanceGutterProvider textAnnotationProvider = new FilePerformanceGutterProvider(displayProvider);
 
             displayGlobalPerformance(editor, markupModel, displayProvider, textAnnotationProvider);
+
+            mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
+            editor.addEditorMouseMotionListener(mouseMotionListener);
+            displayed = true;
+        }
+    }
+
+    private void stopDisplaying(Project project, Editor editor, VirtualFile file) {
+        markupModel.removeAllHighlighters();
+        editor.getGutter().closeAllAnnotations();
+        editor.removeEditorMouseMotionListener(mouseMotionListener);
+        displayed = false;
+    }
+
+    public void actionPerformed(AnActionEvent event) {
+        LOG.debug("Action hit");
+
+        // A project is the current project being edited
+        Project project = event.getProject();
+        assert project != null;
+
+        // An editor is the editor that was open when the action was launched (what happens with split editors?)
+        Editor editor = event.getData(CommonDataKeys.EDITOR);
+        assert editor != null;
+
+        // A virtual file is an abstraction over the file system
+        VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
+        assert file != null;
+
+        if (displayed) {
+            stopDisplaying(project, editor, file);
+        } else {
+            display(project, editor, file);
         }
     }
 
@@ -124,8 +147,6 @@ public class DisplayFeedbackAction extends AnAction {
         FilePerformanceDisplayProvider displayProvider,
         FilePerformanceGutterProvider textAnnotationProvider) {
 
-        markupModel.removeAllHighlighters();
-        editor.getGutter().closeAllAnnotations();
         editor.getGutter().registerTextAnnotation(textAnnotationProvider);
 
         for (int lineNumber : displayProvider.getLineNumbers()) {

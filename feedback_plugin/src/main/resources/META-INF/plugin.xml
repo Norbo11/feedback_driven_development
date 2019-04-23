@@ -21,15 +21,30 @@
     </project-components>
 
     <extensions defaultExtensionNs="com.intellij">
-        <applicationService serviceImplementation="np1815.feedback.plugin.services.MetricsBackendService"/>
-        <projectConfigurable id="FeedbackDrivenDevelopment" displayName="Feedback Driven Development"
-                             instance="np1815.feedback.plugin.components.ProjectConfiguration" />
+        <applicationService
+            serviceImplementation="np1815.feedback.plugin.services.MetricsBackendService"/>
+
+        <projectConfigurable
+            id="FeedbackDrivenDevelopment"
+            displayName="Feedback Driven Development"
+            instance="np1815.feedback.plugin.components.ProjectConfiguration" />
+
+        <toolWindow
+            id="Production Feedback"
+            anchor="bottom"
+            secondary="false"
+            factoryClass="np1815.feedback.plugin.ui.FeedbackToolbarFactory" />
+
     </extensions>
 
     <actions>
-        <group id="MyPlugin.SampleMenu" text="Feedback" description="Feedback menu">
-            <add-to-group group-id="MainMenu" anchor="last"/>
-            <action id="Myplugin.Textboxes" class="np1815.feedback.plugin.actions.DisplayFeedbackAction" text="Display feedback" description="Displays feedback"/>
+        <group id="FeedbackDrivenDevelopment.General" text="Feedback" description="General feedback actions">
+            <action
+                id="FeedbackDrivenDevelopment.General.DisplayFeedback"
+                class="np1815.feedback.plugin.actions.DisplayFeedbackAction"
+                text="Display feedback"
+                description="Displays feedback"
+            />
         </group>
     </actions>
 </idea-plugin>
