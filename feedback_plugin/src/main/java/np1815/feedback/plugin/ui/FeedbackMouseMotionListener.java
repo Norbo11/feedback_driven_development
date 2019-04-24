@@ -1,6 +1,5 @@
 package np1815.feedback.plugin.ui;
 
-import com.intellij.concurrency.JobScheduler;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
@@ -15,15 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.swing.*;
 import java.awt.*;
-import java.awt.event.MouseEvent;
-import java.util.Optional;
-import java.util.OptionalInt;
-import java.util.Timer;
-import java.util.TimerTask;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
 
 public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
@@ -33,6 +24,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
     private int lineNumberLastHoveredOver;
     private javax.swing.Timer hoverTimer;
+    private JBPopup popup;
 
     public FeedbackMouseMotionListener(FilePerformanceDisplayProvider displayProvider) {
         this.displayProvider = displayProvider;
@@ -50,7 +42,9 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
             if (displayProvider.containsFeedbackForLine(lineNumber)) {
                 hoverTimer = UIUtil.createNamedTimer("FeedbackTooltipTimer",
-                    REQUIRED_HOVER_SECONDS * 1000, (x) -> showFeedbackPopup(event.getEditor(), event.getMouseEvent().getLocationOnScreen()));
+                    REQUIRED_HOVER_SECONDS * 1000, (x) ->
+                        showFeedbackPopup(event.getEditor(), event.getMouseEvent().getLocationOnScreen(), lineNumber)
+                );
 
                 hoverTimer.setRepeats(false);
                 hoverTimer.start();
@@ -60,17 +54,22 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
         }
     }
 
-    private void showFeedbackPopup(Editor editor, Point point) {
-        FeedbackPopup feedbackPopup = new FeedbackPopup();
+    private void showFeedbackPopup(Editor editor, Point point, int line) {
+
+        FeedbackPopup feedbackPopup = new FeedbackPopup(line, displayProvider);
 
         ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(feedbackPopup.getRootComponent(), feedbackPopup.getRootComponent());
         popupBuilder.setTitle("Feedback");
 
-        // TODO: DO something with this
-        popupBuilder.setMinSize(new Dimension(100, 100));
-        popupBuilder.setCancelOnMouseOutCallback(event -> getLineNumber(editor, event.getPoint()) != lineNumberLastHoveredOver);
+        // Remove popup if we move 2 lines away
+        popupBuilder.setCancelOnMouseOutCallback(event -> Math.abs(getLineNumber(editor, event.getPoint()) - line) > 2);
 
-        JBPopup popup = popupBuilder.createPopup();
+        // Only allow one popup at a time
+        if (popup != null) {
+            popup.cancel();
+        }
+
+        popup = popupBuilder.createPopup();
         popup.show(RelativePoint.fromScreen(point));
     }
 

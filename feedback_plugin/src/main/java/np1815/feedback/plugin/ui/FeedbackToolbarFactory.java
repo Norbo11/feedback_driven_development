@@ -14,7 +14,6 @@ public class FeedbackToolbarFactory implements ToolWindowFactory {
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content content = contentFactory.createContent(feedbackToolbar.getRootComponent(), "Feedback", false);
 
-
         toolWindow.getContentManager().addContent(content);
     }
 

@@ -98,7 +98,8 @@ public class MetricsBackendService {
                         veryStale = true;
                     }
 
-                    translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale));
+                    //TODO: Get latest available performance information on a per-line basis, instead of for full file
+                    translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale, latestAvailableVersion));
                 }
             } catch (FilesTooBigForDiffException ignored) {
             }

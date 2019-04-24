@@ -48,15 +48,15 @@ public class FilePerformanceDisplayProvider {
     }
 
     public Optional<Color> getForegroundColourForLine(int line) {
-        Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
-
-        if (!lineNumber.isPresent()) {
-            return Optional.empty();
-        }
-
-        List<FileException> exceptions = performance.getLines().get(lineNumber.get()).getExceptions();
+        List<FileException> exceptions = getExceptions(line);
 
         return exceptions.size() > 0 ? Optional.of(JBColor.RED) : Optional.empty();
+    }
+
+    public List<FileException> getExceptions(int line) {
+        Optional<String> lineNumber = getLineNumberBeforeTranslation(line);
+
+        return lineNumber.isPresent() ? performance.getLines().get(lineNumber.get()).getExceptions() : new ArrayList<>();
     }
 
     private Optional<String> getLineNumberBeforeTranslation(int line) {
@@ -96,5 +96,11 @@ public class FilePerformanceDisplayProvider {
 
     public boolean containsFeedbackForLine(int lineNumber) {
         return translatedLineNumbers.containsKey(lineNumber);
+    }
+
+    public String getLastInstrumentedVersion(int line) {
+        TranslatedLineNumber translatedLineNumber = translatedLineNumbers.get(line);
+
+        return translatedLineNumber != null ? translatedLineNumber.getLatestAvailableVersion() : "";
     }
 }

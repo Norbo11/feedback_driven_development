@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.ui.tabs.JBTabs;
 import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
 import org.jetbrains.annotations.Nullable;
 
