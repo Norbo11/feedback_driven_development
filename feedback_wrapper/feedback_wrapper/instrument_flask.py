@@ -34,6 +34,7 @@ class InstrumentationMetadata(object):
         self.start_time = start_time
         self.response = None
         self.stack_summary = None
+        self.exception = None
 
 
 def instrument_flask(flask_app, feedback_config_filename):
