@@ -123,7 +123,7 @@ def pyflame_profile_end():
         if return_code == -2:
             app.logger.error(f'Request possibly ran for too short')
 
-        return response
+        return instrumentation_metadata.response
 
     instrumentation_metadata.end_time = datetime.now()
 
