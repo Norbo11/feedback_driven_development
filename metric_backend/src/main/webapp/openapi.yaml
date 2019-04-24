@@ -41,10 +41,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/AllApplicationVersions'
-  /metrics/performance/for_file:
+  /metrics/feedback/for_file:
     get:
-      summary: Get performance information for particular file
-      operationId: get_performance_for_file
+      summary: Get feedback information for particular file
+      operationId: get_feedback_for_file
       parameters:
         - name: application_name
           in: query
@@ -67,12 +67,12 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/PerformanceForFile'
+                $ref: '#/components/schemas/FileFeedback'
         '400':
           description: Invalid filename
 components:
   schemas:
-    PerformanceForFile:
+    FileFeedback:
       type: object
       properties:
         global_average_for_file:
@@ -83,20 +83,23 @@ components:
           additionalProperties:
             type: object
             properties:
+              general:
+                $ref: '#/components/schemas/LineGeneral'
               performance:
-                $ref: '#/components/schemas/FilePerformance'
+                $ref: '#/components/schemas/LinePerformance'
               exceptions:
-                type: array
-                items:
-                  $ref: '#/components/schemas/FileException'
-    ExceptionsForFile:
+                $ref: '#/components/schemas/LineExceptions'
+    LineGeneral:
       type: object
       properties:
-        lines:
-          type: object
-          additionalProperties:
-            $ref: '#/components/schemas/FileException'
-    FilePerformance:
+        execution_count:
+          type: integer
+          format: int32
+    LineExceptions:
+      type: array
+      items:
+        $ref: '#/components/schemas/LineException'
+    LinePerformance:
       type: object
       properties:
         status:
@@ -107,7 +110,7 @@ components:
         global_average:
           type: number
           format: double
-    FileException:
+    LineException:
       type: object
       properties:
         exception_type:
@@ -139,7 +142,7 @@ components:
         pyflame_output:
           type: string
         exception:
-          $ref: '#/components/schemas/NewException'
+          $ref: '#/components/schemas/NewLineException'
     AddedEntityResponse:
       type: object
       properties:
@@ -153,7 +156,7 @@ components:
           type: array
           items:
             type: string
-    NewException:
+    NewLineException:
       type: object
       properties:
         exception_type:

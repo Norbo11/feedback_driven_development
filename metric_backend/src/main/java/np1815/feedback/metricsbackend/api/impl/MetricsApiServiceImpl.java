@@ -65,7 +65,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             );
 
             Integer addedFrameId = null;
-            for (NewExceptionFrames frame : pyflameProfile.getException().getFrames()) {
+            for (NewLineExceptionFrames frame : pyflameProfile.getException().getFrames()) {
                 addedFrameId = metricsBackendOperations.addExceptionFrame(
                     addedExceptionId,
                     Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(frame.getFilename())).toString(),
@@ -86,20 +86,25 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
-    public Response getPerformanceForFile(String applicationName, String version, String filename, SecurityContext securityContext) throws NotFoundException {
-        Map<Integer, FilePerformance> performance = metricsBackendOperations.getGlobalAveragePerLine(applicationName, version, filename);
-        Map<Integer, List<FileException>> exceptions = metricsBackendOperations.getExceptionsForLine(applicationName, version, filename);
+    public Response getFeedbackForFile(String applicationName, String version, String filename, SecurityContext securityContext) throws NotFoundException {
+        Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralForLine(applicationName, version, filename);
+        Map<Integer, LinePerformance> performance = metricsBackendOperations.getPerformanceForLine(applicationName, version, filename);
+        Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsForLine(applicationName, version, filename);
 
-        double globalAverageForFile = performance.values().stream().mapToDouble(FilePerformance::getGlobalAverage).sum();
+        double globalAverageForFile = performance.values().stream().mapToDouble(LinePerformance::getGlobalAverage).sum();
 
-        Map<String, PerformanceForFileLines> lines = Sets.union(performance.keySet(), exceptions.keySet()).stream().collect(Collectors.toMap(
+        Set<Integer> allLineNumbers = Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet()));
+
+        Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
+            .collect(Collectors.toMap(
             k -> k.toString(),
-            k -> new PerformanceForFileLines()
-                .performance(performance.getOrDefault(k, new FilePerformance().status(FilePerformance.StatusEnum.NOT_PROFILED)))
+            k -> new FileFeedbackLines()
+                .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
+                .performance(performance.getOrDefault(k, new LinePerformance().status(LinePerformance.StatusEnum.NOT_PROFILED)))
                 .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
         ));
 
-        return Response.ok().entity(new PerformanceForFile()
+        return Response.ok().entity(new FileFeedback()
             .lines(lines)
             .globalAverageForFile(globalAverageForFile)
         ).build();

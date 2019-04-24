@@ -1,8 +1,9 @@
 package np1815.feedback.metricsbackend.persistance;
 
 import np1815.feedback.metricsbackend.api.impl.DslContextFactory;
-import np1815.feedback.metricsbackend.model.FileException;
-import np1815.feedback.metricsbackend.model.FilePerformance;
+import np1815.feedback.metricsbackend.model.LineException;
+import np1815.feedback.metricsbackend.model.LineGeneral;
+import np1815.feedback.metricsbackend.model.LinePerformance;
 import org.jooq.*;
 
 import java.sql.Timestamp;
@@ -16,6 +17,7 @@ import static np1815.feedback.metricsbackend.db.requests.tables.Exception.EXCEPT
 import static np1815.feedback.metricsbackend.db.requests.tables.Profile.PROFILE;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.PROFILE_LINES;
 import static org.jooq.impl.DSL.avg;
+import static org.jooq.impl.DSL.count;
 
 public class JooqMetricsBackendOperations implements MetricsBackendOperations {
 
@@ -63,25 +65,6 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .returningResult(PROFILE.ID)
             .fetchOne()
             .get(PROFILE.ID);
-    }
-
-    @Override
-    public Map<Integer, FilePerformance> getGlobalAveragePerLine(String applicationName, String version, String filename) {
-        return dslContextFactory.create()
-            .select(PROFILE_LINES.LINE_NUMBER,
-                avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
-            )
-            .from(PROFILE_LINES)
-            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
-            .where(PROFILE_LINES.FILE_NAME.eq(filename))
-            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
-            .and(PROFILE.VERSION.eq(version))
-            .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
-            .fetch()
-            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new FilePerformance()
-                .globalAverage(r.get("avg", Double.class))
-                .status(FilePerformance.StatusEnum.PROFILED)
-            );
     }
 
     @Override
@@ -137,7 +120,26 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Map<Integer, List<FileException>> getExceptionsForLine(String applicationName, String version, String filename) {
+    public Map<Integer, LinePerformance> getPerformanceForLine(String applicationName, String version, String filename) {
+        return dslContextFactory.create()
+            .select(PROFILE_LINES.LINE_NUMBER,
+                avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
+            )
+            .from(PROFILE_LINES)
+            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
+            .fetch()
+            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new LinePerformance()
+                .globalAverage(r.get("avg", Double.class))
+                .status(LinePerformance.StatusEnum.PROFILED)
+            );
+    }
+
+    @Override
+    public Map<Integer, List<LineException>> getExceptionsForLine(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(
                 EXCEPTION_FRAMES.LINE_NUMBER,
@@ -151,10 +153,28 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .where(EXCEPTION_FRAMES.FILENAME.eq(filename))
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
-            .fetchGroups(EXCEPTION_FRAMES.LINE_NUMBER, r -> new FileException()
+            .fetchGroups(EXCEPTION_FRAMES.LINE_NUMBER, r -> new LineException()
                 .exceptionTime(r.get(PROFILE.END_TIMESTAMP).toLocalDateTime())
                 .exceptionType(r.get(EXCEPTION.EXCEPTION_TYPE))
                 .exceptionMessage(r.get(EXCEPTION.EXCEPTION_MESSAGE))
+            );
+    }
+
+    @Override
+    public Map<Integer, LineGeneral> getGeneralForLine(String applicationName, String version, String filename) {
+        return dslContextFactory.create()
+            .select(PROFILE_LINES.LINE_NUMBER,
+                count(PROFILE.ID).as("count")
+            )
+            .from(PROFILE_LINES)
+            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
+            .fetch()
+            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new LineGeneral()
+                .executionCount(r.get("count", Integer.class))
             );
     }
 }
