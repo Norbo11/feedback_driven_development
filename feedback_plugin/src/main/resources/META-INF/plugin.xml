@@ -12,6 +12,7 @@
     </description>
 
     <depends>com.intellij.modules.lang</depends>
+    <depends>Pythonid</depends>
     <depends>Git4Idea</depends>
 
     <project-components>

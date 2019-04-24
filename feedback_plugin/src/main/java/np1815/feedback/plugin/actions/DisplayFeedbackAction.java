@@ -22,11 +22,13 @@ import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.plugin.ui.FeedbackMouseMotionListener;
 import np1815.feedback.plugin.ui.FilePerformanceGutterProvider;
 import np1815.feedback.plugin.services.MetricsBackendService;
-import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
+import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
+import np1815.feedback.plugin.util.FileFeedbackWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Optional;
 
 public class DisplayFeedbackAction extends AnAction {
@@ -70,13 +72,13 @@ public class DisplayFeedbackAction extends AnAction {
         assert currentVersion != null;
         LOG.debug("Current Version: " + currentVersion);
 
-        FilePerformanceDisplayProvider displayProvider = null;
+        FileFeedbackWrapper feedbackWrapper = null;
         try {
             Optional<String> latestAvailableVersion = metricsBackend.determineLastAvailableVersionInBackend(project, repository, currentVersion);
             LOG.debug("Determined latest available version: " + latestAvailableVersion);
 
             if (latestAvailableVersion.isPresent()) {
-                displayProvider = metricsBackend.getPerformance(project, repository, file, currentVersion, latestAvailableVersion.get());
+                feedbackWrapper = metricsBackend.getPerformance(project, repository, file, currentVersion, latestAvailableVersion.get());
             } else {
                 Notifications.Bus.notify(new Notification(
                     NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
@@ -101,22 +103,36 @@ public class DisplayFeedbackAction extends AnAction {
             ));
         }
 
-        if (displayProvider != null) {
-            FilePerformanceGutterProvider textAnnotationProvider = new FilePerformanceGutterProvider(displayProvider);
+        if (feedbackWrapper != null) {
+            try {
+                // Compute branch probabilities
+                Map<Integer, Double> branchProbabilities = metricsBackend.getBranchExecutionProbability(project, file, feedbackWrapper);
+                FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(feedbackWrapper, branchProbabilities);
 
-            displayGlobalPerformance(editor, markupModel, displayProvider, textAnnotationProvider);
+                // Display line highlighting and gutters
+                FilePerformanceGutterProvider gutterProvider = new FilePerformanceGutterProvider(feedbackWrapper, displayProvider);
+                displayGlobalPerformance(editor, markupModel, displayProvider, gutterProvider);
 
-            mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
-            editor.addEditorMouseMotionListener(mouseMotionListener);
-            displayed = true;
+                // Register mouse listener for tooltips
+                mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
+                editor.addEditorMouseMotionListener(mouseMotionListener);
+            } finally {
+                displayed = true;
+            }
         }
     }
 
     private void stopDisplaying(Project project, Editor editor, VirtualFile file) {
-        markupModel.removeAllHighlighters();
-        editor.getGutter().closeAllAnnotations();
-        editor.removeEditorMouseMotionListener(mouseMotionListener);
-        displayed = false;
+        try {
+            markupModel.removeAllHighlighters();
+            editor.getGutter().closeAllAnnotations();
+
+            if (mouseMotionListener != null) {
+                editor.removeEditorMouseMotionListener(mouseMotionListener);
+            }
+        } finally {
+            displayed = false;
+        }
     }
 
     public void actionPerformed(AnActionEvent event) {
@@ -144,15 +160,15 @@ public class DisplayFeedbackAction extends AnAction {
     public void displayGlobalPerformance(
         Editor editor,
         MarkupModel markupModel,
-        FilePerformanceDisplayProvider displayProvider,
-        FilePerformanceGutterProvider textAnnotationProvider) {
+        FileFeedbackDisplayProvider displayProvider,
+        FilePerformanceGutterProvider gutterProvider) {
 
-        editor.getGutter().registerTextAnnotation(textAnnotationProvider);
+        editor.getGutter().registerTextAnnotation(gutterProvider);
 
         for (int lineNumber : displayProvider.getLineNumbers()) {
             TextAttributes attributes = new TextAttributes(
-                    displayProvider.getForegroundColourForLine(lineNumber).orElse(null),
-                    displayProvider.getBackgroundColourForLine(lineNumber).orElse(null),
+                    displayProvider.getForegroundColourForLine(lineNumber),
+                    displayProvider.getBackgroundColourForLine(lineNumber),
                     null,
                     null,
                     EditorFontType.PLAIN.ordinal());

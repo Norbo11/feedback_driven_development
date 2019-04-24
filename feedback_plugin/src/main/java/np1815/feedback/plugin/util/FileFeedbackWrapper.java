@@ -1,0 +1,78 @@
+package np1815.feedback.plugin.util;
+
+import com.intellij.ui.JBColor;
+import np1815.feedback.metricsbackend.model.*;
+import np1815.feedback.plugin.services.TranslatedLineNumber;
+
+import java.awt.*;
+import java.util.*;
+import java.util.List;
+
+public class FileFeedbackWrapper {
+
+    private final FileFeedback fileFeedback;
+    private final boolean stale;
+    // TODO: Rename this field and class (maybe?)
+    private final Map<Integer, TranslatedLineNumber> translatedLineNumbers;
+
+    public FileFeedbackWrapper(FileFeedback fileFeedback, boolean stale, Map<Integer, TranslatedLineNumber> translatedLineNumbers) {
+        this.fileFeedback = fileFeedback;
+        this.stale = stale;
+        this.translatedLineNumbers = translatedLineNumbers;
+    }
+
+    private String getLineNumberBeforeTranslation(int line) {
+        return containsFeedbackForLine(line) ? translatedLineNumbers.get(line).getNewLineNumber() : null;
+    }
+
+    public List<LineException> getExceptions(int line) {
+        String lineNumber = getLineNumberBeforeTranslation(line);
+        return lineNumber != null ? fileFeedback.getLines().get(lineNumber).getExceptions() : new ArrayList<>();
+    }
+
+    public Optional<Double> getGlobalAverageForLine(int line) {
+        String lineNumber = getLineNumberBeforeTranslation(line);
+
+        if (lineNumber == null) {
+            return Optional.empty();
+        }
+
+        LinePerformance perf = fileFeedback.getLines().get(lineNumber).getPerformance();
+
+        if (perf.getStatus() == LinePerformance.StatusEnum.PROFILED) {
+            return Optional.of(perf.getGlobalAverage());
+        }
+
+        return Optional.empty();
+    }
+
+    public Integer getExecutionCount(int line) {
+        String lineNumber = getLineNumberBeforeTranslation(line);
+        return lineNumber != null ? fileFeedback.getLines().get(lineNumber).getGeneral().getExecutionCount() : 0;
+    }
+
+    public Set<Integer> getLineNumbers() {
+        return translatedLineNumbers.keySet();
+    }
+
+    public boolean isFileStale() {
+        return stale;
+    }
+
+    public boolean containsFeedbackForLine(int line) {
+        return translatedLineNumbers.containsKey(line);
+    }
+
+    public Optional<Boolean> isLineVeryStale(int line) {
+        return containsFeedbackForLine(line) ? Optional.of(translatedLineNumbers.get(line).isVeryStale()) : Optional.empty();
+    }
+
+    public Optional<String> getLatestAvailableVersion(int line) {
+        return containsFeedbackForLine(line) ? Optional.of(translatedLineNumbers.get(line).getLatestAvailableVersion()) : Optional.empty();
+    }
+
+    public Optional<Double> getGlobalAverageForFile() {
+        // TODO: Should return empty if no line in the file was profiled
+        return Optional.ofNullable(fileFeedback.getGlobalAverageForFile());
+    }
+}

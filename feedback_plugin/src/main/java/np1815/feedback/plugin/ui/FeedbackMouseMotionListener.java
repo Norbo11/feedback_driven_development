@@ -9,7 +9,8 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
-import np1815.feedback.plugin.util.FilePerformanceDisplayProvider;
+import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
+import np1815.feedback.plugin.util.FileFeedbackWrapper;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -19,14 +20,14 @@ import java.awt.*;
 public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
     private static final Logger LOG = LoggerFactory.getLogger(FeedbackMouseMotionListener.class);
-    private static final int REQUIRED_HOVER_SECONDS = 1;
-    private final FilePerformanceDisplayProvider displayProvider;
+    private static final double REQUIRED_HOVER_SECONDS = 0.5;
+    private final FileFeedbackDisplayProvider displayProvider;
 
     private int lineNumberLastHoveredOver;
     private javax.swing.Timer hoverTimer;
     private JBPopup popup;
 
-    public FeedbackMouseMotionListener(FilePerformanceDisplayProvider displayProvider) {
+    public FeedbackMouseMotionListener(FileFeedbackDisplayProvider displayProvider) {
         this.displayProvider = displayProvider;
         this.lineNumberLastHoveredOver = -1;
     }
@@ -42,7 +43,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
             if (displayProvider.containsFeedbackForLine(lineNumber)) {
                 hoverTimer = UIUtil.createNamedTimer("FeedbackTooltipTimer",
-                    REQUIRED_HOVER_SECONDS * 1000, (x) ->
+                    (int) (REQUIRED_HOVER_SECONDS * 1000), (x) ->
                         showFeedbackPopup(event.getEditor(), event.getMouseEvent().getLocationOnScreen(), lineNumber)
                 );
 
@@ -52,6 +53,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
             lineNumberLastHoveredOver = lineNumber;
         }
+
     }
 
     private void showFeedbackPopup(Editor editor, Point point, int line) {
