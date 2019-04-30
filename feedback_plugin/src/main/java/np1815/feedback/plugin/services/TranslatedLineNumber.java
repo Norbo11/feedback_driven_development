@@ -11,7 +11,7 @@ public class TranslatedLineNumber {
         this.latestAvailableVersion = latestAvailableVersion;
     }
 
-    public String getNewLineNumber() {
+    public String getLineNumberBeforeChange() {
         return newLineNumber;
     }
 

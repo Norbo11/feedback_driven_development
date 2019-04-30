@@ -17,8 +17,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.diff.Diff;
-import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyFileImpl;
@@ -30,11 +28,11 @@ import git4idea.commands.GitCommandResult;
 import git4idea.commands.GitLineHandler;
 import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.FileFeedback;
-import np1815.feedback.metricsbackend.model.FileFeedbackLines;
 import np1815.feedback.plugin.actions.DisplayFeedbackAction;
 import np1815.feedback.plugin.components.FeedbackConfiguration;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.util.FileFeedbackWrapper;
+import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -66,7 +64,11 @@ public class MetricsBackendService {
         FileFeedback fileFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, latestAvailableVersion, path);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
-        Map<Integer, TranslatedLineNumber> translatedLineNumbers = translateLinesAccordingToChanges(project, file, latestAvailableVersion, fileFeedback);
+
+        List<Change> changes = getChangesSinceVersion(project, file, latestAvailableVersion);
+
+        Map<Integer, TranslatedLineNumber> translatedLineNumbers = MetricsBackendServiceUtil.translateLinesAccordingToChanges(changes,
+            fileFeedback.getLines().keySet().stream().map(Integer::valueOf).collect(Collectors.toSet()));
 
         return new FileFeedbackWrapper(fileFeedback, stale, translatedLineNumbers);
     }
@@ -142,52 +144,21 @@ public class MetricsBackendService {
     private String getMetricBackendPath(VirtualFile file, FeedbackDrivenDevelopment feedback) {
         Path basePath = Paths.get(feedback.getState().feedbackConfigPath).getParent().resolve(feedback.getFeedbackConfiguration().getSourceBasePath());
         basePath = basePath.normalize();
-
         return basePath.relativize(Paths.get(file.getPath())).toString();
     }
 
     /**
-     * Translate the performance data into the new file view according to the edited changes
+     * Get the changes between the current content of a file and the previous known version we have in the metric backend
+     *
+     * @return
      */
-    private Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(Project project, VirtualFile file, String latestAvailableVersion,
-                                                                                FileFeedback fileFeedback) throws VcsException {
+    @NotNull
+    public List<Change> getChangesSinceVersion(Project project, VirtualFile file, String latestAvailableVersion) throws VcsException {
         GitVcs vcs = GitVcs.getInstance(project);
         FilePath vcsFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
         VcsRevisionNumber latestRevisionNumber = vcs.parseRevisionNumber(latestAvailableVersion);
-
-        // Get the changes between the current edited file and the previous known version we have
         ContentRevision beforeContentRevision = GitContentRevision.createRevision(file, latestRevisionNumber, project);
-        List<Change> changes = VcsDiffUtil.createChangesWithCurrentContentForFile(vcsFile, beforeContentRevision);
-
-        assert changes.size() == 1;
-
-        Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
-
-        for (Change change : changes) {
-            try {
-                String before = change.getBeforeRevision().getContent();
-                String after = change.getAfterRevision().getContent();
-                final Diff.Change c = Diff.buildChanges(before, after);
-
-                // Translate lines based on the change
-                for (Map.Entry<String, FileFeedbackLines> entry : fileFeedback.getLines().entrySet()) {
-                    int oldLineNumber = Integer.valueOf(entry.getKey());
-                    int newLineNumber = Diff.translateLine(c, oldLineNumber);
-                    boolean veryStale = false;
-
-                    if (newLineNumber == -1) {
-                        newLineNumber = Diff.translateLine(c, oldLineNumber, true);
-                        veryStale = true;
-                    }
-
-                    //TODO: Get latest available performance information on a per-line basis, instead of for full file
-                    translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale, latestAvailableVersion));
-                }
-            } catch (FilesTooBigForDiffException ignored) {
-            }
-        }
-
-        return translatedLineNumbers;
+        return VcsDiffUtil.createChangesWithCurrentContentForFile(vcsFile, beforeContentRevision);
     }
 
     public Optional<String> determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException,

@@ -1,10 +1,8 @@
 package np1815.feedback.plugin.util;
 
-import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.plugin.services.TranslatedLineNumber;
 
-import java.awt.*;
 import java.util.*;
 import java.util.List;
 
@@ -22,7 +20,7 @@ public class FileFeedbackWrapper {
     }
 
     private String getLineNumberBeforeTranslation(int line) {
-        return containsFeedbackForLine(line) ? translatedLineNumbers.get(line).getNewLineNumber() : null;
+        return containsFeedbackForLine(line) ? translatedLineNumbers.get(line).getLineNumberBeforeChange() : null;
     }
 
     public List<LineException> getExceptions(int line) {
