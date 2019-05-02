@@ -15,12 +15,8 @@ repositories {
 
 dependencies {
     implementation group: 'np1815.feedback', name: 'metric_backend', version: '0.0.1'
-    
     testImplementation group: 'junit', name: 'junit', version: '4.12'
-
     testCompile "org.mockito:mockito-core:2.+"
-//    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: '5.4.2'
-//    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: '5.4.2'
 }
 
 intellij {

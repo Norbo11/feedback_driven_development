@@ -16,14 +16,19 @@ import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiManager;
+import np1815.feedback.plugin.services.MetricsBackendServiceUtil;
 import np1815.feedback.plugin.ui.FeedbackMouseMotionListener;
 import np1815.feedback.plugin.ui.FilePerformanceGutterProvider;
 import np1815.feedback.plugin.services.MetricsBackendService;
+import np1815.feedback.plugin.util.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
 import np1815.feedback.plugin.util.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.PythonBranchProbabilityProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -105,8 +110,11 @@ public class DisplayFeedbackAction extends AnAction {
 
         if (feedbackWrapper != null) {
             try {
+                BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(PsiManager.getInstance(project),
+                    FileDocumentManager.getInstance());
+
                 // Compute branch probabilities
-                Map<Integer, Double> branchProbabilities = metricsBackend.getBranchExecutionProbability(project, file, feedbackWrapper);
+                Map<Integer, Double> branchProbabilities = branchProbabilityProvider.getBranchExecutionProbability(file, feedbackWrapper);
                 FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(feedbackWrapper, branchProbabilities);
 
                 // Display line highlighting and gutters
