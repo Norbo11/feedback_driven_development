@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.util.np1815.feedback.plugin.test;
+package np1815.feedback.plugin.test;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;

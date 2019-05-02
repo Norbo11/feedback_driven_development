@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.util.np1815.feedback.plugin.test;
+package np1815.feedback.plugin.test;
 
 import com.intellij.testFramework.LightProjectDescriptor;
 
@@ -10,9 +10,7 @@ import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.LightProjectDescriptor;
 import com.jetbrains.python.PythonModuleTypeBase;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 
 public class PyLightProjectDescriptor extends LightProjectDescriptor {

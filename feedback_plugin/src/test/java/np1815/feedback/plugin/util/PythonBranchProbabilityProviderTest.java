@@ -1,30 +1,15 @@
 package np1815.feedback.plugin.util;
 
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleType;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import com.jetbrains.python.testing.PyTestFactory;
-import com.jetbrains.python.testing.PythonUnitTestUtil;
 import np1815.feedback.metricsbackend.model.FileFeedback;
 import np1815.feedback.metricsbackend.model.FileFeedbackLines;
 import np1815.feedback.metricsbackend.model.LineGeneral;
-import np1815.feedback.metricsbackend.model.LinePerformance;
-import np1815.feedback.plugin.services.MetricsBackendServiceUtil;
 import np1815.feedback.plugin.services.TranslatedLineNumber;
 //import com.intellij.testFramework.
-import np1815.feedback.plugin.util.np1815.feedback.plugin.test.PyLightProjectDescriptor;
-import org.jetbrains.annotations.NotNull;
-import org.junit.Before;
-import org.junit.Test;
+import np1815.feedback.plugin.test.PyLightProjectDescriptor;
 
 import java.util.HashMap;
 import java.util.Map;
