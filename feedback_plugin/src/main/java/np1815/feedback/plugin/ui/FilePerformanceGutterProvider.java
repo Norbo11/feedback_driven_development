@@ -7,7 +7,6 @@ import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
-import np1815.feedback.plugin.util.FileFeedbackWrapper;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -15,33 +14,31 @@ import java.util.List;
 
 public class FilePerformanceGutterProvider implements TextAnnotationGutterProvider {
 
-    private final FileFeedbackWrapper fileFeedbackWrapper;
-    private final FileFeedbackDisplayProvider performanceDisplayProvider;
+    private final FileFeedbackDisplayProvider feedbackDisplayProvider;
 
-    public FilePerformanceGutterProvider(FileFeedbackWrapper fileFeedbackWrapper, FileFeedbackDisplayProvider performanceDisplayProvider) {
-        this.fileFeedbackWrapper = fileFeedbackWrapper;
-        this.performanceDisplayProvider = performanceDisplayProvider;
+    public FilePerformanceGutterProvider(FileFeedbackDisplayProvider feedbackDisplayProvider) {
+        this.feedbackDisplayProvider = feedbackDisplayProvider;
     }
 
     @Nullable
     @Override
     public String getLineText(int line, Editor editor) {
-        return performanceDisplayProvider.getGlobalAverageForLine(line);
+        return feedbackDisplayProvider.getGlobalAverageForLine(line);
     }
 
     @Nullable
     @Override
     public String getToolTip(int line, Editor editor) {
-        return performanceDisplayProvider.getLineStatus(line);
+        return feedbackDisplayProvider.getLineStatus(line);
     }
 
     @Override
     public EditorFontType getStyle(int line, Editor editor) {
-        if (fileFeedbackWrapper.isLineVeryStale(line).orElse(false)) {
+        if (feedbackDisplayProvider.isLineVeryStale(line).orElse(false)) {
             return EditorFontType.BOLD_ITALIC;
         }
 
-        if (fileFeedbackWrapper.isFileStale()) {
+        if (feedbackDisplayProvider.isFileStale()) {
             return EditorFontType.ITALIC;
         }
 
@@ -57,7 +54,7 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Nullable
     @Override
     public Color getBgColor(int line, Editor editor) {
-        return performanceDisplayProvider.getBackgroundColourForLine(line);
+        return feedbackDisplayProvider.getBackgroundColourForLine(line);
     }
 
     @Override

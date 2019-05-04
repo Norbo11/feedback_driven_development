@@ -17,5 +17,5 @@ import java.util.Map;
 
 public interface BranchProbabilityProvider {
 
-    public Map<Integer, Double> getBranchExecutionProbability(VirtualFile file, FileFeedbackWrapper feedbackWrapper);
+    public Map<Integer, Double> getBranchExecutionProbability(FileFeedbackWrapper feedbackWrapper);
 }

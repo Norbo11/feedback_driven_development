@@ -4,20 +4,20 @@ import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
 
 import java.awt.*;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
 import java.util.stream.Stream;
 
 public class FileFeedbackDisplayProvider {
 
-    private final FileFeedbackWrapper fileFeedbackWrapper;
-    private final Map<Integer, Double> branchProbabilities;
+    private FileFeedbackWrapper fileFeedbackWrapper;
+    private final BranchProbabilityProvider branchProbabilityProvider;
+    private Map<Integer, Double> branchProbabilities;
+    private final List<Runnable> feedbackChangeListeners;
 
-    public FileFeedbackDisplayProvider(FileFeedbackWrapper fileFeedbackWrapper, Map<Integer, Double> branchProbabilities) {
-        this.fileFeedbackWrapper = fileFeedbackWrapper;
-        this.branchProbabilities = branchProbabilities;
+    public FileFeedbackDisplayProvider(BranchProbabilityProvider branchProbabilityProvider) {
+        this.branchProbabilityProvider = branchProbabilityProvider;
+        this.feedbackChangeListeners = new ArrayList<>();
     }
 
     public Color getBackgroundColourForLine(int line) {
@@ -80,5 +80,22 @@ public class FileFeedbackDisplayProvider {
 
     public boolean containsFeedbackForLine(int line) {
         return fileFeedbackWrapper.containsFeedbackForLine(line);
+    }
+
+    public void addFeedbackChangeListener(Runnable runnable) {
+        feedbackChangeListeners.add(runnable);
+    }
+
+    public void refreshFeedback(FileFeedbackWrapper newFeedback) {
+        this.fileFeedbackWrapper = newFeedback;
+        this.branchProbabilities = branchProbabilityProvider.getBranchExecutionProbability(newFeedback);
+
+        for (Runnable runnable : feedbackChangeListeners) {
+            runnable.run();
+        }
+    }
+
+    public Optional<Boolean> isLineVeryStale(int line) {
+        return fileFeedbackWrapper.isLineVeryStale(line);
     }
 }

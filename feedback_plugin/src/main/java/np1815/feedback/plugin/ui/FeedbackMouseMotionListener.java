@@ -59,6 +59,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
     private void showFeedbackPopup(Editor editor, Point point, int line) {
 
         FeedbackPopup feedbackPopup = new FeedbackPopup(line, displayProvider);
+        displayProvider.addFeedbackChangeListener(feedbackPopup::update);
 
         ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(feedbackPopup.getRootComponent(), feedbackPopup.getRootComponent());
         popupBuilder.setTitle("Feedback");

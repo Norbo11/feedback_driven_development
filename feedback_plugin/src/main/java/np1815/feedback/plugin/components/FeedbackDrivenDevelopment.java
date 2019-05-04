@@ -32,6 +32,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         public String feedbackConfigPath;
         public String metricBackendUrl;
         public boolean takeMetricBackendUrlFromConfig;
+        public boolean autoRefresh;
+        public int autoRefreshInterval;
 
         // TODO: Username and password at some point. Use PasswordSafe class
         // https://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html
@@ -40,6 +42,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
             this.feedbackConfigPath = "";
             this.metricBackendUrl = "";
             this.takeMetricBackendUrlFromConfig = true;
+            this.autoRefresh = false;
+            this.autoRefreshInterval = 5;
         }
 
         @Override

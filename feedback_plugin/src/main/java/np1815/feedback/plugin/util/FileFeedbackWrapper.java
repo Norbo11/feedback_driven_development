@@ -12,11 +12,13 @@ public class FileFeedbackWrapper {
     private final boolean stale;
     // TODO: Rename this field and class (maybe?)
     private final Map<Integer, TranslatedLineNumber> translatedLineNumbers;
+    private String latestAvailableVersion;
 
-    public FileFeedbackWrapper(FileFeedback fileFeedback, boolean stale, Map<Integer, TranslatedLineNumber> translatedLineNumbers) {
+    public FileFeedbackWrapper(FileFeedback fileFeedback, boolean stale, Map<Integer, TranslatedLineNumber> translatedLineNumbers, String latestAvailableVersion) {
         this.fileFeedback = fileFeedback;
         this.stale = stale;
         this.translatedLineNumbers = translatedLineNumbers;
+        this.latestAvailableVersion = latestAvailableVersion;
     }
 
     private String getLineNumberBeforeTranslation(int line) {
@@ -66,7 +68,10 @@ public class FileFeedbackWrapper {
     }
 
     public Optional<String> getLatestAvailableVersion(int line) {
-        return containsFeedbackForLine(line) ? Optional.of(translatedLineNumbers.get(line).getLatestAvailableVersion()) : Optional.empty();
+//      return containsFeedbackForLine(line) ? Optional.of(translatedLineNumbers.get(line).getLatestAvailableVersion()) : Optional.empty();
+//      TODO: Fetch feedback per-line instead of per-file
+
+        return Optional.of(latestAvailableVersion);
     }
 
     public Optional<Double> getGlobalAverageForFile() {

@@ -10,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 public class FeedbackToolbarFactory implements ToolWindowFactory {
     @Override
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
-        FeedbackToolbar feedbackToolbar = new FeedbackToolbar(toolWindow);
+        FeedbackToolbar feedbackToolbar = new FeedbackToolbar(project, toolWindow);
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
         Content content = contentFactory.createContent(feedbackToolbar.getRootComponent(), "Feedback", false);
 

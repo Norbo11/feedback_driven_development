@@ -23,8 +23,8 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
     @Override
     public void setUp() throws Exception {
         super.setUp();
-        this.branchProbabilityProvider = new PythonBranchProbabilityProvider(getPsiManager(), FileDocumentManager.getInstance());
         this.mainFile = myFixture.copyFileToProject("main.py");
+        this.branchProbabilityProvider = new PythonBranchProbabilityProvider(mainFile, getPsiManager(), FileDocumentManager.getInstance());
 
         Map<String, FileFeedbackLines> feedbackMap = new HashMap<>();
         feedbackMap.put("7", new FileFeedbackLines().general(new LineGeneral().executionCount(3)));
@@ -38,7 +38,7 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
             translatedLineNumbers.put(lineNumber, new TranslatedLineNumber(lineNumber, false, ""));
         }
 
-        this.feedbackWrapper = new FileFeedbackWrapper(new FileFeedback().lines(feedbackMap), false, translatedLineNumbers);
+        this.feedbackWrapper = new FileFeedbackWrapper(new FileFeedback().lines(feedbackMap), false, translatedLineNumbers, "latest");
 //        PsiTestUtil.
 
     }
@@ -54,7 +54,7 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
     }
 
     public void testBothBranchesProfiled() {
-        Map<Integer, Double> branchExecutionProbability = branchProbabilityProvider.getBranchExecutionProbability(mainFile, feedbackWrapper);
+        Map<Integer, Double> branchExecutionProbability = branchProbabilityProvider.getBranchExecutionProbability(feedbackWrapper);
 
         assertEquals(0.15, branchExecutionProbability.get(7));
         assertEquals(0.45, branchExecutionProbability.get(11));

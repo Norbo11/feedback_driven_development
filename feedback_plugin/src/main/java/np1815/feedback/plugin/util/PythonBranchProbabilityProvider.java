@@ -20,13 +20,15 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
 
     private final PsiManager psiManager;
     private final FileDocumentManager fileDocumentManager;
+    private final VirtualFile file;
 
-    public PythonBranchProbabilityProvider(PsiManager psiManager, FileDocumentManager fileDocumentManager) {
+    public PythonBranchProbabilityProvider(VirtualFile file, PsiManager psiManager, FileDocumentManager fileDocumentManager) {
+        this.file = file;
         this.psiManager = psiManager;
         this.fileDocumentManager = fileDocumentManager;
     }
 
-    public Map<Integer, Double> getBranchExecutionProbability(VirtualFile file, FileFeedbackWrapper feedbackWrapper) {
+    public Map<Integer, Double> getBranchExecutionProbability(FileFeedbackWrapper feedbackWrapper) {
         PsiFile psiFile = psiManager.findFile(file);
         assert psiFile != null;
         assert psiFile instanceof PyFile;

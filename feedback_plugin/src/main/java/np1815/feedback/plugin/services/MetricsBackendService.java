@@ -2,8 +2,6 @@ package np1815.feedback.plugin.services;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -13,13 +11,6 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsDiffUtil;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyFileImpl;
 import git4idea.GitContentRevision;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -70,7 +61,7 @@ public class MetricsBackendService {
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = MetricsBackendServiceUtil.translateLinesAccordingToChanges(changes,
             fileFeedback.getLines().keySet().stream().map(Integer::valueOf).collect(Collectors.toSet()));
 
-        return new FileFeedbackWrapper(fileFeedback, stale, translatedLineNumbers);
+        return new FileFeedbackWrapper(fileFeedback, stale, translatedLineNumbers, latestAvailableVersion);
     }
     /**
      * Generate the path expected by the metric backend, by relativising and normalising against the feedback config file path

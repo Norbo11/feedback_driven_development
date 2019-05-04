@@ -45,6 +45,7 @@
                 class="np1815.feedback.plugin.actions.DisplayFeedbackAction"
                 text="Display feedback"
                 description="Displays feedback"
+                icon="AllIcons.Actions.QuickfixBulb"
             />
         </group>
     </actions>
