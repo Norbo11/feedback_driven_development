@@ -48,8 +48,6 @@ def instrument_flask(flask_app, feedback_config_filename):
         global instrumentation_metadata
 
         instrumentation_metadata = pyflame_profile_start(request)
-        flask_app.logger.info(type(instrumentation_metadata))
-        flask_app.logger.info("dasdsdsasd")
 
         @after_this_request
         def after(response):
