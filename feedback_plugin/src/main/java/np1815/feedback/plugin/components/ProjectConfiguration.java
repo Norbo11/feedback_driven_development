@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.util.ui.components.BorderLayoutPanel;
+import np1815.feedback.plugin.ui.FeedbackConfigurationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,33 +49,7 @@ public class ProjectConfiguration implements Configurable {
     @Nullable
     @Override
     public JComponent createComponent() {
-        /* Initialize components */
-        metricBackendUrlTextfield = new JTextField(initialState.metricBackendUrl);
-        feedbackConfigPathTextField = new JTextField(initialState.feedbackConfigPath);
-
-        FileChooserDescriptor fileChooserDescriptor = new FileChooserDescriptor(true, false, false, false, false, false);
-        TextFieldWithBrowseButton chooseDirectoriesToInstrumentBrowser = new TextFieldWithBrowseButton(feedbackConfigPathTextField);
-        chooseDirectoriesToInstrumentBrowser.addBrowseFolderListener(new TextBrowseFolderListener(fileChooserDescriptor, project));
-
-        takeBackendUrlFromConfigCheckbox = new JCheckBox("Take from config");
-        takeBackendUrlFromConfigCheckbox.addItemListener(a -> metricBackendUrlTextfield.setEnabled(a.getStateChange() == ItemEvent.DESELECTED));
-
-        /* Set up layout */
-        BorderLayoutPanel rootPanel = new BorderLayoutPanel(0, 2);
-
-        BorderLayoutPanel metricBackendUrlPanel = new BorderLayoutPanel(2, 0);
-        metricBackendUrlPanel.addToLeft(new Label("Metric Backend Url"));
-        metricBackendUrlPanel.addToCenter(metricBackendUrlTextfield);
-        metricBackendUrlPanel.addToRight(takeBackendUrlFromConfigCheckbox);
-
-        BorderLayoutPanel chooseDirectoriesToInstrumentPanel = new BorderLayoutPanel();
-        chooseDirectoriesToInstrumentPanel.addToLeft(new JLabel("Feedback Config Path"));
-        chooseDirectoriesToInstrumentPanel.addToCenter(chooseDirectoriesToInstrumentBrowser);
-
-        rootPanel.addToTop(metricBackendUrlPanel);
-        rootPanel.addToCenter(chooseDirectoriesToInstrumentPanel);
-        rootPanel.setPreferredSize(new Dimension(400, 500));
-        return rootPanel;
+        return new FeedbackConfigurationPanel(project, feedbackDrivenDevelopmentComponent).getRootComponent();
     }
 
     @Override
