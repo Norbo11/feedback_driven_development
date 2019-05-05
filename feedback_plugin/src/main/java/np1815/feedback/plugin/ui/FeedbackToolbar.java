@@ -56,7 +56,7 @@ public class FeedbackToolbar {
 
         ActionToolbar actionToolbar = am.createActionToolbar(
             ActionPlaces.getActionGroupPopupPlace("FeedbackDrivenDevelopment.General.DisplayFeedback"),
-            (DefaultActionGroup) am.getAction("FeedbackDrivenDevelopment.General"), true);
+            (DefaultActionGroup) am.getAction("FeedbackDrivenDevelopment.General"), false);
 
         actionToolbar.setTargetComponent(rootComponent);
         this.actionToolbar = actionToolbar.getComponent();

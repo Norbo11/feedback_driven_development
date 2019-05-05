@@ -29,7 +29,7 @@ public class DisplayFeedbackAction extends AnAction {
     private final MetricsBackendService metricsBackend;
 
     public DisplayFeedbackAction() {
-        super("Display Feedback");
+        super();
 
         this.metricsBackend = MetricsBackendService.getInstance();
         this.feedbackManagers = new HashMap<>();
