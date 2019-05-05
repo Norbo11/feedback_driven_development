@@ -4,11 +4,13 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
 import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.project.Project;
 import np1815.feedback.metricsbackend.api.DefaultApi;
 import np1815.feedback.metricsbackend.client.ApiClient;
@@ -25,6 +27,9 @@ import java.util.Set;
 
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
+
+    public static final NotificationGroup NOTIFICATIONS_GROUP_ERROR = NotificationGroup.balloonGroup("FeedbackDrivenDevelopment.Error");
+    public static final int HIGHLIGHTER_LAYER = HighlighterLayer.SELECTION - 1;
 
     private final Project project;
 
