@@ -101,15 +101,26 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="5acd6" class="com.intellij.ui.table.JBTable" binding="exceptionsTable">
+              <scrollpane id="45ae1">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+                    <preferred-size width="-1" height="100"/>
+                    <maximum-size width="-1" height="200"/>
+                  </grid>
                 </constraints>
-                <properties>
-                  <striped value="false"/>
-                  <verifyInputWhenFocusTarget value="true"/>
-                </properties>
-              </component>
+                <properties/>
+                <border type="none"/>
+                <children>
+                  <component id="5acd6" class="com.intellij.ui.table.JBTable" binding="exceptionsTable">
+                    <constraints/>
+                    <properties>
+                      <preferredScrollableViewportSize width="450" height="250"/>
+                      <striped value="true"/>
+                      <verifyInputWhenFocusTarget value="true"/>
+                    </properties>
+                  </component>
+                </children>
+              </scrollpane>
             </children>
           </grid>
           <grid id="6f178" binding="branches" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="true" same-size-vertically="false" hgap="-1" vgap="-1">

@@ -85,10 +85,7 @@ public class FeedbackPopup {
         globalAverageField.setText(displayProvider.getGlobalAverageForLine(line));
         executionCountLabel.setText(displayProvider.getExecutionCount(line));
         exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
-        exceptionsTable.createDefaultColumnsFromModel();
-        exceptionsTable.setShowColumns(true);
         branchProbabilityLabel.setText(displayProvider.getBranchProbabilityForLine(line));
-        JTableHeader header = exceptionsTable.getTableHeader();
     }
 
     public JPanel getRootComponent() {
