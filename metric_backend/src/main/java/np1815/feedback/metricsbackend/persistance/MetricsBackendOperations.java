@@ -10,7 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 public interface MetricsBackendOperations {
-    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime);
+    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName);
 
     public int addProfile(String applicationName, String version, Timestamp startTime, Timestamp endTime, long duration);
 

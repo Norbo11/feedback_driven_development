@@ -51,9 +51,10 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             metricsBackendOperations.addProfileLine(
                 addedProfileId,
                 line.getFilePath(),
-                line.getLineNumber() - 1,
+                line.getLineNumber() - 1, // Pyflame starts counting lines from 1, IntelliJ counts from 0, want DB to be consistent with IntelliJ,
                 line.getNumberOfSamples(),
-                sampleTime
+                sampleTime,
+                line.getFunction()
             );
         }
 

@@ -28,19 +28,21 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime) {
+    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName) {
         dslContextFactory.create().insertInto(PROFILE_LINES)
             .columns(PROFILE_LINES.PROFILE_ID,
                 PROFILE_LINES.FILE_NAME,
                 PROFILE_LINES.SAMPLES,
                 PROFILE_LINES.LINE_NUMBER,
-                PROFILE_LINES.SAMPLE_TIME
+                PROFILE_LINES.SAMPLE_TIME,
+                PROFILE_LINES.FUNCTION_NAME
             )
             .values(profileId,
                 filePath,
                 numberOfSamples,
-                lineNumber, // Pyflame starts counting lines from 1, IntelliJ counts from 0, want DB to be consistent with IntelliJ
-                sampleTime
+                lineNumber,
+                sampleTime,
+                functionName
             )
             .execute();
     }
