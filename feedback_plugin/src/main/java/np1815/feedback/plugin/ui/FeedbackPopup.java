@@ -24,6 +24,7 @@ public class FeedbackPopup {
     private JLabel lastInstrumentedVersionLabel;
     private JPanel branches;
     private JLabel branchProbabilityLabel;
+    private JLabel executionCountLabel;
     private TableModel exceptionsTableModel;
 
     public class ExceptionsTableModel extends AbstractTableModel {
@@ -82,6 +83,7 @@ public class FeedbackPopup {
     public void update() {
         lastInstrumentedVersionLabel.setText(displayProvider.getLastInstrumentedVersion(line));
         globalAverageField.setText(displayProvider.getGlobalAverageForLine(line));
+        executionCountLabel.setText(displayProvider.getExecutionCount(line));
         exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
         exceptionsTable.createDefaultColumnsFromModel();
         exceptionsTable.setShowColumns(true);

@@ -1,5 +1,6 @@
 package np1815.feedback.plugin.util;
 
+import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
 
@@ -71,7 +72,7 @@ public class FileFeedbackDisplayProvider {
     }
 
     public Set<Integer> getLineNumbers() {
-        return fileFeedbackWrapper.getLineNumbers();
+        return Sets.union(fileFeedbackWrapper.getLineNumbers(), branchProbabilities.keySet());
     }
 
     public boolean isFileStale() {
@@ -79,7 +80,7 @@ public class FileFeedbackDisplayProvider {
     }
 
     public boolean containsFeedbackForLine(int line) {
-        return fileFeedbackWrapper.containsFeedbackForLine(line);
+        return fileFeedbackWrapper.containsFeedbackForLine(line) || branchProbabilities.containsKey(line);
     }
 
     public void addFeedbackChangeListener(Runnable runnable) {
@@ -97,5 +98,16 @@ public class FileFeedbackDisplayProvider {
 
     public Optional<Boolean> isLineVeryStale(int line) {
         return fileFeedbackWrapper.isLineVeryStale(line);
+    }
+
+    public String getGutterTextForLine(int line) {
+        Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
+        String part1 = lineGlobalAverage.isPresent() ? getGlobalAverageForLine(line) : "";
+        String part2 = branchProbabilities.containsKey(line) ? getBranchProbabilityForLine(line) : "";
+        return part1 + (!part1.isEmpty() && !part2.isEmpty() ? " - " : "") + part2;
+    }
+
+    public String getExecutionCount(int line) {
+        return fileFeedbackWrapper.getExecutionCount(line) + " times";
     }
 }

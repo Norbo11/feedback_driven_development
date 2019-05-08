@@ -23,13 +23,14 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Nullable
     @Override
     public String getLineText(int line, Editor editor) {
-        return feedbackDisplayProvider.getGlobalAverageForLine(line);
+        return feedbackDisplayProvider.getGutterTextForLine(line);
     }
 
     @Nullable
     @Override
     public String getToolTip(int line, Editor editor) {
-        return feedbackDisplayProvider.getLineStatus(line);
+//        return feedbackDisplayProvider.getLineStatus(line);
+        return null;
     }
 
     @Override
