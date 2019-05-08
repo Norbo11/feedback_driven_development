@@ -20,9 +20,11 @@ import git4idea.commands.GitLineHandler;
 import np1815.feedback.metricsbackend.model.AllApplicationVersions;
 import np1815.feedback.metricsbackend.model.FileFeedback;
 import np1815.feedback.plugin.actions.DisplayFeedbackAction;
-import np1815.feedback.plugin.components.FeedbackConfiguration;
+import np1815.feedback.plugin.config.FeedbackWrapperConfiguration;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
-import np1815.feedback.plugin.util.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.vcs.LineTranslator;
+import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 import org.jetbrains.annotations.NotNull;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -45,7 +47,7 @@ public class MetricsBackendService {
         VcsException {
 
         FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
-        FeedbackConfiguration config = feedback.getFeedbackConfiguration();
+        FeedbackWrapperConfiguration config = feedback.getFeedbackWrapperConfiguration();
         assert feedback.getState() != null;
 
         String path = getMetricBackendPath(file, feedback);
@@ -58,7 +60,7 @@ public class MetricsBackendService {
 
         List<Change> changes = getChangesSinceVersion(project, file, latestAvailableVersion);
 
-        Map<Integer, TranslatedLineNumber> translatedLineNumbers = MetricsBackendServiceUtil.translateLinesAccordingToChanges(changes,
+        Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes,
             fileFeedback.getLines().keySet().stream().map(Integer::valueOf).collect(Collectors.toSet()));
 
         return new FileFeedbackWrapper(fileFeedback, stale, translatedLineNumbers, latestAvailableVersion);
@@ -67,7 +69,7 @@ public class MetricsBackendService {
      * Generate the path expected by the metric backend, by relativising and normalising against the feedback config file path
      */
     private String getMetricBackendPath(VirtualFile file, FeedbackDrivenDevelopment feedback) {
-        Path basePath = Paths.get(feedback.getState().feedbackConfigPath).getParent().resolve(feedback.getFeedbackConfiguration().getSourceBasePath());
+        Path basePath = Paths.get(feedback.getState().feedbackConfigPath).getParent().resolve(feedback.getFeedbackWrapperConfiguration().getSourceBasePath());
         basePath = basePath.normalize();
         return basePath.relativize(Paths.get(file.getPath())).toString();
     }
@@ -92,7 +94,7 @@ public class MetricsBackendService {
 
         FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
 
-        AllApplicationVersions versions = feedback.getApiClient().getApplicationVersions(feedback.getFeedbackConfiguration().getApplicationName());
+        AllApplicationVersions versions = feedback.getApiClient().getApplicationVersions(feedback.getFeedbackWrapperConfiguration().getApplicationName());
 
         if (versions.getVersions().size() > 0) {
             List<String> versionsWithHead = new ArrayList<>(versions.getVersions());

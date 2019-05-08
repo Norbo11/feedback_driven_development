@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.util;
+package np1815.feedback.plugin.language.python;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -8,6 +8,8 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
+import np1815.feedback.plugin.language.BranchProbabilityProvider;
+import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

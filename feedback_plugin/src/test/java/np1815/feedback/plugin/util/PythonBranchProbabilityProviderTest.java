@@ -7,7 +7,9 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import np1815.feedback.metricsbackend.model.FileFeedback;
 import np1815.feedback.metricsbackend.model.FileFeedbackLines;
 import np1815.feedback.metricsbackend.model.LineGeneral;
-import np1815.feedback.plugin.services.TranslatedLineNumber;
+import np1815.feedback.plugin.language.python.PythonBranchProbabilityProvider;
+import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 //import com.intellij.testFramework.
 import np1815.feedback.plugin.test.PyLightProjectDescriptor;
 

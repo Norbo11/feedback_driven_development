@@ -1,10 +1,13 @@
-package np1815.feedback.plugin.components;
+package np1815.feedback.plugin.config;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.util.List;
 
-public class FeedbackConfiguration {
+/**
+ * This is a bean representing the feedback.yaml configuration file expected by the Python feedback wrapper which communicates with the metric backend
+ */
+public class FeedbackWrapperConfiguration {
 
     @JsonProperty
     private String metricBackendUrl;

@@ -1,12 +1,8 @@
 package np1815.feedback.plugin.components;
 
-import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.TextBrowseFolderListener;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import np1815.feedback.plugin.ui.FeedbackConfigurationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -15,12 +11,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.swing.*;
-import java.awt.*;
-import java.awt.event.ItemEvent;
 
-public class ProjectConfiguration implements Configurable {
+public class FeedbackProjectConfiguration implements Configurable {
 
-    public static final Logger LOG = LoggerFactory.getLogger(ProjectConfiguration.class);
+    public static final Logger LOG = LoggerFactory.getLogger(FeedbackProjectConfiguration.class);
 
     private final FeedbackDrivenDevelopment feedbackDrivenDevelopmentComponent;
     private final Project project;
@@ -30,7 +24,7 @@ public class ProjectConfiguration implements Configurable {
     private JTextField feedbackConfigPathTextField;
     private JCheckBox takeBackendUrlFromConfigCheckbox;
 
-    public ProjectConfiguration(Project project) {
+    public FeedbackProjectConfiguration(Project project) {
         this.project = project;
         this.feedbackDrivenDevelopmentComponent = FeedbackDrivenDevelopment.getInstance(project);
         this.initialState = feedbackDrivenDevelopmentComponent.getState();

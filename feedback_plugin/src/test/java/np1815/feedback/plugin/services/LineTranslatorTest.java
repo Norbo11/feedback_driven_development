@@ -2,6 +2,8 @@ package np1815.feedback.plugin.services;
 
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
+import np1815.feedback.plugin.util.vcs.LineTranslator;
+import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 import org.junit.Test;
 
 import static junit.framework.TestCase.assertEquals;
@@ -10,7 +12,7 @@ import static junit.framework.TestCase.assertFalse;
 import static org.mockito.Mockito.*;
 import java.util.*;
 
-public class MetricsBackendServiceUtilTest {
+public class LineTranslatorTest {
 
     public void setUp() throws Exception {
     }
@@ -34,7 +36,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -63,7 +65,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -93,7 +95,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -123,7 +125,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -156,7 +158,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Arrays.asList(1, 2)));
 
@@ -188,7 +190,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -222,7 +224,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Collections.singletonList(change);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 
@@ -262,7 +264,7 @@ public class MetricsBackendServiceUtilTest {
 
         List<Change> changes = Arrays.asList(change1, change2, change3, change4);
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Collections.singletonList(1)));
 

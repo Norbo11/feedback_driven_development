@@ -2,8 +2,7 @@ package np1815.feedback.plugin.ui;
 
 import com.intellij.ui.table.JBTable;
 import np1815.feedback.metricsbackend.model.LineException;
-import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
-import np1815.feedback.plugin.util.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 
 import javax.swing.*;
 import javax.swing.table.*;

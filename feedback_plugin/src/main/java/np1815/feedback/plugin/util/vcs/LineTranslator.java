@@ -1,26 +1,14 @@
-package np1815.feedback.plugin.services;
+package np1815.feedback.plugin.util.vcs;
 
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
-import com.jetbrains.python.PyElementTypes;
-import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyFileImpl;
-import np1815.feedback.plugin.util.FileFeedbackWrapper;
 
 import java.util.*;
 import java.util.stream.Collectors;
 
-public class MetricsBackendServiceUtil {
+public class LineTranslator {
     /**
      * Translate the performance data into the new file view according to the edited changes
      */

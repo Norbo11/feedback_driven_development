@@ -1,7 +1,7 @@
-package np1815.feedback.plugin.util;
+package np1815.feedback.plugin.util.backend;
 
 import np1815.feedback.metricsbackend.model.*;
-import np1815.feedback.plugin.services.TranslatedLineNumber;
+import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 
 import java.util.*;
 import java.util.List;

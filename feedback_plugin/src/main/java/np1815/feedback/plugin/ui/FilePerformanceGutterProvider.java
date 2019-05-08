@@ -6,7 +6,7 @@ import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
-import np1815.feedback.plugin.util.FileFeedbackDisplayProvider;
+import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;

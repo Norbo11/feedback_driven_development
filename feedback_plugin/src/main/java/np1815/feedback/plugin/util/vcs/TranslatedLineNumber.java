@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.services;
+package np1815.feedback.plugin.util.vcs;
 
 public class TranslatedLineNumber {
     private final String newLineNumber;

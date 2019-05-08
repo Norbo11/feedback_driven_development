@@ -14,16 +14,13 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.project.Project;
 import np1815.feedback.metricsbackend.api.DefaultApi;
 import np1815.feedback.metricsbackend.client.ApiClient;
-import np1815.feedback.plugin.services.MetricsBackendService;
+import np1815.feedback.plugin.config.FeedbackWrapperConfiguration;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
 
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
@@ -64,7 +61,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     }
 
     private ApiClient client;
-    private FeedbackConfiguration feedbackConfiguration;
+    private FeedbackWrapperConfiguration feedbackWrapperConfiguration;
     private State state;
 
     public FeedbackDrivenDevelopment(Project project) {
@@ -90,13 +87,13 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         // Feedback config format is snake_case, as per Python standards
         mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
         try {
-            feedbackConfiguration = mapper.readValue(new File(state.feedbackConfigPath), FeedbackConfiguration.class);
+            feedbackWrapperConfiguration = mapper.readValue(new File(state.feedbackConfigPath), FeedbackWrapperConfiguration.class);
 
             if (!state.takeMetricBackendUrlFromConfig) {
-                feedbackConfiguration.setMetricBackendUrl(state.metricBackendUrl);
+                feedbackWrapperConfiguration.setMetricBackendUrl(state.metricBackendUrl);
             }
 
-            client = new ApiClient(feedbackConfiguration.getMetricBackendUrl(), null, null, null);
+            client = new ApiClient(feedbackWrapperConfiguration.getMetricBackendUrl(), null, null, null);
 
             Notifications.Bus.notify(new Notification(
                 "FeedbackDrivenDevelopment.Info",
@@ -132,8 +129,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         return "FeedbackDrivenDevelopment";
     }
 
-    public FeedbackConfiguration getFeedbackConfiguration() {
-        return feedbackConfiguration;
+    public FeedbackWrapperConfiguration getFeedbackWrapperConfiguration() {
+        return feedbackWrapperConfiguration;
     }
 
     public DefaultApi getApiClient() {

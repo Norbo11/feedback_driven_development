@@ -1,8 +1,10 @@
-package np1815.feedback.plugin.util;
+package np1815.feedback.plugin.util.ui;
 
 import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
+import np1815.feedback.plugin.language.BranchProbabilityProvider;
+import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 
 import java.awt.*;
 import java.util.*;

@@ -28,7 +28,7 @@
         <projectConfigurable
             id="FeedbackDrivenDevelopment"
             displayName="Feedback Driven Development"
-            instance="np1815.feedback.plugin.components.ProjectConfiguration" />
+            instance="np1815.feedback.plugin.components.FeedbackProjectConfiguration" />
 
         <toolWindow
             id="Production Feedback"

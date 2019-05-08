@@ -5,6 +5,8 @@ import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.*;
+import np1815.feedback.plugin.util.vcs.LineTranslator;
+import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 import org.junit.Ignore;
 
 import java.util.Arrays;
@@ -53,7 +55,7 @@ public class MetricsBackendServiceTest extends LightPlatformCodeInsightFixtureTe
 
         List<Change> changes = service.getChangesSinceVersion(getProject(), virtualFile, "0e43d213d3048105fc2735356e21cff62c96afed");
 
-        Map<Integer, TranslatedLineNumber> map = MetricsBackendServiceUtil.translateLinesAccordingToChanges(
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,
             new HashSet<>(Arrays.asList(1)));
 
