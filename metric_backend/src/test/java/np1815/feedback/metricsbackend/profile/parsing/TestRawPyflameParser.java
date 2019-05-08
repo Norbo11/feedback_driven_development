@@ -7,10 +7,6 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-
 public class TestRawPyflameParser {
 
 
@@ -31,12 +27,24 @@ public class TestRawPyflameParser {
         Profile profile = rawPyflameParser.parseFlamegraph(input, "/");
         Assertions.assertEquals(47, profile.getTotalSamples());
         Assertions.assertEquals(6, profile.numberOfUniqueLines());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/main.py", 1).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("random_module/main.py", 1).getFunction());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/function.py", 5).getNumberOfSamples());
+        Assertions.assertEquals("function", profile.getProfileForLine("random_module/function.py", 5).getFunction());
+
         Assertions.assertEquals(37, profile.getProfileForLine("python/threading.py", 864).getNumberOfSamples());
+        Assertions.assertEquals("run", profile.getProfileForLine("python/threading.py", 864).getFunction());
+
         Assertions.assertEquals(37, profile.getProfileForLine("python/socketserver.py", 639).getNumberOfSamples());
+        Assertions.assertEquals("process_request_thread", profile.getProfileForLine("python/socketserver.py", 639).getFunction());
+
         Assertions.assertEquals(15, profile.getProfileForLine("app/my_app_main.py", 4).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("app/my_app_main.py", 4).getFunction());
+
         Assertions.assertEquals(22, profile.getProfileForLine("app/my_app_main.py", 10).getNumberOfSamples());
+        Assertions.assertEquals("function", profile.getProfileForLine("app/my_app_main.py", 10).getFunction());
 
         // Because two unique invocations of lines in my_app_main
         Assertions.assertEquals(2, profile.getAllLineProfilesRegex("my_app_main").size());
@@ -56,12 +64,24 @@ public class TestRawPyflameParser {
         Profile profile = rawPyflameParser.parseFlamegraph(input, "/");
         Assertions.assertEquals(47, profile.getTotalSamples());
         Assertions.assertEquals(6, profile.numberOfUniqueLines());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/main.py", 1).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("random_module/main.py", 1).getFunction());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/function.py", 5).getNumberOfSamples());
+        Assertions.assertEquals("function", profile.getProfileForLine("random_module/function.py", 5).getFunction());
+
         Assertions.assertEquals(37, profile.getProfileForLine("python/threading.py", 864).getNumberOfSamples());
+        Assertions.assertEquals("run", profile.getProfileForLine("python/threading.py", 864).getFunction());
+
         Assertions.assertEquals(37, profile.getProfileForLine("python/socketserver.py", 639).getNumberOfSamples());
+        Assertions.assertEquals("process_request_thread", profile.getProfileForLine("python/socketserver.py", 639).getFunction());
+
         Assertions.assertEquals(15, profile.getProfileForLine("app/my_app_main.py", 4).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("app/my_app_main.py", 4).getFunction());
+
         Assertions.assertEquals(22, profile.getProfileForLine("app/my_app_main.py", 10).getNumberOfSamples());
+        Assertions.assertEquals("function", profile.getProfileForLine("app/my_app_main.py", 10).getFunction());
 
         // Because two unique invocations of lines in my_app_main
         Assertions.assertEquals(2, profile.getAllLineProfilesRegex("my_app_main").size());
@@ -82,12 +102,24 @@ public class TestRawPyflameParser {
         Profile profile = rawPyflameParser.parseFlamegraph(input, "/");
         Assertions.assertEquals(75, profile.getTotalSamples());
         Assertions.assertEquals(8, profile.numberOfUniqueLines());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/main.py", 1).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("random_module/main.py", 1).getFunction());
+
         Assertions.assertEquals(10, profile.getProfileForLine("random_module/function.py", 5).getNumberOfSamples());
+        Assertions.assertEquals("function", profile.getProfileForLine("random_module/function.py", 5).getFunction());
+
         Assertions.assertEquals(65, profile.getProfileForLine("python/threading.py", 864).getNumberOfSamples());
+        Assertions.assertEquals("run", profile.getProfileForLine("python/threading.py", 864).getFunction());
+
         Assertions.assertEquals(37, profile.getProfileForLine("python/socketserver.py", 639).getNumberOfSamples());
+        Assertions.assertEquals("process_request_thread", profile.getProfileForLine("python/socketserver.py", 639).getFunction());
+
         Assertions.assertEquals(28, profile.getProfileForLine("python/socketserver.py", 641).getNumberOfSamples());
+        Assertions.assertEquals("process_request_thread", profile.getProfileForLine("python/socketserver.py", 639).getFunction());
+
         Assertions.assertEquals(15, profile.getProfileForLine("app/my_app_main.py", 4).getNumberOfSamples());
+        Assertions.assertEquals("main", profile.getProfileForLine("app/my_app_main.py", 4).getFunction());
 
         // There is more than one unique chain of execution of app/my_app_main.py - one through prq:639 and another through prq:641
         Assertions.assertThrows(Profile.MoreThanOneProfileException.class, () ->
@@ -95,16 +127,16 @@ public class TestRawPyflameParser {
         );
 
         ProfiledLine one = profile.getProfileForLine("app/my_app_main.py", 10,
-            new ProfiledLineKey("python/socketserver.py", 639,
-                new ProfiledLineKey("python/threading.py", 864, null)
+            new ProfiledLineKey("python/socketserver.py", 639, new ProfiledLineKey("python/threading.py", 864, null)
             )
         );
+        Assertions.assertEquals("function", one.getFunction());
 
         ProfiledLine two = profile.getProfileForLine("app/my_app_main.py", 10,
-            new ProfiledLineKey("python/socketserver.py", 641,
-                new ProfiledLineKey("python/threading.py", 864, null)
+            new ProfiledLineKey("python/socketserver.py", 641, new ProfiledLineKey("python/threading.py", 864, null)
             )
         );
+        Assertions.assertEquals("function", two.getFunction());
 
         Assertions.assertEquals(22, one.getNumberOfSamples());
         Assertions.assertEquals(28, two.getNumberOfSamples());

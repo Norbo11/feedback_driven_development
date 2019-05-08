@@ -1,6 +1,5 @@
 package np1815.feedback.metricsbackend.profile;
 
-import java.io.File;
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -38,7 +37,7 @@ public class Profile {
         if (samples.containsKey(newKey)) {
             profiledLine = samples.get(newKey);
         } else {
-            profiledLine = new ProfiledLine(newKey);
+            profiledLine = new ProfiledLine(newKey, function);
             samples.put(newKey, profiledLine);
         }
 
