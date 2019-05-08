@@ -60,9 +60,6 @@ def instrument_flask(flask_app, feedback_config_filename):
         _, _, tb = sys.exc_info()
         stack_summary = traceback.extract_tb(tb)
 
-        for entry in stack_summary:
-            flask_app.logger.info(f'{entry.filename}: {entry.lineno} - {entry.name} - {entry.line}')
-
         instrumentation_metadata.exception = e
         instrumentation_metadata.stack_summary = stack_summary
 
@@ -75,83 +72,89 @@ def instrument_flask(flask_app, feedback_config_filename):
 
 
 def pyflame_profile_start(request):
-    pid = os.getpid()
-
-    # TODO: Run forever instead of 10 seconds
-    # TODO: Don't hardcode ABI
-    # TODO: Use pyspy
-    # TODO: Look into the effects of "idle" time
-    # TODO: Look into the effects of rate
-    command = f"pyflame-bleeding " \
-        f"--threads " \
-        f"--exclude-idle " \
-        f"--abi {PYFLAME_ARGS['abi']} " \
-        f"--rate {PYFLAME_ARGS['rate']} " \
-        f"--seconds {PYFLAME_ARGS['seconds']} " \
-        f"-p {pid} "
-        # f"--flamechart "
-
     start_time = datetime.now()
 
-    app.logger.info(f'Running {command}')
-    process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    app.logger.info(f'Ran')
+    try:
+        pid = os.getpid()
+
+        # TODO: Run forever instead of 10 seconds
+        # TODO: Don't hardcode ABI
+        # TODO: Use pyspy
+        # TODO: Look into the effects of "idle" time
+        # TODO: Look into the effects of rate
+        command = f"pyflame-bleeding " \
+            f"--threads " \
+            f"--exclude-idle " \
+            f"--abi {PYFLAME_ARGS['abi']} " \
+            f"--rate {PYFLAME_ARGS['rate']} " \
+            f"--seconds {PYFLAME_ARGS['seconds']} " \
+            f"-p {pid} "
+            # f"--flamechart "
+
+        app.logger.info(f'Running {command}')
+        process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
+        app.logger.info(f'Ran')
+    except Exception as ex:
+        process = None
+        app.logger.error(f'Error while starting instrumentation: ' + str(ex))
 
     return InstrumentationMetadata(request=request, pyflame_process=process, start_time=start_time)
 
 
 def pyflame_profile_end():
+    try:
+        def kill_process():
+            app.logger.info("Sending SIGINT to pyflame")
+            instrumentation_metadata.pyflame_process.send_signal(signal.SIGINT)
 
-    def kill_process():
-        instrumentation_metadata.pyflame_process.send_signal(signal.SIGINT)
+            try:
+                stdout, stderr = instrumentation_metadata.pyflame_process.communicate(timeout=0.1)
+                return stdout, stderr
+            except subprocess.TimeoutExpired as e:
+                return kill_process()
 
-        try:
-            stdout, stderr = instrumentation_metadata.pyflame_process.communicate(timeout=0.1)
-            return stdout, stderr
-        except subprocess.TimeoutExpired as e:
-            return kill_process()
+        stdout, stderr = kill_process()
+        return_code = instrumentation_metadata.pyflame_process.poll()
+        app.logger.info(f'Finished')
 
-    stdout, stderr = kill_process()
-    return_code = instrumentation_metadata.pyflame_process.poll()
-    app.logger.info(f'Finished')
+        if return_code != 0:
+            app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
 
-    if return_code != 0:
-        app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
+            if return_code == -2:
+                app.logger.error(f'Request possibly ran for too short')
 
-        if return_code == -2:
-            app.logger.error(f'Request possibly ran for too short')
+            return instrumentation_metadata.response
 
-        return instrumentation_metadata.response
+        instrumentation_metadata.end_time = datetime.now()
 
-    instrumentation_metadata.end_time = datetime.now()
+        exception = None
+        if instrumentation_metadata.exception is not None:
+            frames = [NewExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
+                      for f in instrumentation_metadata.stack_summary]
 
-    exception = None
-    if instrumentation_metadata.exception is not None:
-        frames = [NewExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
-                  for f in instrumentation_metadata.stack_summary]
+            exception = NewException(
+                exception_type=type(instrumentation_metadata.exception).__name__,
+                exception_message=str(instrumentation_metadata.exception),
+                frames=frames
+            )
 
-        exception = NewException(
-            exception_type=type(instrumentation_metadata.exception).__name__,
-            exception_message=str(instrumentation_metadata.exception),
-            frames=frames
+        pyflame_profile = PyflameProfile(
+            application_name=feedback_config.application_name,
+            version=feedback_config.current_version,
+            start_timestamp=instrumentation_metadata.start_time,
+            end_timestamp=instrumentation_metadata.end_time,
+            pyflame_output=stdout,
+            base_path=str(feedback_config.source_base_path),
+            instrument_directories=[str(d) for d in feedback_config.instrument_directories],
+            exception=exception
         )
 
-    pyflame_profile = PyflameProfile(
-        application_name=feedback_config.application_name,
-        version=feedback_config.current_version,
-        start_timestamp=instrumentation_metadata.start_time,
-        end_timestamp=instrumentation_metadata.end_time,
-        pyflame_output=stdout,
-        base_path=str(feedback_config.source_base_path),
-        instrument_directories=[str(d) for d in feedback_config.instrument_directories],
-        exception=exception
-    )
+        added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
+        app.logger.info("Recorded profile")
 
-    added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
-    app.logger.info("Recorded profile")
-
-
-    generate_flamegraph(feedback_config.git_base_path, stdout, added_profile_response.id)
+        generate_flamegraph(feedback_config.git_base_path, stdout, added_profile_response.id)
+    except Exception as ex:
+        app.logger.error("Error while terminating instrumentation: " + str(ex))
 
     return instrumentation_metadata.response
 
