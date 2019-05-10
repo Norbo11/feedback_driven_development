@@ -61,6 +61,18 @@ paths:
           required: true
           schema:
             type: string
+        - name: history_since_type
+          in: query
+          required: false
+          schema:
+            type: string
+            enum: [date_time, beginning_of_version]
+        - name: history_since_date_time
+          in: query
+          required: false
+          schema:
+            type: string
+            format: date-time
       responses:
         '200':
           description: OK
@@ -69,9 +81,18 @@ paths:
               schema:
                 $ref: '#/components/schemas/FileFeedback'
         '400':
-          description: Invalid filename
+          description: Bad request
 components:
   schemas:
+    FeedbackFilterOptions:
+      type: object
+      properties:
+        history_since_type:
+          type: string
+          enum: [date_time, beginning_of_version]
+        history_since_date_time:
+          type: string
+          format: date-time
     FileFeedback:
       type: object
       properties:
@@ -110,6 +131,17 @@ components:
         global_average:
           type: number
           format: double
+        request_profile_history:
+          type: array
+          items:
+            type: object
+            properties:
+              start_timestamp:
+                type: string
+                format: date-time
+              sample_time:
+                type: number
+                format: double
     LineException:
       type: object
       properties:

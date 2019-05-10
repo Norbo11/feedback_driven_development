@@ -1,17 +1,19 @@
 package np1815.feedback.metricsbackend.api.impl;
 
 import com.google.common.collect.Sets;
+import np1815.feedback.metricsbackend.api.ApiResponseMessage;
 import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.NotFoundException;
 import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.metricsbackend.persistance.MetricsBackendOperations;
+import np1815.feedback.metricsbackend.persistance.models.LineGlobalPerformance;
 import np1815.feedback.metricsbackend.profile.Profile;
 import np1815.feedback.metricsbackend.profile.parsing.FlaskPyflameParser;
-import np1815.feedback.metricsbackend.util.DateTimeUtil;
 
 import java.nio.file.Paths;
 import java.time.Duration;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -39,8 +41,8 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         int addedProfileId = metricsBackendOperations.addProfile(
             pyflameProfile.getApplicationName(),
             pyflameProfile.getVersion(),
-            DateTimeUtil.dateTimeToTimestamp(pyflameProfile.getStartTimestamp()),
-            DateTimeUtil.dateTimeToTimestamp(pyflameProfile.getEndTimestamp()),
+            pyflameProfile.getStartTimestamp(),
+            pyflameProfile.getEndTimestamp(),
             duration.toMillis()
         );
 
@@ -87,22 +89,37 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
-    public Response getFeedbackForFile(String applicationName, String version, String filename, SecurityContext securityContext) throws NotFoundException {
-        Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralForLine(applicationName, version, filename);
-        Map<Integer, LinePerformance> performance = metricsBackendOperations.getPerformanceForLine(applicationName, version, filename);
-        Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsForLine(applicationName, version, filename);
+    public Response getFeedbackForFile(String applicationName, String version, String filename, String historySinceType, LocalDateTime historySinceDateTime, SecurityContext securityContext) throws NotFoundException {
+        Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralFeedbackForLines(applicationName, version, filename);
+        Map<Integer, LineGlobalPerformance> performance = metricsBackendOperations.getGlobalPerformanceForLines(applicationName, version, filename);
+        Map<Integer, List<LinePerformanceRequestProfileHistory>> performanceHistory;
 
-        double globalAverageForFile = performance.values().stream().mapToDouble(LinePerformance::getGlobalAverage).sum();
+        if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.BEGINNING_OF_VERSION.toString())) {
+            performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename);
+        } else if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.DATE_TIME.toString())) {
+            performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename, historySinceDateTime);
+        } else {
+            return Response
+                .status(Response.Status.BAD_REQUEST)
+                .entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Unknown filter parameter: " + historySinceType))
+                .build();
+        }
+
+        Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
+
+        double globalAverageForFile = performance.values().stream().mapToDouble(LineGlobalPerformance::getAvg).sum();
 
         Set<Integer> allLineNumbers = Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet()));
 
         Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
             .collect(Collectors.toMap(
-            k -> k.toString(),
-            k -> new FileFeedbackLines()
-                .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
-                .performance(performance.getOrDefault(k, new LinePerformance().status(LinePerformance.StatusEnum.NOT_PROFILED)))
-                .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
+                k -> k.toString(),
+                k -> new FileFeedbackLines()
+                    .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
+                    .performance(new LinePerformance()
+                        .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
+                        .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
+                    .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
         ));
 
         return Response.ok().entity(new FileFeedback()

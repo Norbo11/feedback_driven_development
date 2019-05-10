@@ -4,9 +4,11 @@ import np1815.feedback.metricsbackend.api.impl.DslContextFactory;
 import np1815.feedback.metricsbackend.model.LineException;
 import np1815.feedback.metricsbackend.model.LineGeneral;
 import np1815.feedback.metricsbackend.model.LinePerformance;
+import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
+import np1815.feedback.metricsbackend.persistance.models.LineGlobalPerformance;
 import org.jooq.*;
 
-import java.sql.Timestamp;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -48,7 +50,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public int addProfile(String applicationName, String version, Timestamp startTime, Timestamp endTime, long duration) {
+    public int addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration) {
         return dslContextFactory.create().insertInto(PROFILE)
             .columns(
                 PROFILE.APPLICATION_NAME,
@@ -122,7 +124,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Map<Integer, LinePerformance> getPerformanceForLine(String applicationName, String version, String filename) {
+    public Map<Integer, LineGlobalPerformance> getGlobalPerformanceForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                 avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
@@ -134,14 +136,13 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch()
-            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new LinePerformance()
-                .globalAverage(r.get("avg", Double.class))
-                .status(LinePerformance.StatusEnum.PROFILED)
+            .intoMap(PROFILE_LINES.LINE_NUMBER, r ->
+                new LineGlobalPerformance(r.get("avg", Double.class), LinePerformance.StatusEnum.PROFILED)
             );
     }
 
     @Override
-    public Map<Integer, List<LineException>> getExceptionsForLine(String applicationName, String version, String filename) {
+    public Map<Integer, List<LineException>> getExceptionsFeedbackForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(
                 EXCEPTION_FRAMES.LINE_NUMBER,
@@ -156,14 +157,14 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
             .fetchGroups(EXCEPTION_FRAMES.LINE_NUMBER, r -> new LineException()
-                .exceptionTime(r.get(PROFILE.END_TIMESTAMP).toLocalDateTime())
+                .exceptionTime(r.get(PROFILE.END_TIMESTAMP))
                 .exceptionType(r.get(EXCEPTION.EXCEPTION_TYPE))
                 .exceptionMessage(r.get(EXCEPTION.EXCEPTION_MESSAGE))
             );
     }
 
     @Override
-    public Map<Integer, LineGeneral> getGeneralForLine(String applicationName, String version, String filename) {
+    public Map<Integer, LineGeneral> getGeneralFeedbackForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                 count(PROFILE.ID).as("count")
@@ -178,5 +179,37 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new LineGeneral()
                 .executionCount(r.get("count", Integer.class))
             );
+    }
+
+    @Override
+    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename) {
+        return getPerformanceHistory(applicationName, version, filename, null);
+    }
+
+    @Override
+    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime since) {
+        return getPerformanceHistory(applicationName, version, filename, since);
+    }
+
+    private Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistory(String applicationName, String version, String filename, LocalDateTime since) {
+        SelectConditionStep<Record3<LocalDateTime, Integer, Long>> query = dslContextFactory.create()
+            .select(
+                PROFILE.START_TIMESTAMP,
+                PROFILE_LINES.LINE_NUMBER,
+                PROFILE_LINES.SAMPLE_TIME
+            )
+            .from(PROFILE_LINES)
+            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .where(PROFILE_LINES.FILE_NAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version));
+
+        if (since != null) {
+            query = query.and(PROFILE.START_TIMESTAMP.greaterOrEqual(since));
+        }
+
+        return query
+            .fetch()
+            .intoGroups(PROFILE_LINES.LINE_NUMBER, LinePerformanceRequestProfileHistory.class);
     }
 }

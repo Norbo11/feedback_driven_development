@@ -7,6 +7,16 @@
         <servlet-name>jersey</servlet-name>
         <servlet-class>org.glassfish.jersey.servlet.ServletContainer</servlet-class>
         <init-param>
+            <param-name>jersey.config.server.provider.classnames</param-name>
+            <param-value>
+                org.glassfish.jersey.media.multipart.MultiPartFeature,
+            </param-value>
+        </init-param>
+        <init-param>
+            <param-name>jersey.config.server.wadl.disableWadl</param-name>
+            <param-value>true</param-value>
+        </init-param>
+        <init-param>
             <param-name>jersey.config.server.provider.packages</param-name>
             <param-value>
                 io.swagger.jaxrs.listing,
@@ -14,14 +24,6 @@
                 io.swagger.v3.jaxrs2.integration.resources,
                 np1815.feedback.metricsbackend.api,
             </param-value>
-        </init-param>
-        <init-param>
-            <param-name>jersey.config.server.provider.classnames</param-name>
-            <param-value>org.glassfish.jersey.media.multipart.MultiPartFeature</param-value>
-        </init-param>
-        <init-param>
-            <param-name>jersey.config.server.wadl.disableWadl</param-name>
-            <param-value>true</param-value>
         </init-param>
         <load-on-startup>1</load-on-startup>
     </servlet>

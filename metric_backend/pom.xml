@@ -395,6 +395,7 @@
             </target>
             <generate>
               <!-- Generation flags: See advanced configuration properties -->
+              <javaTimeTypes>true</javaTimeTypes>
             </generate>
           </generator>
         </configuration>

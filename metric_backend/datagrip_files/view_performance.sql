@@ -22,14 +22,16 @@ where "requests"."profile_lines"."file_name" = 'playground_application/controlle
 --          and "requests"."profile"."version" = '8cdae6d945d82af46a40e90e86c294c9a9b44b47'
 group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."line_number"
 
+
 select
-  "requests"."profile_lines"."function_name",
-  avg("requests"."profile_lines"."sample_time") as "avg",
-  count(requests.profile.id) as "count"
+--   time_bucket('1 second', start_timestamp) as one_min,
+  start_timestamp as one_min,
+  "requests"."profile_lines"."line_number",
+  "requests"."profile_lines"."sample_time"
 from "requests"."profile_lines"
-       join "requests"."profile"
-            on "requests"."profile"."id" = "requests"."profile_lines"."profile_id"
+     join "requests"."profile"
+     on "requests"."profile"."id" = "requests"."profile_lines"."profile_id"
 where "requests"."profile_lines"."file_name" = 'playground_application/controllers/default_controller.py'
   and "requests"."profile"."application_name" = 'playground_application'
-  --          and "requests"."profile"."version" = '8cdae6d945d82af46a40e90e86c294c9a9b44b47'
-group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."function_name"
+-- group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."line_number", one_min
+order by one_min desc;
