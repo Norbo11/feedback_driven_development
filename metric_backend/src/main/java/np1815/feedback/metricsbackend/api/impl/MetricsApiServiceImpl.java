@@ -117,6 +117,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                 k -> new FileFeedbackLines()
                     .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
                     .performance(new LinePerformance()
+                        .globalAverage(performance.containsKey(k) ? performance.get(k).getAvg() : null)
                         .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
                         .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
                     .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
