@@ -46,6 +46,16 @@ public class FileFeedbackWrapper {
         return Optional.empty();
     }
 
+    public Optional<List<LinePerformanceRequestProfileHistory>> getPerformanceHistory(int line) {
+        String lineNumber = getLineNumberBeforeTranslation(line);
+
+        if (lineNumber == null) {
+            return Optional.empty();
+        }
+
+        return Optional.of(fileFeedback.getLines().get(lineNumber).getPerformance().getRequestProfileHistory());
+    }
+
     public Integer getExecutionCount(int line) {
         String lineNumber = getLineNumberBeforeTranslation(line);
         return lineNumber != null ? fileFeedback.getLines().get(lineNumber).getGeneral().getExecutionCount() : 0;

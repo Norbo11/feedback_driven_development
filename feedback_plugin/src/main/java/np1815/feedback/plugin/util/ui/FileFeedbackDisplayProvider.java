@@ -3,6 +3,7 @@ package np1815.feedback.plugin.util.ui;
 import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
+import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 
@@ -89,6 +90,10 @@ public class FileFeedbackDisplayProvider {
         feedbackChangeListeners.add(runnable);
     }
 
+    public void removeFeedbackChangeListener(Runnable runnable) {
+        feedbackChangeListeners.remove(runnable);
+    }
+
     public void refreshFeedback(FileFeedbackWrapper newFeedback) {
         this.fileFeedbackWrapper = newFeedback;
         this.branchProbabilities = branchProbabilityProvider.getBranchExecutionProbability(newFeedback);
@@ -112,4 +117,9 @@ public class FileFeedbackDisplayProvider {
     public String getExecutionCount(int line) {
         return fileFeedbackWrapper.getExecutionCount(line) + " times";
     }
+
+    public FileFeedbackWrapper getFileFeedbackWrapper() {
+        return fileFeedbackWrapper;
+    }
+
 }

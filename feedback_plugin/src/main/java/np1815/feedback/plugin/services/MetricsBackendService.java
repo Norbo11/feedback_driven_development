@@ -54,7 +54,7 @@ public class MetricsBackendService {
         LOG.debug("File path: " + path);
 
         String applicationName = config.getApplicationName();
-        FileFeedback fileFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, latestAvailableVersion, path);
+        FileFeedback fileFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, latestAvailableVersion, path, "beginning_of_version", null);
 
         boolean stale = !currentVersion.equals(latestAvailableVersion);
 

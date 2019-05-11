@@ -10,7 +10,9 @@
     <children>
       <tabbedpane id="a747f" class="com.intellij.ui.components.JBTabbedPane">
         <constraints>
-          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+          <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
+            <preferred-size width="300" height="300"/>
+          </grid>
         </constraints>
         <properties/>
         <border type="none"/>
@@ -70,7 +72,7 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="28e46" class="javax.swing.JLabel">
+              <component id="ce736" class="com.intellij.ui.components.JBLabel">
                 <constraints>
                   <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -78,12 +80,7 @@
                   <text value="Global Average:"/>
                 </properties>
               </component>
-              <vspacer id="e7d18">
-                <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
-                </constraints>
-              </vspacer>
-              <component id="151cb" class="javax.swing.JLabel" binding="globalAverageField">
+              <component id="4440" class="com.intellij.ui.components.JBLabel" binding="globalAverageField">
                 <constraints>
                   <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
@@ -91,6 +88,15 @@
                   <text value=""/>
                 </properties>
               </component>
+              <grid id="8f6f9" class="org.jfree.chart.ChartPanel" binding="performanceChartPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+                <margin top="0" left="0" bottom="0" right="0"/>
+                <constraints>
+                  <grid row="1" column="0" row-span="1" col-span="2" vsize-policy="7" hsize-policy="7" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children/>
+              </grid>
             </children>
           </grid>
           <grid id="ed684" binding="exceptions" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
@@ -103,10 +109,7 @@
             <children>
               <scrollpane id="45ae1">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false">
-                    <preferred-size width="-1" height="100"/>
-                    <maximum-size width="-1" height="200"/>
-                  </grid>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="7" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
@@ -114,7 +117,7 @@
                   <component id="5acd6" class="com.intellij.ui.table.JBTable" binding="exceptionsTable">
                     <constraints/>
                     <properties>
-                      <preferredScrollableViewportSize width="450" height="250"/>
+                      <preferredScrollableViewportSize width="-1" height="-1"/>
                       <striped value="true"/>
                       <verifyInputWhenFocusTarget value="true"/>
                     </properties>
