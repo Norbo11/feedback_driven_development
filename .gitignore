@@ -6,6 +6,7 @@ metric_backend/src/gen
 feedback_wrapper/metric_backend_client
 feedback_wrapper/.openapi-generator
 playground_application
+metric_backend_client
 
 Created by https://www.gitignore.io/api/python,intellij
 # Edit at https://www.gitignore.io/?templates=python,intellij

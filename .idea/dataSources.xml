@@ -7,5 +7,11 @@
       <jdbc-driver>org.postgresql.Driver</jdbc-driver>
       <jdbc-url>jdbc:postgresql://cloud-vm-46-203.doc.ic.ac.uk:5432/feedback_driven_development</jdbc-url>
     </data-source>
+    <data-source source="LOCAL" name="feedback_driven_development@localhost" uuid="d9669f27-d873-4fcc-aa64-baf4f25e39d2">
+      <driver-ref>postgresql</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.postgresql.Driver</jdbc-driver>
+      <jdbc-url>jdbc:postgresql://localhost:5432/feedback_driven_development</jdbc-url>
+    </data-source>
   </component>
 </project>
