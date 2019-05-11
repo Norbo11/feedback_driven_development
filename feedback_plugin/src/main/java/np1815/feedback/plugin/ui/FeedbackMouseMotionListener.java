@@ -25,6 +25,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
     private int lineNumberLastHoveredOver;
     private javax.swing.Timer hoverTimer;
     private JBPopup popup;
+    private FeedbackPopup feedbackPopup;
 
     public FeedbackMouseMotionListener(FileFeedbackDisplayProvider displayProvider) {
         this.displayProvider = displayProvider;
@@ -56,20 +57,21 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
     }
 
     private void showFeedbackPopup(Editor editor, Point point, int line) {
+        // Only allow one popup at a time
+        if (popup != null) {
+            displayProvider.removeFeedbackChangeListener(feedbackPopup::update);
+            popup.cancel();
+            popup.dispose();
+        }
 
-        FeedbackPopup feedbackPopup = new FeedbackPopup(line, displayProvider);
+        feedbackPopup = new FeedbackPopup(line, displayProvider);
         displayProvider.addFeedbackChangeListener(feedbackPopup::update);
 
         ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(feedbackPopup.getRootComponent(), feedbackPopup.getRootComponent());
-        popupBuilder.setTitle("Feedback");
+        popupBuilder.setTitle("Feedback Driven Development");
 
         // Remove popup if we move 2 lines away
         popupBuilder.setCancelOnMouseOutCallback(event -> Math.abs(getLineNumber(editor, event.getPoint()) - line) > 2);
-
-        // Only allow one popup at a time
-        if (popup != null) {
-            popup.cancel();
-        }
 
         popup = popupBuilder.createPopup();
         popup.show(RelativePoint.fromScreen(point));
