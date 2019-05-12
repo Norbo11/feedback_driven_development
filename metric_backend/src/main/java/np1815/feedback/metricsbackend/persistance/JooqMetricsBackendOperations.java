@@ -1,10 +1,7 @@
 package np1815.feedback.metricsbackend.persistance;
 
 import np1815.feedback.metricsbackend.api.impl.DslContextFactory;
-import np1815.feedback.metricsbackend.model.LineException;
-import np1815.feedback.metricsbackend.model.LineGeneral;
-import np1815.feedback.metricsbackend.model.LinePerformance;
-import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
+import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.metricsbackend.persistance.models.LineGlobalPerformance;
 import org.jooq.*;
 
@@ -231,5 +228,22 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 message
             )
             .execute();
+    }
+
+    @Override
+    public Map<Integer, List<LogRecord>> getLoggingRecordsForLines(String applicationName, String version, String filename) {
+        return dslContextFactory.create()
+            .select(
+                LOGGING_LINES.LINE_NUMBER,
+                LOGGING_LINES.LEVEL,
+                LOGGING_LINES.LOGGER,
+                LOGGING_LINES.MESSAGE
+            )
+            .from(LOGGING_LINES)
+            .join(PROFILE).on(LOGGING_LINES.PROFILE_START_TIMESTAMP.eq(PROFILE.START_TIMESTAMP))
+            .where(LOGGING_LINES.FILENAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .fetchGroups(LOGGING_LINES.LINE_NUMBER, LogRecord.class);
     }
 }

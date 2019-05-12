@@ -116,10 +116,11 @@ public class MetricsApiServiceImpl extends MetricsApiService {
         }
 
         Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
+        Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
 
         double globalAverageForFile = performance.values().stream().mapToDouble(LineGlobalPerformance::getAvg).sum();
 
-        Set<Integer> allLineNumbers = Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet()));
+        Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
 
         Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
             .collect(Collectors.toMap(
@@ -131,6 +132,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                         .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
                         .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
                     .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
+                    .logging(loggingRecords.getOrDefault(k, new ArrayList<>()))
         ));
 
         return Response.ok().entity(new FileFeedback()

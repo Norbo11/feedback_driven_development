@@ -35,3 +35,15 @@ where "requests"."profile_lines"."file_name" = 'playground_application/controlle
   and "requests"."profile"."application_name" = 'playground_application'
 -- group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."line_number", one_min
 order by one_min desc;
+
+select
+  requests.logging_lines.line_number,
+  requests.logging_lines.filename,
+  requests.logging_lines.level,
+  requests.logging_lines.logger,
+  requests.logging_lines.message
+from "requests"."logging_lines"
+   join "requests"."profile"
+   on "requests"."profile"."start_timestamp" = "requests"."logging_lines"."profile_start_timestamp"
+where "requests"."logging_lines"."filename" = 'playground_application/controllers/default_controller.py'
+  and "requests"."profile"."application_name" = 'playground_application'
