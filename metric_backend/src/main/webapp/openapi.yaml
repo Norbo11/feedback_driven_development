@@ -161,6 +161,9 @@ components:
     LogRecord:
       type: object
       properties:
+        log_timestamp:
+          type: string
+          format: date-time
         logger:
           type: string
         level:

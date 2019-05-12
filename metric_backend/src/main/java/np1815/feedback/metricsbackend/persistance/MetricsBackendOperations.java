@@ -34,7 +34,7 @@ public interface MetricsBackendOperations {
 
     public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime historySinceDateTime);
 
-    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message);
+    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message, LocalDateTime timestamp);
 
     public Map<Integer, List<LogRecord>> getLoggingRecordsForLines(String applicationName, String version, String filename);
 }

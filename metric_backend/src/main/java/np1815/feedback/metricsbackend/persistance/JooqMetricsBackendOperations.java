@@ -209,10 +209,11 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message) {
+    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message, LocalDateTime timestamp) {
         dslContextFactory.create().insertInto(LOGGING_LINES)
             .columns(
                 LOGGING_LINES.PROFILE_START_TIMESTAMP,
+                LOGGING_LINES.LOG_TIMESTAMP,
                 LOGGING_LINES.FILENAME,
                 LOGGING_LINES.LINE_NUMBER,
                 LOGGING_LINES.LOGGER,
@@ -221,6 +222,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             )
             .values(
                 profileStartTimestamp,
+                timestamp,
                 filePath,
                 lineNumber,
                 logger,
@@ -235,6 +237,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
         return dslContextFactory.create()
             .select(
                 LOGGING_LINES.LINE_NUMBER,
+                LOGGING_LINES.LOG_TIMESTAMP,
                 LOGGING_LINES.LEVEL,
                 LOGGING_LINES.LOGGER,
                 LOGGING_LINES.MESSAGE

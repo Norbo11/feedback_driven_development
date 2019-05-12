@@ -84,8 +84,15 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             LogRecord record = newLogRecord.getLogRecord();
             String relativePath = Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(newLogRecord.getFilename())).toString();
             if (PathUtil.pathMatchesAnyGlob(relativePath, pyflameProfile.getInstrumentDirectories())) {
-                metricsBackendOperations.addLoggingLine(addedProfileId, relativePath, newLogRecord.getLineNumber() - 1, record.getLogger(), record.getLevel()
-                    , record.getMessage());
+                metricsBackendOperations.addLoggingLine(
+                    addedProfileId,
+                    relativePath,
+                    newLogRecord.getLineNumber() - 1,
+                    record.getLogger(),
+                    record.getLevel(),
+                    record.getMessage(),
+                    record.getLogTimestamp()
+                    );
             }
         }
 

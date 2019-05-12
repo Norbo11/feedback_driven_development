@@ -30,6 +30,11 @@ public class FileFeedbackWrapper {
         return lineNumber != null ? fileFeedback.getLines().get(lineNumber).getExceptions() : new ArrayList<>();
     }
 
+    public List<LogRecord> getLogging(int line) {
+        String lineNumber = getLineNumberBeforeTranslation(line);
+        return lineNumber != null ? fileFeedback.getLines().get(lineNumber).getLogging() : new ArrayList<>();
+    }
+
     public Optional<Double> getGlobalAverageForLine(int line) {
         String lineNumber = getLineNumberBeforeTranslation(line);
 
@@ -88,4 +93,5 @@ public class FileFeedbackWrapper {
         // TODO: Should return empty if no line in the file was profiled
         return Optional.ofNullable(fileFeedback.getGlobalAverageForFile());
     }
+
 }

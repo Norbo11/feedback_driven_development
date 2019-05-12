@@ -162,7 +162,8 @@ def pyflame_profile_end():
                                          exception_message=str(instrumentation_metadata.exception),
                                          frames=frames)
 
-        logging_lines = [NewLogRecord(log_record=LogRecord(logger=record.name,
+        logging_lines = [NewLogRecord(log_record=LogRecord(log_timestamp=datetime.fromtimestamp(record.created),
+                                                           logger=record.name,
                                                            level=record.levelname,
                                                            message=record.msg.format(record.args)),
                                       line_number=record.lineno,

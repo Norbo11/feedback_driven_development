@@ -1,12 +1,14 @@
 package np1815.feedback.plugin.ui;
 
 import com.google.common.collect.Lists;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.DateAxis;
 import org.jfree.chart.axis.ValueAxis;
+import org.jfree.chart.entity.ChartEntity;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
 import org.jfree.chart.renderer.category.StandardBarPainter;
@@ -30,6 +32,8 @@ import java.util.List;
 import java.util.Optional;
 
 public class PerformanceGraph {
+
+    private static final Logger LOG = Logger.getInstance(PerformanceGraph.class);
 
     private final TimeSeriesCollection performanceDataset;
     private final JFreeChart performanceChart;
@@ -115,13 +119,17 @@ public class PerformanceGraph {
 
             @Override
             public void chartMouseMoved(ChartMouseEvent event) {
+                ChartEntity entity = event.getEntity();
+
+                LOG.debug(entity.getClass().getName());
+
                 final XYPlot plot = event.getChart().getXYPlot();
                 final DateAxis domainAxis = (DateAxis) plot.getDomainAxis();
                 final ValueAxis rangeAxis = plot.getRangeAxis();
-                final Rectangle2D plotRectangle = event.getEntity().getArea().getBounds2D();
+                final Rectangle2D plotRectangle = entity.getArea().getBounds2D();
                 final double chartX = domainAxis.java2DToValue(event.getTrigger().getX(), plotRectangle, plot.getDomainAxisEdge());
                 final double chartY = rangeAxis.java2DToValue(event.getTrigger().getY(), plotRectangle, plot.getRangeAxisEdge());
-                event.getEntity().setToolTipText(DateFormat.getInstance().format(new Date((long) chartX)) + " " + chartY);
+                entity.setToolTipText(DateFormat.getInstance().format(new Date((long) chartX)) + " " + chartY);
             }
         };
     }
