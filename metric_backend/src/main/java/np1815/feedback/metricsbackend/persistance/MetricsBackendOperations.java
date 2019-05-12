@@ -11,15 +11,15 @@ import java.util.Map;
 import java.util.Set;
 
 public interface MetricsBackendOperations {
-    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName);
+    public void addProfileLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName);
 
-    public int addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration);
+    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration);
 
     public Set<String> getApplicationVersions(String applicationName);
 
     public void addApplicationIfDoesntExist(String applicationName);
 
-    public int addException(int profileId, String exceptionType, String message);
+    public int addException(LocalDateTime profileStartTimestamp, String exceptionType, String message);
 
     public Integer addExceptionFrame(int exceptionId, String filename, Integer lineNumber, String functionName, Integer parentFrameId);
 
@@ -29,7 +29,9 @@ public interface MetricsBackendOperations {
 
     public Map<Integer, LineGeneral> getGeneralFeedbackForLines(String applicationName, String version, String filename);
 
-    Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename);
+    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename);
 
-    Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime historySinceDateTime);
+    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime historySinceDateTime);
+
+    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message);
 }

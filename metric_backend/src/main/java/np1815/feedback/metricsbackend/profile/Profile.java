@@ -1,5 +1,7 @@
 package np1815.feedback.metricsbackend.profile;
 
+import np1815.feedback.metricsbackend.util.PathUtil;
+
 import java.nio.file.FileSystems;
 import java.nio.file.Path;
 import java.nio.file.PathMatcher;
@@ -62,13 +64,7 @@ public class Profile {
     }
 
     public Set<ProfiledLine> getAllLineProfilesMatchingGlobs(List<String> globs) {
-        return getAllLineProfilesSatisfyingPredicate(s ->
-            globs.stream().anyMatch(g -> {
-                Path path = Paths.get(s.getFilePath());
-                PathMatcher matcher = FileSystems.getDefault().getPathMatcher("glob:" + g);
-                return matcher.matches(path);
-            })
-        );
+        return getAllLineProfilesSatisfyingPredicate(s -> PathUtil.pathMatchesAnyGlob(s.getFilePath(), globs));
     }
 
     public Set<ProfiledLine> getAllLineProfilesRegex(String pathRegex) {

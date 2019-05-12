@@ -110,6 +110,8 @@ components:
                 $ref: '#/components/schemas/LinePerformance'
               exceptions:
                 $ref: '#/components/schemas/LineExceptions'
+              logging:
+                $ref: '#/components/schemas/LineLogging'
     LineGeneral:
       type: object
       properties:
@@ -152,6 +154,19 @@ components:
         exception_time:
           type: string
           format: date-time
+    LineLogging:
+      type: array
+      items:
+        $ref: '#/components/schemas/LogRecord'
+    LogRecord:
+      type: object
+      properties:
+        logger:
+          type: string
+        level:
+          type: string
+        message:
+          type: string
     PyflameProfile:
       type: object
       properties:
@@ -175,12 +190,15 @@ components:
           type: string
         exception:
           $ref: '#/components/schemas/NewLineException'
+        logging_lines:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewLogRecord'
     AddedEntityResponse:
       type: object
       properties:
         id:
-          type: integer
-          format: int32
+          type: object
     AllApplicationVersions:
       type: object
       properties:
@@ -207,3 +225,12 @@ components:
                 format: int32
               function_name:
                 type: string
+    NewLogRecord:
+      type: object
+      properties:
+        line_number:
+          type: integer
+        filename:
+          type: string
+        log_record:
+          $ref: '#/components/schemas/LogRecord'

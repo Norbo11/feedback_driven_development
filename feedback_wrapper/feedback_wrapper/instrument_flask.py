@@ -6,13 +6,17 @@ import signal
 import sys
 import pathlib
 import traceback
+import threading
 
+from flask import request
 from typing import List
 from datetime import datetime
 
 from metric_backend_client.models.pyflame_profile import PyflameProfile
-from metric_backend_client.models.new_exception import NewException
-from metric_backend_client.models.new_exception_frames import NewExceptionFrames
+from metric_backend_client.models.new_line_exception import NewLineException
+from metric_backend_client.models.new_line_exception_frames import NewLineExceptionFrames
+from metric_backend_client.models.new_log_record import NewLogRecord
+from metric_backend_client.models.log_record import LogRecord
 
 from feedback_wrapper.configuration import FeedbackConfiguration
 
@@ -35,6 +39,25 @@ class InstrumentationMetadata(object):
         self.response = None
         self.stack_summary = None
         self.exception = None
+        self.logging_lines = []
+
+
+class FeedbackLoggingHandler(logging.Handler):
+
+    def __init__(self):
+        super().__init__()
+        self.list = []
+        self.previous_request = None
+
+    def emit(self, record):
+
+        if request and instrumentation_metadata:
+            # New request? Reset list of logging records
+            if self.previous_request != request:
+                instrumentation_metadata.logging_lines = []
+
+            instrumentation_metadata.logging_lines.append(record)
+            self.previous_request = request
 
 
 def instrument_flask(flask_app, feedback_config_filename):
@@ -68,11 +91,14 @@ def instrument_flask(flask_app, feedback_config_filename):
         return flask_handle_exception(e)
 
     flask_app.handle_exception = instrumented_handle_exception
-
+    # flask_app.logger.addHandler(FeedbackLoggingHandler())
+    logging.getLogger().addHandler(FeedbackLoggingHandler())
 
 
 def pyflame_profile_start(request):
     start_time = datetime.now()
+
+    app.logger.info(f'Start thread ID: {threading.get_ident()}')
 
     try:
         pid = os.getpid()
@@ -129,25 +155,28 @@ def pyflame_profile_end():
 
         exception = None
         if instrumentation_metadata.exception is not None:
-            frames = [NewExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
+            frames = [NewLineExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
                       for f in instrumentation_metadata.stack_summary]
 
-            exception = NewException(
-                exception_type=type(instrumentation_metadata.exception).__name__,
-                exception_message=str(instrumentation_metadata.exception),
-                frames=frames
-            )
+            exception = NewLineException(exception_type=type(instrumentation_metadata.exception).__name__,
+                                         exception_message=str(instrumentation_metadata.exception),
+                                         frames=frames)
 
-        pyflame_profile = PyflameProfile(
-            application_name=feedback_config.application_name,
-            version=feedback_config.current_version,
-            start_timestamp=instrumentation_metadata.start_time,
-            end_timestamp=instrumentation_metadata.end_time,
-            pyflame_output=stdout,
-            base_path=str(feedback_config.source_base_path),
-            instrument_directories=[str(d) for d in feedback_config.instrument_directories],
-            exception=exception
-        )
+        logging_lines = [NewLogRecord(log_record=LogRecord(logger=record.name,
+                                                           level=record.levelname,
+                                                           message=record.msg.format(record.args)),
+                                      line_number=record.lineno,
+                                      filename=record.pathname) for record in instrumentation_metadata.logging_lines]
+
+        pyflame_profile = PyflameProfile(application_name=feedback_config.application_name,
+                                         version=feedback_config.current_version,
+                                         start_timestamp=instrumentation_metadata.start_time,
+                                         end_timestamp=instrumentation_metadata.end_time,
+                                         pyflame_output=stdout,
+                                         base_path=str(feedback_config.source_base_path),
+                                         instrument_directories=[str(d) for d in feedback_config.instrument_directories],
+                                         exception=exception,
+                                         logging_lines=logging_lines)
 
         added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
         app.logger.info("Recorded profile")

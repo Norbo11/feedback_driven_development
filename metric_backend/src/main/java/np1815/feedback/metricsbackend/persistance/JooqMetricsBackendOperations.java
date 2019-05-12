@@ -13,13 +13,11 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import static np1815.feedback.metricsbackend.db.requests.Tables.APPLICATION;
-import static np1815.feedback.metricsbackend.db.requests.Tables.EXCEPTION_FRAMES;
+import static np1815.feedback.metricsbackend.db.requests.Tables.*;
 import static np1815.feedback.metricsbackend.db.requests.tables.Exception.EXCEPTION;
 import static np1815.feedback.metricsbackend.db.requests.tables.Profile.PROFILE;
 import static np1815.feedback.metricsbackend.db.requests.tables.ProfileLines.PROFILE_LINES;
-import static org.jooq.impl.DSL.avg;
-import static org.jooq.impl.DSL.count;
+import static org.jooq.impl.DSL.*;
 
 public class JooqMetricsBackendOperations implements MetricsBackendOperations {
 
@@ -30,16 +28,16 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public void addProfileLine(int profileId, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName) {
+    public void addProfileLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName) {
         dslContextFactory.create().insertInto(PROFILE_LINES)
-            .columns(PROFILE_LINES.PROFILE_ID,
+            .columns(PROFILE_LINES.PROFILE_START_TIMESTAMP,
                 PROFILE_LINES.FILE_NAME,
                 PROFILE_LINES.SAMPLES,
                 PROFILE_LINES.LINE_NUMBER,
                 PROFILE_LINES.SAMPLE_TIME,
                 PROFILE_LINES.FUNCTION_NAME
             )
-            .values(profileId,
+            .values(profileStartTimestamp,
                 filePath,
                 numberOfSamples,
                 lineNumber,
@@ -50,7 +48,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public int addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration) {
+    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration) {
         return dslContextFactory.create().insertInto(PROFILE)
             .columns(
                 PROFILE.APPLICATION_NAME,
@@ -66,9 +64,9 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 startTime,
                 endTime
             )
-            .returningResult(PROFILE.ID)
+            .returningResult(PROFILE.START_TIMESTAMP)
             .fetchOne()
-            .get(PROFILE.ID);
+            .get(PROFILE.START_TIMESTAMP);
     }
 
     @Override
@@ -96,11 +94,11 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public int addException(int profileId, String exceptionType, String message) {
+    public int addException(LocalDateTime profileStartTimestamp, String exceptionType, String message) {
         return dslContextFactory.create()
             .insertInto(EXCEPTION)
-            .columns( EXCEPTION.PROFILE_ID, EXCEPTION.EXCEPTION_TYPE, EXCEPTION.EXCEPTION_MESSAGE)
-            .values(profileId, exceptionType, message)
+            .columns(EXCEPTION.PROFILE_START_TIMESTAMP, EXCEPTION.EXCEPTION_TYPE, EXCEPTION.EXCEPTION_MESSAGE)
+            .values(profileStartTimestamp, exceptionType, message)
             .returning(EXCEPTION.ID)
             .fetchOne()
             .get(EXCEPTION.ID);
@@ -130,7 +128,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 avg(PROFILE_LINES.SAMPLE_TIME).as("avg")
             )
             .from(PROFILE_LINES)
-            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
             .where(PROFILE_LINES.FILE_NAME.eq(filename))
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
@@ -152,7 +150,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             )
             .from(EXCEPTION_FRAMES)
             .join(EXCEPTION).on(EXCEPTION_FRAMES.EXCEPTION_ID.eq(EXCEPTION.ID))
-            .join(PROFILE).on(EXCEPTION.PROFILE_ID.eq(PROFILE.ID))
+            .join(PROFILE).on(EXCEPTION.PROFILE_START_TIMESTAMP.eq(PROFILE.START_TIMESTAMP))
             .where(EXCEPTION_FRAMES.FILENAME.eq(filename))
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
@@ -167,10 +165,10 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     public Map<Integer, LineGeneral> getGeneralFeedbackForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
-                count(PROFILE.ID).as("count")
+                count(PROFILE.START_TIMESTAMP).as("count")
             )
             .from(PROFILE_LINES)
-            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
             .where(PROFILE_LINES.FILE_NAME.eq(filename))
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
@@ -199,7 +197,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 PROFILE_LINES.SAMPLE_TIME
             )
             .from(PROFILE_LINES)
-            .join(PROFILE).on(PROFILE.ID.eq(PROFILE_LINES.PROFILE_ID))
+            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
             .where(PROFILE_LINES.FILE_NAME.eq(filename))
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version));
@@ -211,5 +209,27 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
         return query
             .fetch()
             .intoGroups(PROFILE_LINES.LINE_NUMBER, LinePerformanceRequestProfileHistory.class);
+    }
+
+    @Override
+    public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message) {
+        dslContextFactory.create().insertInto(LOGGING_LINES)
+            .columns(
+                LOGGING_LINES.PROFILE_START_TIMESTAMP,
+                LOGGING_LINES.FILENAME,
+                LOGGING_LINES.LINE_NUMBER,
+                LOGGING_LINES.LOGGER,
+                LOGGING_LINES.LEVEL,
+                LOGGING_LINES.MESSAGE
+            )
+            .values(
+                profileStartTimestamp,
+                filePath,
+                lineNumber,
+                logger,
+                level,
+                message
+            )
+            .execute();
     }
 }

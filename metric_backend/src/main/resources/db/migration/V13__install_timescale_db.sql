@@ -3,21 +3,23 @@
 -- \c feedback_driven_development
 -- CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
-ALTER TABLE requests.profile RENAME TO profile_old;
+DROP TABLE requests.profile CASCADE;
+CREATE TABLE requests.profile (
+    start_timestamp TIMESTAMP PRIMARY KEY,
+    end_timestamp TIMESTAMP NOT NULL,
+    duration BIGINT NOT NULL,
+    version TEXT NOT NULL,
+    application_name TEXT REFERENCES requests.application(name)
+);
 
-CREATE TABLE requests.profile (LIKE requests.profile_old INCLUDING ALL EXCLUDING INDEXES);
-ALTER TABLE requests.profile ADD CONSTRAINT profile_id_timestamp_unique UNIQUE (id, start_timestamp);
-DROP TABLE requests.profile_old CASCADE;
+ALTER TABLE requests.profile_lines DROP COLUMN profile_id;
+ALTER TABLE requests.profile_lines ADD COLUMN profile_start_timestamp TIMESTAMP WITHOUT TIME ZONE;
+-- ALTER TABLE requests.profile_lines ADD CONSTRAINT profile_lines_profile_start_timestamp_fkey FOREIGN KEY (profile_start_timestamp) REFERENCES
+--     requests.profile(start_timestamp);
 
--- ALTER TABLE requests.profile_lines DROP CONSTRAINT profile_lines_profile_id_fkey;
--- ALTER TABLE requests.profile_lines ADD CONSTRAINT profile_lines_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES requests.profile(id) ON DELETE CASCADE ON
--- UPDATE CASCADE;
---
--- ALTER TABLE requests.exception DROP CONSTRAINT exception_profile_id_fkey;
--- ALTER TABLE requests.exception ADD CONSTRAINT exception_profile_id_fkey FOREIGN KEY (profile_id) REFERENCES requests.profile(id) ON DELETE CASCADE ON
---     UPDATE CASCADE;
+ALTER TABLE requests.exception DROP COLUMN profile_id;
+ALTER TABLE requests.exception ADD COLUMN profile_start_timestamp TIMESTAMP WITHOUT TIME ZONE;
+-- ALTER TABLE requests.exception ADD CONSTRAINT exception_profile_start_timestamp_fkey FOREIGN KEY (profile_start_timestamp) REFERENCES
+--     requests.profile(start_timestamp);
 
-CREATE SEQUENCE requests.profile_id_seq;
-ALTER TABLE requests.profile ALTER COLUMN id SET DEFAULT nextval('requests.profile_id_seq'::regclass);
-
-SELECT create_hypertable('requests.profile', 'start_timestamp', migrate_data => true)
+SELECT create_hypertable('requests.profile', 'start_timestamp')

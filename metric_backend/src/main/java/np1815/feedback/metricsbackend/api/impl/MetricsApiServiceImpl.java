@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import np1815.feedback.metricsbackend.profile.ProfiledLine;
+import np1815.feedback.metricsbackend.util.PathUtil;
 
 import javax.ws.rs.core.Response;
 import javax.ws.rs.core.SecurityContext;
@@ -38,7 +39,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
         metricsBackendOperations.addApplicationIfDoesntExist(pyflameProfile.getApplicationName());
 
-        int addedProfileId = metricsBackendOperations.addProfile(
+        LocalDateTime addedProfileId = metricsBackendOperations.addProfile(
             pyflameProfile.getApplicationName(),
             pyflameProfile.getVersion(),
             pyflameProfile.getStartTimestamp(),
@@ -76,6 +77,15 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                     frame.getFunctionName(),
                     addedFrameId
                 );
+            }
+        }
+
+        for (NewLogRecord newLogRecord : pyflameProfile.getLoggingLines()) {
+            LogRecord record = newLogRecord.getLogRecord();
+            String relativePath = Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(newLogRecord.getFilename())).toString();
+            if (PathUtil.pathMatchesAnyGlob(relativePath, pyflameProfile.getInstrumentDirectories())) {
+                metricsBackendOperations.addLoggingLine(addedProfileId, relativePath, newLogRecord.getLineNumber() - 1, record.getLogger(), record.getLevel()
+                    , record.getMessage());
             }
         }
 

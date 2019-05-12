@@ -176,7 +176,7 @@
               <generateSupportingFiles>true</generateSupportingFiles>
               <generateApiDocumentation>false</generateApiDocumentation>
               <generateModelDocumentation>false</generateModelDocumentation>
-              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <skipIfSpecIsUnchanged>false</skipIfSpecIsUnchanged>
 
               <configOptions>
                 <packageName>metric_backend_client</packageName>
