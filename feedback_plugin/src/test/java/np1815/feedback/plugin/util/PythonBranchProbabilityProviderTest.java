@@ -4,7 +4,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
-import np1815.feedback.metricsbackend.model.FileFeedback;
 import np1815.feedback.metricsbackend.model.FileFeedbackLines;
 import np1815.feedback.metricsbackend.model.LineGeneral;
 import np1815.feedback.plugin.language.python.PythonBranchProbabilityProvider;
@@ -37,7 +36,7 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
 
         for (Map.Entry<String, FileFeedbackLines> line : feedbackMap.entrySet()) {
             int lineNumber = Integer.valueOf(line.getKey());
-            translatedLineNumbers.put(lineNumber, new TranslatedLineNumber(lineNumber, false, ""));
+            translatedLineNumbers.put(lineNumber, new TranslatedLineNumber(lineNumber));
         }
 
         //TODO: fix

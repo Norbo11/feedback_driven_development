@@ -2,7 +2,6 @@ package np1815.feedback.plugin.services;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -27,18 +26,16 @@ import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import np1815.feedback.plugin.util.vcs.LineTranslator;
 import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 public class MetricsBackendService {
-    public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
+    public static final Logger LOG = Logger.getInstance(DisplayFeedbackAction.class);
 
     public static MetricsBackendService getInstance() {
         return ServiceManager.getService(MetricsBackendService.class);
@@ -69,14 +66,14 @@ public class MetricsBackendService {
             LOG.debug("Looking at version " + beforeVersion);
             List<Change> changes = getChangesBetweenVersions(project, file, beforeVersion, afterVersion);
 
-            Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes, null);
+            Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes);
 
             versionTranslations.put(afterVersion, translatedLineNumbers);
             afterVersion = beforeVersion;
         }
 
-        List<Change> localChanges = getChangesComparedToLocal(project, file, "HEAD");
-        Map<Integer, TranslatedLineNumber> localTranslations = LineTranslator.translateLinesAccordingToChanges(localChanges, null);
+        List<Change> localChanges = getChangesComparedToLocal(project, file, versions.get(0));
+        Map<Integer, TranslatedLineNumber> localTranslations = LineTranslator.translateLinesAccordingToChanges(localChanges);
 
         return new FileFeedbackWrapper(versions, versionedFeedback, versionTranslations, localTranslations);
     }

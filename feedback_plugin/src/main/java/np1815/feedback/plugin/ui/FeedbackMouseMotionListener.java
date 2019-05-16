@@ -11,14 +11,14 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jetbrains.annotations.NotNull;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import java.awt.*;
 
 public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FeedbackMouseMotionListener.class);
+    private static final Logger LOG = Logger.getInstance(FeedbackMouseMotionListener.class);
     private static final double REQUIRED_HOVER_SECONDS = 0.5;
     private final FileFeedbackDisplayProvider displayProvider;
 

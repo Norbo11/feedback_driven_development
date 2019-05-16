@@ -27,14 +27,13 @@ public class FileFeedbackDisplayProvider {
     public Color getBackgroundColourForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
         Optional<Double> fileGlobalAverage = fileFeedbackWrapper.getGlobalAverageForFile();
-        Optional<Boolean> lineVeryStale = fileFeedbackWrapper.isLineVeryStale(line);
 
-        if (!Stream.of(lineGlobalAverage, fileGlobalAverage, lineVeryStale).allMatch(Optional::isPresent)) {
+        if (!Stream.of(lineGlobalAverage, fileGlobalAverage).allMatch(Optional::isPresent)) {
             return null;
         }
 
         double fractionalPerformance = lineGlobalAverage.get() / fileGlobalAverage.get();
-        float brightness = lineVeryStale.get() ? 0.5f : 1f;
+        float brightness = 1f;
 
         // 0 = red
         return JBColor.getHSBColor(0, (float) fractionalPerformance, brightness);
@@ -44,12 +43,6 @@ public class FileFeedbackDisplayProvider {
         List<LineException> exceptions = fileFeedbackWrapper.getExceptions(line);
 
         return exceptions.size() > 0 ? JBColor.RED : null;
-    }
-
-
-    public String getLineStatus(int line) {
-        Optional<Boolean> lineVeryStale = fileFeedbackWrapper.isLineVeryStale(line);
-        return lineVeryStale.isPresent() ? (lineVeryStale.get() ? "Very Stale" : "Latest Version") : "Line Not Profiled";
     }
 
     public String getLastInstrumentedVersion(int line) {
@@ -75,8 +68,12 @@ public class FileFeedbackDisplayProvider {
         return branchProbabilities.containsKey(line) ? String.format("%.1f", branchProbabilities.get(line) * 100) + "% of the time" : "Not a branch";
     }
 
+    public boolean containsAnyFeedback() {
+        return fileFeedbackWrapper != null;
+    }
+
     public boolean containsFeedbackForLine(int line) {
-        return fileFeedbackWrapper.containsFeedbackForLine(line) || branchProbabilities.containsKey(line);
+        return containsAnyFeedback() && (fileFeedbackWrapper.containsFeedbackForLine(line) || branchProbabilities.containsKey(line));
     }
 
     public void addFeedbackChangeListener(Runnable runnable) {
@@ -96,10 +93,6 @@ public class FileFeedbackDisplayProvider {
         }
     }
 
-    public Optional<Boolean> isLineVeryStale(int line) {
-        return fileFeedbackWrapper.isLineVeryStale(line);
-    }
-
     public String getGutterTextForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
         String part1 = lineGlobalAverage.isPresent() ? getGlobalAverageForLine(line) : "";
@@ -117,5 +110,9 @@ public class FileFeedbackDisplayProvider {
 
     public boolean isLineStale(int line) {
         return fileFeedbackWrapper.isLineStale(line);
+    }
+
+    public String getLineStatus(int line) {
+        return isLineStale(line) ? "Stale (Instrumented Version < Checked-Out Version)" : "Recent (Instrumented Version = Checked-Out Version)";
     }
 }

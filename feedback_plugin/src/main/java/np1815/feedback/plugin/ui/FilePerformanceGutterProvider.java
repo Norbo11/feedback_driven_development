@@ -35,15 +35,11 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
 
     @Override
     public EditorFontType getStyle(int line, Editor editor) {
-        if (feedbackDisplayProvider.isLineVeryStale(line).orElse(false)) {
-            return EditorFontType.BOLD_ITALIC;
-        }
-
         if (feedbackDisplayProvider.isLineStale(line)) {
             return EditorFontType.ITALIC;
         }
 
-        return EditorFontType.PLAIN;
+        return EditorFontType.BOLD;
     }
 
     @Nullable

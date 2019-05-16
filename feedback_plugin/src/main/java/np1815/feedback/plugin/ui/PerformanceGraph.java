@@ -25,11 +25,13 @@ import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
-import java.time.ZoneOffset;
+import java.time.*;
+import java.time.temporal.TemporalAmount;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 public class PerformanceGraph {
 
@@ -38,13 +40,16 @@ public class PerformanceGraph {
     private final TimeSeriesCollection performanceDataset;
     private final JFreeChart performanceChart;
     private final TimeSeries sampleTimeSeries;
+    private final TimeSeries averageSampleTimeSeries;
     private final int line;
 
     public PerformanceGraph(int line) {
         this.line = line;
         this.performanceDataset = new TimeSeriesCollection();
         this.sampleTimeSeries = new TimeSeries("Sample Time");
+        this.averageSampleTimeSeries = new TimeSeries("Average Sample Time");
         this.performanceDataset.addSeries(sampleTimeSeries);
+        this.performanceDataset.addSeries(averageSampleTimeSeries);
 
         this.performanceChart = ChartFactory.createTimeSeriesChart(
             "Performance Over Time",
@@ -92,9 +97,13 @@ public class PerformanceGraph {
         xyPlot.getDomainAxis().setTickLabelPaint(Color.decode("#666666"));
 
         // Series
-        rend.setSeriesPaint(performanceDataset.getSeriesIndex("Sample Time"), JBColor.decode("#4572a7"));
-        rend.setSeriesItemLabelsVisible(performanceDataset.getSeriesIndex("Sample Time"), true);
-        rend.setSeriesShape(performanceDataset.getSeriesIndex("Sample Time"), new Ellipse2D.Double(-2, -2, 4, 4));
+//        rend.setDefaultPaint(JBColor.decode("#4572a7"));
+//        rend.setSeriesPaint(performanceDataset.getSeriesIndex("Sample Time"), JBColor.decode("#4572a7"));
+
+        rend.setDefaultItemLabelsVisible(true);
+        rend.setSeriesShape(0, new Ellipse2D.Double(-2, -2, 4, 4));
+        rend.setSeriesShape(1, new Ellipse2D.Double(-2, -2, 4, 4));
+
 
         // Other
         performanceChart.setTextAntiAlias(true);
@@ -121,7 +130,7 @@ public class PerformanceGraph {
             public void chartMouseMoved(ChartMouseEvent event) {
                 ChartEntity entity = event.getEntity();
 
-                LOG.debug(entity.getClass().getName());
+                LOG.info(entity.getClass().getName());
 
                 final XYPlot plot = event.getChart().getXYPlot();
                 final DateAxis domainAxis = (DateAxis) plot.getDomainAxis();
@@ -139,18 +148,25 @@ public class PerformanceGraph {
     }
 
     public void update(FileFeedbackWrapper feedbackWrapper) {
-        List<LinePerformanceRequestProfileHistory> history = feedbackWrapper.getPerformanceHistory(line);
+        //TODO: Include in display settings
+
+        List<LinePerformanceRequestProfileHistory> history = feedbackWrapper.getPerformanceHistory(line).stream().filter(h -> h.getStartTimestamp()
+                .isAfter(LocalDateTime.now(ZoneId.of("UTC")).minus(Duration.ofHours(1)))).collect(Collectors.toList());
 
         if (history.size() > 0) {
             for (LinePerformanceRequestProfileHistory h : history) {
+                double average =
+                    history.stream().filter(s ->
+                        s.getStartTimestamp().isBefore(h.getStartTimestamp()) || s.getStartTimestamp().isEqual(h.getStartTimestamp()))
+                    .mapToDouble(s -> s.getSampleTime()).average().orElse(0.0);
+
+                if (average != 0.0) {
+                    averageSampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getStartTimestamp().toInstant(ZoneOffset.UTC))), average);
+                }
                 sampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getStartTimestamp().toInstant(ZoneOffset.UTC))), h.getSampleTime());
             }
         } else {
             performanceChart.setSubtitles(Collections.singletonList(new TextTitle("No performance history available")));
         }
-
-        Optional<Double> globalAverage = feedbackWrapper.getGlobalAverageForLine(line);
-
-        globalAverage.ifPresent(avg -> performanceChart.getXYPlot().addRangeMarker(new ValueMarker(avg, JBColor.red, new BasicStroke())));
     }
 }

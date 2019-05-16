@@ -15,15 +15,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.util.backend.FileFeedbackManager;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import java.util.HashMap;
 import java.util.Map;
 
 public class DisplayFeedbackAction extends AnAction {
 
-    private static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
+    private static final Logger LOG = Logger.getInstance(DisplayFeedbackAction.class);
 
     private final Map<VirtualFile, FileFeedbackManager> feedbackManagers;
     private final MetricsBackendService metricsBackend;

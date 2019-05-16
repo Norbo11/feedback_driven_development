@@ -24,8 +24,8 @@ import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import np1815.feedback.plugin.language.python.PythonBranchProbabilityProvider;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -38,7 +38,7 @@ import static np1815.feedback.plugin.components.FeedbackDrivenDevelopment.NOTIFI
 
 public class FileFeedbackManager {
 
-    private static final Logger LOG = LoggerFactory.getLogger(FileFeedbackManager.class);
+    private static final Logger LOG = Logger.getInstance(FileFeedbackManager.class);
 
     private final MetricsBackendService metricsBackend;
     private final Project project;

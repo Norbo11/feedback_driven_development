@@ -32,6 +32,7 @@ public class FeedbackPopup {
     private JLabel executionCountLabel;
     private ChartPanel performanceChartPanel;
     private JBTable loggingTable;
+    private JLabel statusLabel;
     private TableModel exceptionsTableModel;
     private PerformanceGraph performanceChart;
 
@@ -143,8 +144,10 @@ public class FeedbackPopup {
 
     public void update() {
         lastInstrumentedVersionLabel.setText(displayProvider.getLastInstrumentedVersion(line));
-        globalAverageField.setText(displayProvider.getGlobalAverageForLine(line));
         executionCountLabel.setText(displayProvider.getExecutionCount(line));
+        statusLabel.setText(displayProvider.getLineStatus(line));
+
+        globalAverageField.setText(displayProvider.getGlobalAverageForLine(line));
         exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
         loggingTable.setModel(new LoggingTableModel(displayProvider.getFileFeedbackWrapper().getLogging(line)));
         branchProbabilityLabel.setText(displayProvider.getBranchProbabilityForLine(line));

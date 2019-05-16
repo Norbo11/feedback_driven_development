@@ -7,14 +7,14 @@ import np1815.feedback.plugin.ui.FeedbackConfigurationPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import javax.swing.*;
 
 public class FeedbackProjectConfiguration implements Configurable {
 
-    public static final Logger LOG = LoggerFactory.getLogger(FeedbackProjectConfiguration.class);
+    public static final Logger LOG = Logger.getInstance(FeedbackProjectConfiguration.class);
 
     private final FeedbackDrivenDevelopment feedbackDrivenDevelopmentComponent;
     private final Project project;

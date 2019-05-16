@@ -9,8 +9,6 @@ import np1815.feedback.plugin.util.vcs.LineTranslator;
 import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 import org.junit.Ignore;
 
-import java.util.Arrays;
-import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 
@@ -56,8 +54,8 @@ public class MetricsBackendServiceTest extends LightPlatformCodeInsightFixtureTe
         List<Change> changes = service.getChangesComparedToLocal(getProject(), virtualFile, "0e43d213d3048105fc2735356e21cff62c96afed");
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Arrays.asList(1)));
+            changes
+        );
 
         assertEquals(1, map.size());
         assertTrue(map.containsKey(1));

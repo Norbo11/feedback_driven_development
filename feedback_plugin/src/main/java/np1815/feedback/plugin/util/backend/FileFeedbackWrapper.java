@@ -46,7 +46,7 @@ public class FileFeedbackWrapper {
 
     private List<VersionedFeedback> collectFeedbackForAllVersions(int line) {
         List<VersionedFeedback> feedbacks = new ArrayList<>();
-        TranslatedLineNumber lineNumber = new TranslatedLineNumber(line, false, "");
+        TranslatedLineNumber lineNumber = new TranslatedLineNumber(line);
 
         for (String version : sortedVersions) {
             FileFeedback feedbackForVersion = versionedFeedback.get(version);
@@ -94,10 +94,6 @@ public class FileFeedbackWrapper {
         return getLatestAvailableVersion(line).isPresent();
     }
 
-    public Optional<Boolean> isLineVeryStale(int line) {
-        return getLatestAvailableVersion(line).map(versionWithLineNumber -> versionWithLineNumber.getLineNumber().isVeryStale());
-    }
-
     public Optional<Double> getGlobalAverageForFile() {
         // TODO: Should return empty if no line in the file was profiled
         return Optional.ofNullable(versionedFeedback.get(getLatestVersionFeedback().get()).getGlobalAverageForFile());
@@ -130,7 +126,6 @@ public class FileFeedbackWrapper {
     }
 
     public boolean isLineStale(int line) {
-        return !getLatestAvailableVersion(line).orElse(new VersionWithLineNumber("", new TranslatedLineNumber(line, false, "")))
-            .getVersion().equals(getLatestVersionFeedback().orElse(" "));
+        return getLatestAvailableVersion(line).map(versionWithLineNumber -> !versionWithLineNumber.getVersion().equals(sortedVersions.get(1))).orElse(false);
     }
 }

@@ -10,15 +10,15 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+import com.intellij.openapi.diagnostic.Logger;
+
 
 import java.util.*;
 
 
 public class PythonBranchProbabilityProvider implements BranchProbabilityProvider {
 
-    private static final Logger LOG = LoggerFactory.getLogger(PythonBranchProbabilityProvider.class);
+    private static final Logger LOG = Logger.getInstance(PythonBranchProbabilityProvider.class);
 
     private final PsiManager psiManager;
     private final FileDocumentManager fileDocumentManager;

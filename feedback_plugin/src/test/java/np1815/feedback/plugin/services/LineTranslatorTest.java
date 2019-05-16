@@ -18,7 +18,7 @@ public class LineTranslatorTest {
     }
 
     @Test
-    public void sameLineChangedIsVeryStale() throws VcsException {
+    public void sameLineChangeIsNotTranslated() throws VcsException {
         MetricsBackendService service = new MetricsBackendService();
 
         Change change = mock(Change.class, RETURNS_DEEP_STUBS);
@@ -37,13 +37,11 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
         assertEquals(1, map.size());
-        assertTrue(map.containsKey(1));
-        assertEquals("1", map.get(1).getLineNumberBeforeChange());
-        assertTrue(map.get(1).isVeryStale());
+        assertEquals("0", map.get(0).getLineNumberBeforeChange());
     }
 
     @Test
@@ -66,13 +64,12 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
+        assertEquals(2, map.size());
         assertTrue(map.containsKey(1));
         assertEquals("1", map.get(1).getLineNumberBeforeChange());
-        assertFalse(map.get(1).isVeryStale());
     }
 
     @Test
@@ -96,13 +93,12 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
+        assertEquals(2, map.size());
         assertTrue(map.containsKey(2));
         assertEquals("1", map.get(2).getLineNumberBeforeChange());
-        assertFalse(map.get(2).isVeryStale());
     }
 
     @Test
@@ -126,13 +122,12 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
-        assertTrue(map.containsKey(1));
+        assertEquals(2, map.size());
+        assertEquals("0", map.get(0).getLineNumberBeforeChange());
         assertEquals("1", map.get(1).getLineNumberBeforeChange());
-        assertFalse(map.get(1).isVeryStale());
     }
 
     @Test
@@ -159,20 +154,18 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Arrays.asList(1, 2)));
+            changes
+        );
 
-        assertEquals(2, map.size());
+        assertEquals(3, map.size());
         assertTrue(map.containsKey(2));
         assertTrue(map.containsKey(4));
         assertEquals("1", map.get(2).getLineNumberBeforeChange());
-        assertFalse(map.get(2).isVeryStale());
         assertEquals("2", map.get(4).getLineNumberBeforeChange());
-        assertFalse(map.get(4).isVeryStale());
     }
 
     @Test
-    public void whitespaceChangeMeansNotStale() throws VcsException {
+    public void whitespaceChangeTranslatesSuccessfully() throws VcsException {
         MetricsBackendService service = new MetricsBackendService();
 
         Change change = mock(Change.class, RETURNS_DEEP_STUBS);
@@ -191,15 +184,12 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
-        assertTrue(map.containsKey(1));
+        assertEquals(2, map.size());
+        assertEquals("0", map.get(0).getLineNumberBeforeChange());
         assertEquals("1", map.get(1).getLineNumberBeforeChange());
-
-        // Whitespace should not be marked as very stale
-        assertFalse(map.get(1).isVeryStale());
     }
 
     @Test
@@ -225,15 +215,12 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
+        assertEquals(3, map.size());
         assertTrue(map.containsKey(4));
         assertEquals("1", map.get(4).getLineNumberBeforeChange());
-
-        // TODO: Maybe have some form of ambiguity flag
-        assertFalse(map.get(4).isVeryStale());
     }
 
     @Test
@@ -265,13 +252,12 @@ public class LineTranslatorTest {
         List<Change> changes = Arrays.asList(change1, change2, change3, change4);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Collections.singletonList(1)));
+            changes
+        );
 
-        assertEquals(1, map.size());
+        assertEquals(3, map.size());
         assertTrue(map.containsKey(2));
         assertEquals("1", map.get(2).getLineNumberBeforeChange());
-        assertFalse(map.get(2).isVeryStale());
     }
 
     @Test
@@ -296,14 +282,14 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Arrays.asList(1, 2)));
+            changes
+        );
 
-        assertEquals(1, map.size());
+        // Two of the original lines map to the same thing. One of them is very stale and therefore gets replaced
+        assertEquals(3, map.size());
         assertTrue(map.containsKey(1));
 
         assertEquals("2", map.get(1).getLineNumberBeforeChange());
-        assertFalse(map.get(1).isVeryStale());
     }
 
     @Test
@@ -322,7 +308,7 @@ public class LineTranslatorTest {
             "    print('4')\n" +
             "def c():\n" +
             "    print('5')\n" +
-            "    print('6')\n"
+            "    print('6')"
         );
 
         when(change.getAfterRevision().getContent()).thenReturn(
@@ -334,40 +320,24 @@ public class LineTranslatorTest {
             "    print('4')\n" +
             "def c():\n" +
             "    print('1')\n" +
-            "    print('6')\n"
+            "    print('6')"
         );
 
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Arrays.asList(1, 2, 4, 5, 7, 8)));
+            changes
+        );
 
-        assertEquals(6, map.size());
-        assertTrue(map.containsKey(1));
-        assertTrue(map.containsKey(2));
-        assertTrue(map.containsKey(4));
-        assertTrue(map.containsKey(5));
-        assertTrue(map.containsKey(7));
-        assertTrue(map.containsKey(8));
-
+        assertEquals(8, map.size());
+        assertEquals("0", map.get(0).getLineNumberBeforeChange());
         assertEquals("1", map.get(1).getLineNumberBeforeChange());
-        assertFalse(map.get(1).isVeryStale());
-
         assertEquals("2", map.get(2).getLineNumberBeforeChange());
-        assertFalse(map.get(2).isVeryStale());
-
+        assertEquals("3", map.get(3).getLineNumberBeforeChange());
         assertEquals("4", map.get(4).getLineNumberBeforeChange());
-        assertFalse(map.get(4).isVeryStale());
-
         assertEquals("5", map.get(5).getLineNumberBeforeChange());
-        assertFalse(map.get(5).isVeryStale());
-
-        assertEquals("7", map.get(7).getLineNumberBeforeChange());
-        assertTrue(map.get(7).isVeryStale());
-
+        assertEquals("6", map.get(6).getLineNumberBeforeChange());
         assertEquals("8", map.get(8).getLineNumberBeforeChange());
-        assertFalse(map.get(8).isVeryStale());
     }
 
     @Test
@@ -405,33 +375,17 @@ public class LineTranslatorTest {
         List<Change> changes = Collections.singletonList(change);
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes,
-            new HashSet<>(Arrays.asList(1, 2, 4, 5, 7, 8)));
+            changes
+        );
 
-        assertEquals(6, map.size());
-        assertTrue(map.containsKey(1));
-        assertTrue(map.containsKey(2));
-        assertTrue(map.containsKey(4));
-        assertTrue(map.containsKey(5));
-        assertTrue(map.containsKey(7));
-        assertTrue(map.containsKey(9));
-
+        assertEquals(8, map.size());
+        assertEquals("0", map.get(0).getLineNumberBeforeChange());
         assertEquals("1", map.get(1).getLineNumberBeforeChange());
-        assertFalse(map.get(1).isVeryStale());
-
         assertEquals("2", map.get(2).getLineNumberBeforeChange());
-        assertFalse(map.get(2).isVeryStale());
-
+        assertEquals("3", map.get(3).getLineNumberBeforeChange());
         assertEquals("4", map.get(4).getLineNumberBeforeChange());
-        assertFalse(map.get(4).isVeryStale());
-
         assertEquals("5", map.get(5).getLineNumberBeforeChange());
-        assertFalse(map.get(5).isVeryStale());
-
-        assertEquals("7", map.get(7).getLineNumberBeforeChange());
-        assertTrue(map.get(7).isVeryStale());
-
+        assertEquals("6", map.get(6).getLineNumberBeforeChange());
         assertEquals("8", map.get(9).getLineNumberBeforeChange());
-        assertFalse(map.get(9).isVeryStale());
     }
 }

@@ -104,15 +104,15 @@ public class FileFeedbackWrapperTest {
         Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations = new HashMap<>();
 
         Map<Integer, TranslatedLineNumber> versionTranslationsBbbb = new HashMap<>();
-        versionTranslationsBbbb.put(2, new TranslatedLineNumber(0, false, null));
+        versionTranslationsBbbb.put(2, new TranslatedLineNumber(0));
 
         Map<Integer, TranslatedLineNumber> versionTranslationsCccc = new HashMap<>();
-        versionTranslationsCccc.put(1, new TranslatedLineNumber(1, false, null));
-        versionTranslationsCccc.put(3, new TranslatedLineNumber(2, false, null));
+        versionTranslationsCccc.put(1, new TranslatedLineNumber(1));
+        versionTranslationsCccc.put(3, new TranslatedLineNumber(2));
 
         Map<Integer, TranslatedLineNumber> localTranslations = new HashMap<>();
-        localTranslations.put(1, new TranslatedLineNumber(1, false, null));
-        localTranslations.put(4, new TranslatedLineNumber(3, false, null));
+        localTranslations.put(1, new TranslatedLineNumber(1));
+        localTranslations.put(4, new TranslatedLineNumber(3));
 
 
         versionTranslations.put("bbbb", versionTranslationsBbbb);
