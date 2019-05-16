@@ -25,16 +25,17 @@ group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."lin
 
 select
 --   time_bucket('1 second', start_timestamp) as one_min,
-  start_timestamp as one_min,
+  version,
+  start_timestamp,
   "requests"."profile_lines"."line_number",
   "requests"."profile_lines"."sample_time"
 from "requests"."profile_lines"
      join "requests"."profile"
-     on "requests"."profile"."id" = "requests"."profile_lines"."profile_id"
+     on "requests"."profile"."start_timestamp" = "requests"."profile_lines"."profile_start_timestamp"
 where "requests"."profile_lines"."file_name" = 'playground_application/controllers/default_controller.py'
   and "requests"."profile"."application_name" = 'playground_application'
 -- group by "requests"."profile_lines"."file_name", "requests"."profile_lines"."line_number", one_min
-order by one_min desc;
+order by start_timestamp desc;
 
 select
   requests.logging_lines.line_number,

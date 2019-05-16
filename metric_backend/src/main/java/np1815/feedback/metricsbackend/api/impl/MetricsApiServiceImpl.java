@@ -106,46 +106,67 @@ public class MetricsApiServiceImpl extends MetricsApiService {
     }
 
     @Override
-    public Response getFeedbackForFile(String applicationName, String version, String filename, String historySinceType, LocalDateTime historySinceDateTime, SecurityContext securityContext) throws NotFoundException {
-        Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralFeedbackForLines(applicationName, version, filename);
-        Map<Integer, LineGlobalPerformance> performance = metricsBackendOperations.getGlobalPerformanceForLines(applicationName, version, filename);
-        Map<Integer, List<LinePerformanceRequestProfileHistory>> performanceHistory;
+    public Response getFeedbackForFile(String applicationName,
+                                       List<String> versions,
+                                       String filename,
+                                       String historySinceType,
+                                       LocalDateTime historySinceDateTime,
+                                       SecurityContext securityContext) throws NotFoundException {
 
-        if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.BEGINNING_OF_VERSION.toString())) {
-            performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename);
-        } else if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.DATE_TIME.toString())) {
-            performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename, historySinceDateTime);
-        } else {
-            return Response
-                .status(Response.Status.BAD_REQUEST)
-                .entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Unknown filter parameter: " + historySinceType))
-                .build();
+        Map<String, FileFeedback> multiVersionFileFeedback = new HashMap<>();
+
+        for (String version : versions) {
+            boolean versionExists = metricsBackendOperations.getApplicationVersions(applicationName).contains(version);
+
+            if (!versionExists) {
+                multiVersionFileFeedback.put(version, new FileFeedback().lines(new HashMap<>()).versionExists(versionExists));
+                continue;
+            }
+
+            Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralFeedbackForLines(applicationName, version, filename);
+            Map<Integer, LineGlobalPerformance> performance = metricsBackendOperations.getGlobalPerformanceForLines(applicationName, version, filename);
+            Map<Integer, List<LinePerformanceRequestProfileHistory>> performanceHistory;
+
+            if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.BEGINNING_OF_VERSION.toString())) {
+                performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename);
+            } else if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.DATE_TIME.toString())) {
+                performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename, historySinceDateTime);
+            } else {
+                return Response
+                    .status(Response.Status.BAD_REQUEST)
+                    .entity(new ApiResponseMessage(ApiResponseMessage.ERROR, "Unknown filter parameter: " + historySinceType))
+                    .build();
+            }
+
+            Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
+            Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
+
+            double globalAverageForFile = performance.values().stream().mapToDouble(LineGlobalPerformance::getAvg).sum();
+
+            Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
+
+            Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
+                .collect(Collectors.toMap(
+                    k -> k.toString(),
+                    k -> new FileFeedbackLines()
+                        .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
+                        .performance(new LinePerformance()
+                            .globalAverage(performance.containsKey(k) ? performance.get(k).getAvg() : null)
+                            .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
+                            .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
+                        .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
+                        .logging(loggingRecords.getOrDefault(k, new ArrayList<>()))
+                ));
+
+            FileFeedback fileFeedback = new FileFeedback()
+                .versionExists(versionExists)
+                .lines(lines)
+                .globalAverageForFile(globalAverageForFile);
+
+            multiVersionFileFeedback.put(version, fileFeedback);
         }
 
-        Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
-        Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
-
-        double globalAverageForFile = performance.values().stream().mapToDouble(LineGlobalPerformance::getAvg).sum();
-
-        Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
-
-        Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
-            .collect(Collectors.toMap(
-                k -> k.toString(),
-                k -> new FileFeedbackLines()
-                    .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
-                    .performance(new LinePerformance()
-                        .globalAverage(performance.containsKey(k) ? performance.get(k).getAvg() : null)
-                        .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
-                        .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
-                    .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
-                    .logging(loggingRecords.getOrDefault(k, new ArrayList<>()))
-        ));
-
-        return Response.ok().entity(new FileFeedback()
-            .lines(lines)
-            .globalAverageForFile(globalAverageForFile)
-        ).build();
+        return Response.ok().entity(multiVersionFileFeedback).build();
     }
 
 }

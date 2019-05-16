@@ -139,10 +139,10 @@ public class PerformanceGraph {
     }
 
     public void update(FileFeedbackWrapper feedbackWrapper) {
-        Optional<List<LinePerformanceRequestProfileHistory>> history = feedbackWrapper.getPerformanceHistory(line);
+        List<LinePerformanceRequestProfileHistory> history = feedbackWrapper.getPerformanceHistory(line);
 
-        if (history.isPresent()) {
-            for (LinePerformanceRequestProfileHistory h : history.get()) {
+        if (history.size() > 0) {
+            for (LinePerformanceRequestProfileHistory h : history) {
                 sampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getStartTimestamp().toInstant(ZoneOffset.UTC))), h.getSampleTime());
             }
         } else {

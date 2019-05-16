@@ -53,7 +53,7 @@ public class MetricsBackendServiceTest extends LightPlatformCodeInsightFixtureTe
     public void testTranslateLinesAccordingToChanges() throws VcsException {
         MetricsBackendService service = new MetricsBackendService();
 
-        List<Change> changes = service.getChangesSinceVersion(getProject(), virtualFile, "0e43d213d3048105fc2735356e21cff62c96afed");
+        List<Change> changes = service.getChangesComparedToLocal(getProject(), virtualFile, "0e43d213d3048105fc2735356e21cff62c96afed");
 
         Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
             changes,

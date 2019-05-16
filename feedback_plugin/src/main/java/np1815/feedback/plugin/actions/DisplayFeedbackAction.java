@@ -10,6 +10,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.plugin.services.MetricsBackendService;
@@ -60,17 +61,14 @@ public class DisplayFeedbackAction extends AnAction {
         assert file != null;
 
         // A document is an editable sequence of characters
-        Document document = editor.getDocument();
-
-        // A markup model represents the text effects on a particular document
-        MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
+        FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
 
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
 
         //TODO: Test effect with multiple editors editing the same file
         if (!feedbackManagers.containsKey(file)) {
-            feedbackManagers.put(file, new FileFeedbackManager(metricsBackend, project, editor, file, repository, markupModel));
+            feedbackManagers.put(file, new FileFeedbackManager(metricsBackend, project, editor, file, repository, fileDocumentManager));
         }
 
         boolean feedbackDisplaying = feedbackManagers.get(file).toggleFeedback();

@@ -3,10 +3,9 @@ package np1815.feedback.plugin.util.ui;
 import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
-import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
-import np1815.feedback.metricsbackend.model.LogRecord;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
+import np1815.feedback.plugin.util.backend.VersionWithLineNumber;
 
 import java.awt.*;
 import java.util.*;
@@ -54,7 +53,8 @@ public class FileFeedbackDisplayProvider {
     }
 
     public String getLastInstrumentedVersion(int line) {
-        return fileFeedbackWrapper.getLatestAvailableVersion(line).orElse("Line Not Instrumented");
+        Optional<VersionWithLineNumber> latestVersion = fileFeedbackWrapper.getLatestAvailableVersion(line);
+        return latestVersion.isPresent() ? latestVersion.get().getVersion() : "Line Not Instrumented";
     }
 
     public String getGlobalAverageForFile(int line) {
@@ -73,14 +73,6 @@ public class FileFeedbackDisplayProvider {
 
     public String getBranchProbabilityForLine(int line) {
         return branchProbabilities.containsKey(line) ? String.format("%.1f", branchProbabilities.get(line) * 100) + "% of the time" : "Not a branch";
-    }
-
-    public Set<Integer> getLineNumbers() {
-        return Sets.union(fileFeedbackWrapper.getLineNumbers(), branchProbabilities.keySet());
-    }
-
-    public boolean isFileStale() {
-        return fileFeedbackWrapper.isFileStale();
     }
 
     public boolean containsFeedbackForLine(int line) {
@@ -121,5 +113,9 @@ public class FileFeedbackDisplayProvider {
 
     public FileFeedbackWrapper getFileFeedbackWrapper() {
         return fileFeedbackWrapper;
+    }
+
+    public boolean isLineStale(int line) {
+        return fileFeedbackWrapper.isLineStale(line);
     }
 }

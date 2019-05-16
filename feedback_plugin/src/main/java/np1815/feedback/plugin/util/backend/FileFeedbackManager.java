@@ -4,8 +4,10 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import com.intellij.openapi.editor.impl.DocumentMarkupModel;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -44,6 +46,7 @@ public class FileFeedbackManager {
     private final VirtualFile file;
     private final Repository repository;
     private final MarkupModel markupModel;
+    private final FileDocumentManager documentManager;
 
     private FeedbackMouseMotionListener mouseMotionListener;
     private Timer feedbackDisplayTimer;
@@ -56,16 +59,27 @@ public class FileFeedbackManager {
      * @param editor The editor which we want to highlight
      * @param file The file for which to fetch feedback
      * @param repository The VCS repository for this file
-     * @param markupModel The markup model for this editor
+     * @param documentManager The document manager providing file contents for this file
      */
-    public FileFeedbackManager(MetricsBackendService metricsBackend, Project project, Editor editor, VirtualFile file, Repository repository,
-                               MarkupModel markupModel) {
+    public FileFeedbackManager(MetricsBackendService metricsBackend,
+                               Project project,
+                               Editor editor,
+                               VirtualFile file,
+                               Repository repository,
+                               FileDocumentManager documentManager) {
+
         this.metricsBackend = metricsBackend;
         this.project = project;
         this.editor = editor;
         this.file = file;
         this.repository = repository;
-        this.markupModel = markupModel;
+        this.documentManager = documentManager;
+
+        Document document = documentManager.getDocument(file);
+        assert document != null;
+
+        // A markup model represents the text effects on a particular document
+        this.markupModel = DocumentMarkupModel.forDocument(document, project, true);
     }
 
     /**
@@ -77,7 +91,7 @@ public class FileFeedbackManager {
     private void startDisplayingFeedback() {
         try {
             FeedbackDrivenDevelopment feedbackComponent = FeedbackDrivenDevelopment.getInstance(project);
-            BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, PsiManager.getInstance(project), FileDocumentManager.getInstance());
+            BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, PsiManager.getInstance(project), documentManager);
             FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(branchProbabilityProvider);
             FilePerformanceGutterProvider gutterProvider = new FilePerformanceGutterProvider(displayProvider);
 
@@ -159,7 +173,7 @@ public class FileFeedbackManager {
             LOG.debug("Determined latest available version: " + latestAvailableVersion);
 
             if (latestAvailableVersion.isPresent()) {
-                feedbackWrapper = metricsBackend.getPerformance(project, repository, file, currentVersion, latestAvailableVersion.get());
+                feedbackWrapper = metricsBackend.getMultiVersionFeedback(project, repository, file, currentVersion, latestAvailableVersion.get());
             } else {
                 Notifications.Bus.notify(new Notification(
                     NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
@@ -200,15 +214,20 @@ public class FileFeedbackManager {
 
         editor.getGutter().registerTextAnnotation(gutterProvider);
 
-        for (int lineNumber : displayProvider.getLineNumbers()) {
-            TextAttributes attributes = new TextAttributes(
-                displayProvider.getForegroundColourForLine(lineNumber),
-                displayProvider.getBackgroundColourForLine(lineNumber),
-                null,
-                null,
-                EditorFontType.PLAIN.ordinal());
+        Document document = documentManager.getDocument(file);
+        assert document != null;
 
-            markupModel.addLineHighlighter(lineNumber, HIGHLIGHTER_LAYER, attributes);
+        for (int lineNumber = 0; lineNumber < document.getLineCount(); lineNumber++) {
+            if (displayProvider.containsFeedbackForLine(lineNumber)) {
+                TextAttributes attributes = new TextAttributes(
+                    displayProvider.getForegroundColourForLine(lineNumber),
+                    displayProvider.getBackgroundColourForLine(lineNumber),
+                    null,
+                    null,
+                    EditorFontType.PLAIN.ordinal());
+
+                markupModel.addLineHighlighter(lineNumber, HIGHLIGHTER_LAYER, attributes);
+            }
         }
     }
 }

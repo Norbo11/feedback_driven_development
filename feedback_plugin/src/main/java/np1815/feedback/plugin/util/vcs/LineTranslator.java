@@ -7,10 +7,15 @@ import com.intellij.util.diff.FilesTooBigForDiffException;
 
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class LineTranslator {
+
     /**
-     * Translate the performance data into the new file view according to the edited changes
+     * Translate lines according to a list of changes.
+     * @param changes List of VCS changes - needs to contain a single change of type MODIFICATION
+     * @param linesToTranslate List of line numbers in the old revision to translate
+     * @return A map of newLineNumber -> oldLineNumber with the same size as linesToTranslate
      */
     public static Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(List<Change> changes, Set<Integer> linesToTranslate) throws VcsException {
         List<Change> modifiedChanges = changes.stream().filter(c -> c.getType() == Change.Type.MODIFICATION).collect(Collectors.toList());
@@ -28,7 +33,7 @@ public class LineTranslator {
             final Diff.Change c = Diff.buildChanges(before, after);
 
             // Translate lines based on the change
-            for (Integer oldLineNumber : linesToTranslate) {
+            for (Integer oldLineNumber : IntStream.range(0, before.split("\n").length).boxed().collect(Collectors.toSet())) {
                 int newLineNumber = Diff.translateLine(c, oldLineNumber);
                 boolean veryStale = false;
 
@@ -38,7 +43,14 @@ public class LineTranslator {
                 }
 
                 //TODO: Get latest available performance information on a per-line basis, instead of for full file
-                translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale, ""));
+                if (translatedLineNumbers.containsKey(newLineNumber)) {
+                    // Replace an existing mapping only if very stale
+                    if (translatedLineNumbers.get(newLineNumber).isVeryStale()) {
+                        translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale, ""));
+                    }
+                } else {
+                    translatedLineNumbers.put(newLineNumber, new TranslatedLineNumber(oldLineNumber, veryStale, ""));
+                }
             }
         } catch (FilesTooBigForDiffException ignored) {
         }

@@ -51,11 +51,13 @@ paths:
           required: true
           schema:
             type: string
-        - name: version
+        - name: versions
           in: query
           required: true
           schema:
-            type: string
+            type: array
+            items:
+              type: string
         - name: filename
           in: query
           required: true
@@ -79,7 +81,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/FileFeedback'
+                $ref: '#/components/schemas/MultiVersionFileFeedback'
         '400':
           description: Bad request
 components:
@@ -93,9 +95,15 @@ components:
         history_since_date_time:
           type: string
           format: date-time
+    MultiVersionFileFeedback:
+      type: object
+      additionalProperties:
+        $ref: '#/components/schemas/FileFeedback'
     FileFeedback:
       type: object
       properties:
+        version_exists:
+          type: boolean
         global_average_for_file:
           type: number
           format: double

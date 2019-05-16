@@ -1,18 +1,18 @@
 package np1815.feedback.plugin.util.vcs;
 
 public class TranslatedLineNumber {
-    private final String newLineNumber;
+    private final String oldLineNumber;
     private final boolean veryStale;
     private final String latestAvailableVersion;
 
-    public TranslatedLineNumber(int newLineNumber, boolean veryStale, String latestAvailableVersion) {
-        this.newLineNumber = String.valueOf(newLineNumber);
+    public TranslatedLineNumber(int oldLineNumber, boolean veryStale, String latestAvailableVersion) {
+        this.oldLineNumber = String.valueOf(oldLineNumber);
         this.veryStale = veryStale;
         this.latestAvailableVersion = latestAvailableVersion;
     }
 
     public String getLineNumberBeforeChange() {
-        return newLineNumber;
+        return oldLineNumber;
     }
 
     public boolean isVeryStale() {
@@ -21,5 +21,10 @@ public class TranslatedLineNumber {
 
     public String getLatestAvailableVersion() {
         return latestAvailableVersion;
+    }
+
+    @Override
+    public String toString() {
+        return "old=" + oldLineNumber + " (" + veryStale + ")";
     }
 }

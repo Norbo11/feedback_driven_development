@@ -40,7 +40,8 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
             translatedLineNumbers.put(lineNumber, new TranslatedLineNumber(lineNumber, false, ""));
         }
 
-        this.feedbackWrapper = new FileFeedbackWrapper(new FileFeedback().lines(feedbackMap), false, translatedLineNumbers, "latest");
+        //TODO: fix
+//        this.feedbackWrapper = new FileFeedbackWrapper(new FileFeedback().lines(feedbackMap), false, translatedLineNumbers, "latest");
 //        PsiTestUtil.
 
     }

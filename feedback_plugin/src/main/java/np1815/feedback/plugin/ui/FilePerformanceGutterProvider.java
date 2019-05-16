@@ -39,7 +39,7 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
             return EditorFontType.BOLD_ITALIC;
         }
 
-        if (feedbackDisplayProvider.isFileStale()) {
+        if (feedbackDisplayProvider.isLineStale(line)) {
             return EditorFontType.ITALIC;
         }
 

@@ -2,6 +2,7 @@ package np1815.feedback.plugin.services;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
@@ -34,6 +35,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 public class MetricsBackendService {
     public static final Logger LOG = LoggerFactory.getLogger(DisplayFeedbackAction.class);
@@ -42,8 +44,8 @@ public class MetricsBackendService {
         return ServiceManager.getService(MetricsBackendService.class);
     }
 
-    public FileFeedbackWrapper getPerformance(Project project, Repository repository, VirtualFile file,
-                                              String currentVersion, String latestAvailableVersion) throws IOException,
+    public FileFeedbackWrapper getMultiVersionFeedback(Project project, Repository repository, VirtualFile file,
+                                                                   String currentVersion, String latestAvailableVersion) throws IOException,
         VcsException {
 
         FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
@@ -54,17 +56,31 @@ public class MetricsBackendService {
         LOG.debug("File path: " + path);
 
         String applicationName = config.getApplicationName();
-        FileFeedback fileFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, latestAvailableVersion, path, "beginning_of_version", null);
+        List<String> versions = getSortedCommitsUpTillVersion(project, repository, "HEAD", 3);
 
-        boolean stale = !currentVersion.equals(latestAvailableVersion);
+        Map<String, FileFeedback> versionedFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, versions, path, "beginning_of_version", null);
 
-        List<Change> changes = getChangesSinceVersion(project, file, latestAvailableVersion);
+        String afterVersion = versions.get(0);
 
-        Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes,
-            fileFeedback.getLines().keySet().stream().map(Integer::valueOf).collect(Collectors.toSet()));
+        Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations = new HashMap<>();
 
-        return new FileFeedbackWrapper(fileFeedback, stale, translatedLineNumbers, latestAvailableVersion);
+        // Iterate through all versions, translating lines between versions
+        for (String beforeVersion : versions.subList(1, versions.size())) {
+            LOG.debug("Looking at version " + beforeVersion);
+            List<Change> changes = getChangesBetweenVersions(project, file, beforeVersion, afterVersion);
+
+            Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes, null);
+
+            versionTranslations.put(afterVersion, translatedLineNumbers);
+            afterVersion = beforeVersion;
+        }
+
+        List<Change> localChanges = getChangesComparedToLocal(project, file, "HEAD");
+        Map<Integer, TranslatedLineNumber> localTranslations = LineTranslator.translateLinesAccordingToChanges(localChanges, null);
+
+        return new FileFeedbackWrapper(versions, versionedFeedback, versionTranslations, localTranslations);
     }
+
     /**
      * Generate the path expected by the metric backend, by relativising and normalising against the feedback config file path
      */
@@ -75,17 +91,30 @@ public class MetricsBackendService {
     }
 
     /**
-     * Get the changes between the current content of a file and the previous known version we have in the metric backend
+     * Get the changes between the current content of a file and another version
      *
      * @return
      */
     @NotNull
-    public List<Change> getChangesSinceVersion(Project project, VirtualFile file, String latestAvailableVersion) throws VcsException {
+    public List<Change> getChangesComparedToLocal(Project project, VirtualFile file, String version) throws VcsException {
         GitVcs vcs = GitVcs.getInstance(project);
         FilePath vcsFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
-        VcsRevisionNumber latestRevisionNumber = vcs.parseRevisionNumber(latestAvailableVersion);
-        ContentRevision beforeContentRevision = GitContentRevision.createRevision(file, latestRevisionNumber, project);
+        VcsRevisionNumber vcsVersion = vcs.parseRevisionNumber(version);
+        ContentRevision beforeContentRevision = GitContentRevision.createRevision(file, vcsVersion, project);
         return VcsDiffUtil.createChangesWithCurrentContentForFile(vcsFile, beforeContentRevision);
+    }
+
+    public List<Change> getChangesBetweenVersions(Project project, VirtualFile file, String before, String after) throws VcsException {
+        GitVcs vcs = GitVcs.getInstance(project);
+        FilePath vcsFile = VcsContextFactory.SERVICE.getInstance().createFilePathOn(file);
+
+        VcsRevisionNumber vcsVersion1 = vcs.parseRevisionNumber(before);
+        VcsRevisionNumber vcsVersion2 = vcs.parseRevisionNumber(after);
+
+        ContentRevision revision1 = GitContentRevision.createRevision(file, vcsVersion1, project);
+        ContentRevision revision2 = GitContentRevision.createRevision(file, vcsVersion2, project);
+
+        return Collections.singletonList(new Change(revision1, revision2));
     }
 
     public Optional<String> determineLastAvailableVersionInBackend(Project project, Repository repository, String currentVersion) throws IOException,
@@ -111,4 +140,18 @@ public class MetricsBackendService {
         return Optional.empty();
     }
 
+    /**
+     * Return a sorted list of commits up until the currently checked out version, with the most recent first
+     */
+    public List<String> getSortedCommitsUpTillVersion(Project project, Repository repository, String version, int limit) throws VcsException {
+        Git git = Git.getInstance();
+
+        GitLineHandler gitLineHandler = new GitLineHandler(project, repository.getRoot(), GitCommand.REV_LIST);
+        gitLineHandler.addParameters("-n " + limit);
+        gitLineHandler.addParameters(version);
+        GitCommandResult result = git.runCommand(gitLineHandler);
+
+        result.throwOnError();
+        return result.getOutput();
+    }
 }
