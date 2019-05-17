@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
+import np1815.feedback.plugin.language.python.PythonFunctionPerformanceProvider;
 import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.ui.FeedbackMouseMotionListener;
 import np1815.feedback.plugin.ui.FilePerformanceGutterProvider;
@@ -47,6 +48,7 @@ public class FileFeedbackManager {
     private final Repository repository;
     private final MarkupModel markupModel;
     private final FileDocumentManager documentManager;
+    private final PsiManager psiManager;
 
     private FeedbackMouseMotionListener mouseMotionListener;
     private Timer feedbackDisplayTimer;
@@ -66,7 +68,9 @@ public class FileFeedbackManager {
                                Editor editor,
                                VirtualFile file,
                                Repository repository,
-                               FileDocumentManager documentManager) {
+                               FileDocumentManager documentManager,
+                               PsiManager psiManager
+                               ) {
 
         this.metricsBackend = metricsBackend;
         this.project = project;
@@ -74,6 +78,7 @@ public class FileFeedbackManager {
         this.file = file;
         this.repository = repository;
         this.documentManager = documentManager;
+        this.psiManager = psiManager;
 
         Document document = documentManager.getDocument(file);
         assert document != null;
@@ -91,8 +96,9 @@ public class FileFeedbackManager {
     private void startDisplayingFeedback() {
         try {
             FeedbackDrivenDevelopment feedbackComponent = FeedbackDrivenDevelopment.getInstance(project);
-            BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, PsiManager.getInstance(project), documentManager);
-            FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(branchProbabilityProvider);
+            BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, documentManager);
+            PythonFunctionPerformanceProvider functionPerformanceProvider = new PythonFunctionPerformanceProvider(file, psiManager, documentManager);
+            FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(branchProbabilityProvider, functionPerformanceProvider);
             FilePerformanceGutterProvider gutterProvider = new FilePerformanceGutterProvider(displayProvider);
 
             // TODO: Need one listener/timer per file (maybe? not if a new action is created every time)
@@ -212,7 +218,8 @@ public class FileFeedbackManager {
         FileFeedbackDisplayProvider displayProvider,
         FilePerformanceGutterProvider gutterProvider) {
 
-        editor.getGutter().registerTextAnnotation(gutterProvider);
+        // TODO: Sometimes breaks UI? look into this
+//        editor.getGutter().registerTextAnnotation(gutterProvider);
 
         Document document = documentManager.getDocument(file);
         assert document != null;

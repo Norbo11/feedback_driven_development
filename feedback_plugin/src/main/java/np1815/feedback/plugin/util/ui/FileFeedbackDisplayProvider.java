@@ -4,6 +4,7 @@ import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
+import np1815.feedback.plugin.language.python.PythonFunctionPerformanceProvider;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import np1815.feedback.plugin.util.backend.VersionWithLineNumber;
 
@@ -14,25 +15,28 @@ import java.util.stream.Stream;
 
 public class FileFeedbackDisplayProvider {
 
+    private final PythonFunctionPerformanceProvider functionPerformanceProvider;
     private FileFeedbackWrapper fileFeedbackWrapper;
-    private final BranchProbabilityProvider branchProbabilityProvider;
     private Map<Integer, Double> branchProbabilities;
+
+    private final BranchProbabilityProvider branchProbabilityProvider;
     private final List<Runnable> feedbackChangeListeners;
 
-    public FileFeedbackDisplayProvider(BranchProbabilityProvider branchProbabilityProvider) {
+    public FileFeedbackDisplayProvider(BranchProbabilityProvider branchProbabilityProvider, PythonFunctionPerformanceProvider functionPerformanceProvider) {
         this.branchProbabilityProvider = branchProbabilityProvider;
         this.feedbackChangeListeners = new ArrayList<>();
+        this.functionPerformanceProvider = functionPerformanceProvider;
     }
 
     public Color getBackgroundColourForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
-        Optional<Double> fileGlobalAverage = fileFeedbackWrapper.getGlobalAverageForFile();
+        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForFunction(fileFeedbackWrapper, line);
 
-        if (!Stream.of(lineGlobalAverage, fileGlobalAverage).allMatch(Optional::isPresent)) {
+        if (!Stream.of(lineGlobalAverage, scopeGlobalAverage).allMatch(Optional::isPresent)) {
             return null;
         }
 
-        double fractionalPerformance = lineGlobalAverage.get() / fileGlobalAverage.get();
+        double fractionalPerformance = lineGlobalAverage.get() / scopeGlobalAverage.get();
         float brightness = 1f;
 
         // 0 = red
