@@ -97,7 +97,8 @@ public class FileFeedbackManager {
         try {
             FeedbackDrivenDevelopment feedbackComponent = FeedbackDrivenDevelopment.getInstance(project);
             BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, documentManager);
-            PythonFunctionPerformanceProvider functionPerformanceProvider = new PythonFunctionPerformanceProvider(file, psiManager, documentManager);
+            PythonFunctionPerformanceProvider functionPerformanceProvider = new PythonFunctionPerformanceProvider(file, psiManager, documentManager,
+                editor.getCaretModel());
             FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(branchProbabilityProvider, functionPerformanceProvider);
             FilePerformanceGutterProvider gutterProvider = new FilePerformanceGutterProvider(displayProvider);
 

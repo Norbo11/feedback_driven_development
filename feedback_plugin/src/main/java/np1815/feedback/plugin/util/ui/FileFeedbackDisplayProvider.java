@@ -1,6 +1,5 @@
 package np1815.feedback.plugin.util.ui;
 
-import com.google.common.collect.Sets;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
@@ -30,7 +29,10 @@ public class FileFeedbackDisplayProvider {
 
     public Color getBackgroundColourForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
-        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForFunction(fileFeedbackWrapper, line);
+
+        // TODO: tomorrow: Add options for this
+//        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForFunction(fileFeedbackWrapper, line);
+        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForCurrentScope(fileFeedbackWrapper, line);
 
         if (!Stream.of(lineGlobalAverage, scopeGlobalAverage).allMatch(Optional::isPresent)) {
             return null;
