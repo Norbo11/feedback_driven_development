@@ -4,6 +4,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -17,9 +18,10 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
-import np1815.feedback.plugin.language.python.PythonFunctionPerformanceProvider;
+import np1815.feedback.plugin.language.python.PythonAggregatePerformanceProvider;
+import np1815.feedback.plugin.listeners.FeedbackCaretListener;
 import np1815.feedback.plugin.services.MetricsBackendService;
-import np1815.feedback.plugin.ui.FeedbackMouseMotionListener;
+import np1815.feedback.plugin.listeners.FeedbackMouseMotionListener;
 import np1815.feedback.plugin.ui.FilePerformanceGutterProvider;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
@@ -37,7 +39,7 @@ import static np1815.feedback.plugin.components.FeedbackDrivenDevelopment.HIGHLI
 import static np1815.feedback.plugin.components.FeedbackDrivenDevelopment.NOTIFICATIONS_GROUP_ERROR;
 
 
-public class FileFeedbackManager {
+public class FileFeedbackManager implements Disposable {
 
     private static final Logger LOG = Logger.getInstance(FileFeedbackManager.class);
 
@@ -50,7 +52,15 @@ public class FileFeedbackManager {
     private final FileDocumentManager documentManager;
     private final PsiManager psiManager;
 
+    private final FeedbackDrivenDevelopment feedbackComponent;
+    private final BranchProbabilityProvider branchProbabilityProvider;
+    private final FilePerformanceGutterProvider gutterProvider;
+    private final FileFeedbackDisplayProvider displayProvider;
+    private final PythonAggregatePerformanceProvider functionPerformanceProvider;
+
     private FeedbackMouseMotionListener mouseMotionListener;
+    private FeedbackCaretListener caretListener;
+
     private Timer feedbackDisplayTimer;
     private boolean started;
 
@@ -85,6 +95,12 @@ public class FileFeedbackManager {
 
         // A markup model represents the text effects on a particular document
         this.markupModel = DocumentMarkupModel.forDocument(document, project, true);
+
+        feedbackComponent = FeedbackDrivenDevelopment.getInstance(project);
+        branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, documentManager);
+        functionPerformanceProvider = new PythonAggregatePerformanceProvider(file, psiManager, documentManager, editor.getCaretModel());
+        displayProvider = new FileFeedbackDisplayProvider(feedbackComponent, branchProbabilityProvider, functionPerformanceProvider);
+        gutterProvider = new FilePerformanceGutterProvider(displayProvider);
     }
 
     /**
@@ -95,16 +111,11 @@ public class FileFeedbackManager {
      */
     private void startDisplayingFeedback() {
         try {
-            FeedbackDrivenDevelopment feedbackComponent = FeedbackDrivenDevelopment.getInstance(project);
-            BranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, documentManager);
-            PythonFunctionPerformanceProvider functionPerformanceProvider = new PythonFunctionPerformanceProvider(file, psiManager, documentManager,
-                editor.getCaretModel());
-            FileFeedbackDisplayProvider displayProvider = new FileFeedbackDisplayProvider(branchProbabilityProvider, functionPerformanceProvider);
-            FilePerformanceGutterProvider gutterProvider = new FilePerformanceGutterProvider(displayProvider);
+            caretListener = new FeedbackCaretListener(this);
+            editor.getCaretModel().addCaretListener(caretListener, this);
 
-            // TODO: Need one listener/timer per file (maybe? not if a new action is created every time)
             mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
-            editor.addEditorMouseMotionListener(mouseMotionListener);
+            editor.addEditorMouseMotionListener(mouseMotionListener, this);
 
             ActionListener refreshFeedback = (e) -> {
                 LOG.info("Refreshing feedback");
@@ -112,8 +123,7 @@ public class FileFeedbackManager {
 
                 if (newFeedback != null) {
                     displayProvider.refreshFeedback(newFeedback);
-                    clearFeedback(editor);
-                    annotateFileWithFeedback(editor, markupModel, displayProvider, gutterProvider);
+                    repaintFeedback();
                 }
             };
 
@@ -127,6 +137,11 @@ public class FileFeedbackManager {
         } finally {
             started = true;
         }
+    }
+
+    public void repaintFeedback() {
+        clearFeedback(editor);
+        annotateFileWithFeedback(editor, markupModel, displayProvider, gutterProvider);
     }
 
     private void stopDisplayingFeedback() {
@@ -237,5 +252,10 @@ public class FileFeedbackManager {
                 markupModel.addLineHighlighter(lineNumber, HIGHLIGHTER_LAYER, attributes);
             }
         }
+    }
+
+    @Override
+    public void dispose() {
+
     }
 }

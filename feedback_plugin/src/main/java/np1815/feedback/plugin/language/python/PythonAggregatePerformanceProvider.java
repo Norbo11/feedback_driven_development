@@ -7,6 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
@@ -15,14 +16,14 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.IntStream;
 
-public class PythonFunctionPerformanceProvider {
+public class PythonAggregatePerformanceProvider {
 
     private final VirtualFile file;
     private final PsiManager psiManager;
     private final FileDocumentManager fileDocumentManager;
     private final CaretModel caretModel;
 
-    public PythonFunctionPerformanceProvider(VirtualFile file, PsiManager psiManager, FileDocumentManager fileDocumentManager, CaretModel caretModel) {
+    public PythonAggregatePerformanceProvider(VirtualFile file, PsiManager psiManager, FileDocumentManager fileDocumentManager, CaretModel caretModel) {
         this.file = file;
         this.psiManager = psiManager;
         this.fileDocumentManager = fileDocumentManager;
@@ -42,15 +43,23 @@ public class PythonFunctionPerformanceProvider {
         PyFunction containingFunction = (PyFunction) PsiTreeUtil.findFirstParent(elementAtLine, scopeClass::isInstance);
         assert containingFunction != null;
 
-        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, document, containingFunction);
+        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, containingFunction);
     }
 
-    public Optional<Double> calculateAggregatePerformanceInScope(FileFeedbackWrapper fileFeedbackWrapper, Document document, PsiElement containingScope) {
+    private Optional<Double> calculateAggregatePerformanceInScope(FileFeedbackWrapper fileFeedbackWrapper, PsiElement containingScope) {
+        Document document = fileDocumentManager.getDocument(file);
+
         int from = document.getLineNumber(containingScope.getTextRange().getStartOffset());
         int to = document.getLineNumber(containingScope.getTextRange().getEndOffset());
 
         double totalGlobalAverage = IntStream.rangeClosed(from, to).mapToDouble(i -> fileFeedbackWrapper.getGlobalAverageForLine(i).orElse(0.0)).sum();
         return Optional.of(totalGlobalAverage);
+    }
+
+    public Optional<Double> getAggregatePerformanceForFile(FileFeedbackWrapper fileFeedbackWrapper) {
+        PsiFile psiFile = psiManager.findFile(file);
+        assert psiFile != null;
+        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, psiFile);
     }
 
     private class AggregatedFunctionFeedback {
@@ -89,26 +98,36 @@ public class PythonFunctionPerformanceProvider {
 
         // Get the element at the cursor
         PsiElement elementAtCursor = psiFile.findElementAt(caretModel.getOffset());
-        assert elementAtCursor != null;
+        if (elementAtCursor == null) {
+            return Optional.empty();
+        }
+        if (elementAtCursor instanceof PsiWhiteSpace) {
+            elementAtCursor = PsiTreeUtil.skipWhitespacesForward(elementAtCursor);
+        }
 
         // Get its parent PyStatementList element (a scope)
-        elementAtCursor = PsiTreeUtil.findFirstParent(elementAtCursor, e -> e instanceof PyStatementList);
-        assert elementAtCursor != null;
+        PsiElement cursorParentScope = PsiTreeUtil.findFirstParent(elementAtCursor, e -> e instanceof PyStatementList);
+        if (cursorParentScope == null) {
+            return Optional.empty();
+        }
 
         // Get the element for the current line we're trying to colour
         PsiElement elementAtLine = psiFile.findElementAt(document.getLineStartOffset(line));
-        assert elementAtLine != null;
-
-        // Get its parent PyStatementList element (a scope)
-        elementAtLine = PsiTreeUtil.findFirstParent(elementAtLine, e -> e instanceof PyStatementList);
         if (elementAtLine == null) {
             return Optional.empty();
         }
-        assert elementAtLine != null;
+        if (elementAtLine instanceof PsiWhiteSpace) {
+            elementAtLine = PsiTreeUtil.skipWhitespacesForward(elementAtLine);
+        }
+
+        // Get its parent PyStatementList element (a scope)
+        PsiElement lineParentScope = PsiTreeUtil.findFirstParent(elementAtLine, e -> psiManager.areElementsEquivalent(e, cursorParentScope));
+        if (lineParentScope == null) {
+            return Optional.empty();
+        }
 
         // If they are the same scope, return a value
-        return psiManager.areElementsEquivalent(elementAtCursor, elementAtLine) ? calculateAggregatePerformanceInScope(fileFeedbackWrapper, document,
-            elementAtCursor) : Optional.empty();
+        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, cursorParentScope);
     }
 
     public Optional<Double> getAggregatePerformanceForFunction(FileFeedbackWrapper fileFeedbackWrapper, int line) {

@@ -1,4 +1,4 @@
-package np1815.feedback.plugin.ui;
+package np1815.feedback.plugin.listeners;
 
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
@@ -9,6 +9,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import np1815.feedback.plugin.ui.FeedbackPopup;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.diagnostic.Logger;

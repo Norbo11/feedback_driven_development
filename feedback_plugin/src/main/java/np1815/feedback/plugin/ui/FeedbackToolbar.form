@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="rootComponent" layout-manager="GridLayoutManager" row-count="1" column-count="4" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="500" height="400"/>
+      <xy x="20" y="20" width="525" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -15,7 +15,7 @@
         <properties/>
         <border type="none"/>
         <children>
-          <grid id="ee6cc" layout-manager="GridLayoutManager" row-count="2" column-count="2" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
+          <grid id="ee6cc" layout-manager="GridLayoutManager" row-count="3" column-count="5" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
             <margin top="0" left="0" bottom="0" right="0"/>
             <constraints>
               <tabbedpane title="Settings"/>
@@ -23,28 +23,61 @@
             <properties/>
             <border type="none"/>
             <children>
-              <component id="d91a0" class="javax.swing.JCheckBox" binding="autoRefreshEverySCheckBox" default-binding="true">
-                <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
-                </constraints>
-                <properties>
-                  <text value="Auto-Refresh Every (s):"/>
-                </properties>
-              </component>
               <vspacer id="83255">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="2" column="0" row-span="1" col-span="1" vsize-policy="6" hsize-policy="1" anchor="0" fill="2" indent="0" use-parent-layout="false"/>
                 </constraints>
               </vspacer>
-              <component id="a6b59" class="javax.swing.JTextField" binding="refreshIntervalTextField">
+              <component id="32f0a" class="com.intellij.ui.components.JBLabel">
                 <constraints>
-                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
-                    <preferred-size width="150" height="-1"/>
-                  </grid>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
                 </constraints>
                 <properties>
-                  <text value=""/>
-                  <toolTipText value="Auto-Refresh Interval"/>
+                  <text value="Colour feedback relative to:"/>
+                </properties>
+              </component>
+              <component id="35b27" class="com.intellij.ui.components.JBRadioButton" binding="colourFeedbackRelativeToFunctionRadio">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="2" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Function"/>
+                </properties>
+              </component>
+              <component id="55bce" class="com.intellij.ui.components.JBRadioButton" binding="colourFeedbackRelativeToCurrentScopeRadio">
+                <constraints>
+                  <grid row="1" column="3" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Current scope"/>
+                </properties>
+              </component>
+              <component id="33ab2" class="com.intellij.ui.components.JBTextField" binding="autoRefreshIntervalField">
+                <constraints>
+                  <grid row="0" column="2" row-span="1" col-span="3" vsize-policy="3" hsize-policy="7" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="8188a" class="com.intellij.ui.components.JBLabel">
+                <constraints>
+                  <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="Auto-refresh every (s):"/>
+                </properties>
+              </component>
+              <component id="369af" class="com.intellij.ui.components.JBCheckBox" binding="autoRefreshCheckBox">
+                <constraints>
+                  <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties/>
+              </component>
+              <component id="c13c3" class="com.intellij.ui.components.JBRadioButton" binding="colourFeedbackRelativeToFile">
+                <constraints>
+                  <grid row="1" column="4" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="0" indent="0" use-parent-layout="false"/>
+                </constraints>
+                <properties>
+                  <text value="File"/>
                 </properties>
               </component>
             </children>
@@ -62,4 +95,11 @@
       </grid>
     </children>
   </grid>
+  <buttonGroups>
+    <group name="colourFeedbackRelativeToButtonGroup">
+      <member id="35b27"/>
+      <member id="55bce"/>
+      <member id="c13c3"/>
+    </group>
+  </buttonGroups>
 </form>

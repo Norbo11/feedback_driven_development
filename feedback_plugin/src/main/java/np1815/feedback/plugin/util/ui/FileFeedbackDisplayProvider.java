@@ -2,8 +2,10 @@ package np1815.feedback.plugin.util.ui;
 
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
+import np1815.feedback.plugin.components.FeedbackColouringOptions;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
-import np1815.feedback.plugin.language.python.PythonFunctionPerformanceProvider;
+import np1815.feedback.plugin.language.python.PythonAggregatePerformanceProvider;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import np1815.feedback.plugin.util.backend.VersionWithLineNumber;
 
@@ -14,25 +16,36 @@ import java.util.stream.Stream;
 
 public class FileFeedbackDisplayProvider {
 
-    private final PythonFunctionPerformanceProvider functionPerformanceProvider;
+    private final PythonAggregatePerformanceProvider aggregatePerformanceProvider;
     private FileFeedbackWrapper fileFeedbackWrapper;
     private Map<Integer, Double> branchProbabilities;
 
+    private final FeedbackDrivenDevelopment feedbackComponent;
     private final BranchProbabilityProvider branchProbabilityProvider;
     private final List<Runnable> feedbackChangeListeners;
 
-    public FileFeedbackDisplayProvider(BranchProbabilityProvider branchProbabilityProvider, PythonFunctionPerformanceProvider functionPerformanceProvider) {
+    public FileFeedbackDisplayProvider(FeedbackDrivenDevelopment feedbackComponent, BranchProbabilityProvider branchProbabilityProvider, PythonAggregatePerformanceProvider aggregatePerformanceProvider) {
+        this.feedbackComponent = feedbackComponent;
         this.branchProbabilityProvider = branchProbabilityProvider;
         this.feedbackChangeListeners = new ArrayList<>();
-        this.functionPerformanceProvider = functionPerformanceProvider;
+        this.aggregatePerformanceProvider = aggregatePerformanceProvider;
     }
 
     public Color getBackgroundColourForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
+        Optional<Double> scopeGlobalAverage = Optional.empty();
 
-        // TODO: tomorrow: Add options for this
-//        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForFunction(fileFeedbackWrapper, line);
-        Optional<Double> scopeGlobalAverage = functionPerformanceProvider.getAggregatePerformanceForCurrentScope(fileFeedbackWrapper, line);
+        if (feedbackComponent.getState().colourFeedbackRelativeTo == FeedbackColouringOptions.RELATIVE_TO_FILE) {
+            scopeGlobalAverage = aggregatePerformanceProvider.getAggregatePerformanceForFile(fileFeedbackWrapper);
+        }
+
+        if (feedbackComponent.getState().colourFeedbackRelativeTo == FeedbackColouringOptions.RELATIVE_TO_FUNCTION) {
+            scopeGlobalAverage = aggregatePerformanceProvider.getAggregatePerformanceForFunction(fileFeedbackWrapper, line);
+        }
+
+        if (feedbackComponent.getState().colourFeedbackRelativeTo == FeedbackColouringOptions.RELATIVE_TO_CURRENT_SCOPE) {
+            scopeGlobalAverage = aggregatePerformanceProvider.getAggregatePerformanceForCurrentScope(fileFeedbackWrapper, line);
+        }
 
         if (!Stream.of(lineGlobalAverage, scopeGlobalAverage).allMatch(Optional::isPresent)) {
             return null;

@@ -36,6 +36,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         public boolean takeMetricBackendUrlFromConfig;
         public boolean autoRefresh;
         public int autoRefreshInterval;
+        public FeedbackColouringOptions colourFeedbackRelativeTo;
 
         // TODO: Username and password at some point. Use PasswordSafe class
         // https://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html
@@ -54,7 +55,10 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
                 State o = (State) obj;
                 return o.feedbackConfigPath.equals(feedbackConfigPath)
                     && o.metricBackendUrl.equals(metricBackendUrl)
-                    && o.takeMetricBackendUrlFromConfig == takeMetricBackendUrlFromConfig;
+                    && o.takeMetricBackendUrlFromConfig == takeMetricBackendUrlFromConfig
+                    && o.autoRefresh == autoRefresh
+                    && o.autoRefreshInterval == autoRefreshInterval
+                    && o.colourFeedbackRelativeTo == colourFeedbackRelativeTo;
             }
             return false;
         }
