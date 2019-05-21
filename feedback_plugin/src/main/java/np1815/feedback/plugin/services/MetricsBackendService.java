@@ -50,7 +50,7 @@ public class MetricsBackendService {
         assert feedback.getState() != null;
 
         String path = getMetricBackendPath(file, feedback);
-        LOG.debug("File path: " + path);
+        LOG.info("File path: " + path);
 
         String applicationName = config.getApplicationName();
         List<String> versions = getSortedCommitsUpTillVersion(project, repository, "HEAD", 3);
@@ -63,7 +63,7 @@ public class MetricsBackendService {
 
         // Iterate through all versions, translating lines between versions
         for (String beforeVersion : versions.subList(1, versions.size())) {
-            LOG.debug("Looking at version " + beforeVersion);
+            LOG.info("Looking at version " + beforeVersion);
             List<Change> changes = getChangesBetweenVersions(project, file, beforeVersion, afterVersion);
 
             Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes);

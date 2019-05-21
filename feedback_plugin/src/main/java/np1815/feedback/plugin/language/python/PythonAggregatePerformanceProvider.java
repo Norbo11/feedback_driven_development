@@ -1,5 +1,6 @@
 package np1815.feedback.plugin.language.python;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -18,6 +19,8 @@ import java.util.stream.IntStream;
 
 public class PythonAggregatePerformanceProvider {
 
+    private static final Logger LOG = Logger.getInstance(PythonAggregatePerformanceProvider.class);
+
     private final VirtualFile file;
     private final PsiManager psiManager;
     private final FileDocumentManager fileDocumentManager;
@@ -30,23 +33,7 @@ public class PythonAggregatePerformanceProvider {
         this.caretModel = caretModel;
     }
 
-    public <T> Optional<Double> getAggregatePerformanceForScope(FileFeedbackWrapper fileFeedbackWrapper, int line, Class<? extends PsiElement> scopeClass) {
-        PsiFile psiFile = psiManager.findFile(file);
-        assert psiFile != null;
-
-        Document document = fileDocumentManager.getDocument(file);
-        assert document != null;
-
-        PsiElement elementAtLine = psiFile.findElementAt(document.getLineStartOffset(line));
-        assert elementAtLine != null;
-
-        PyFunction containingFunction = (PyFunction) PsiTreeUtil.findFirstParent(elementAtLine, scopeClass::isInstance);
-        assert containingFunction != null;
-
-        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, containingFunction);
-    }
-
-    private Optional<Double> calculateAggregatePerformanceInScope(FileFeedbackWrapper fileFeedbackWrapper, PsiElement containingScope) {
+    private Optional<Double> getAggregatePerformanceForScope(FileFeedbackWrapper fileFeedbackWrapper, PsiElement containingScope) {
         Document document = fileDocumentManager.getDocument(file);
 
         int from = document.getLineNumber(containingScope.getTextRange().getStartOffset());
@@ -59,32 +46,7 @@ public class PythonAggregatePerformanceProvider {
     public Optional<Double> getAggregatePerformanceForFile(FileFeedbackWrapper fileFeedbackWrapper) {
         PsiFile psiFile = psiManager.findFile(file);
         assert psiFile != null;
-        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, psiFile);
-    }
-
-    private class AggregatedFunctionFeedback {
-
-    }
-
-    public Map<Integer, AggregatedFunctionFeedback> getFeedbackForFunctionsInFile(FileFeedbackWrapper fileFeedbackWrapper) {
-        PsiFile psiFile = psiManager.findFile(file);
-        assert psiFile != null;
-        assert psiFile instanceof PyFile;
-        PyFile pyFile = (PyFile) psiFile;
-
-        Document document = fileDocumentManager.getDocument(file);
-        assert document != null;
-
-        psiFile.accept(new PyRecursiveElementVisitor() {
-            @Override
-            public void visitPyFunction(PyFunction function) {
-                super.visitPyFunction(function);
-
-                // Can estimate the average performance of the function by considering the performance of the lines contained within it
-            }
-        });
-
-        return null;
+        return getAggregatePerformanceForScope(fileFeedbackWrapper, psiFile);
     }
 
     public Optional<Double> getAggregatePerformanceForCurrentScope(FileFeedbackWrapper fileFeedbackWrapper, int line) {
@@ -127,10 +89,57 @@ public class PythonAggregatePerformanceProvider {
         }
 
         // If they are the same scope, return a value
-        return calculateAggregatePerformanceInScope(fileFeedbackWrapper, cursorParentScope);
+        return getAggregatePerformanceForScope(fileFeedbackWrapper, cursorParentScope);
     }
 
     public Optional<Double> getAggregatePerformanceForFunction(FileFeedbackWrapper fileFeedbackWrapper, int line) {
-        return getAggregatePerformanceForScope(fileFeedbackWrapper, line, PyFunction.class);
+        PsiFile psiFile = psiManager.findFile(file);
+        assert psiFile != null;
+
+        Document document = fileDocumentManager.getDocument(file);
+        assert document != null;
+
+        PsiElement elementAtLine = psiFile.findElementAt(document.getLineStartOffset(line));
+        assert elementAtLine != null;
+
+        PyFunction containingFunction = (PyFunction) PsiTreeUtil.findFirstParent(elementAtLine, e -> e instanceof PyFunction);
+        assert containingFunction != null;
+
+        return getAggregatePerformanceForScope(fileFeedbackWrapper, containingFunction);
+    }
+
+    private class AggregatedFunctionFeedback {
+
+    }
+
+    public Map<Integer, AggregatedFunctionFeedback> getFeedbackForFunctionsInFile(FileFeedbackWrapper fileFeedbackWrapper) {
+        PsiFile psiFile = psiManager.findFile(file);
+        assert psiFile != null;
+        assert psiFile instanceof PyFile;
+        PyFile pyFile = (PyFile) psiFile;
+
+        Document document = fileDocumentManager.getDocument(file);
+        assert document != null;
+
+        PyFunction function = ((PyFile) psiFile).findTopLevelFunction("branch");
+        assert function != null;
+
+        function.accept(new PyRecursiveElementVisitor() {
+            @Override
+            public void visitPyStatementList(PyStatementList node) {
+                super.visitPyStatementList(node);
+
+                LOG.info("In statement list " + node.getText());
+            }
+
+            @Override
+            public void visitPyIfStatement(PyIfStatement node) {
+                super.visitPyIfStatement(node);
+
+                LOG.info("In if statement " + node.getText());
+            }
+        });
+
+        return null;
     }
 }

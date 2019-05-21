@@ -47,7 +47,7 @@ public class DisplayFeedbackAction extends AnAction {
 
     @Override
     public void actionPerformed(AnActionEvent event) {
-        LOG.debug("Action hit");
+        LOG.info("Action hit");
 
         // A project is the current project being edited
         Project project = event.getProject();

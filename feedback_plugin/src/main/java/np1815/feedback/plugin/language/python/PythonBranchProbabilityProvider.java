@@ -102,8 +102,6 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
         Collection<PyStatement> statements = PsiTreeUtil.findChildrenOfAnyType(pyElement, PyStatement.class);
 
         OptionalInt max = statements.stream().mapToInt(s -> {
-            LOG.debug(s.getClass().getName());
-
             if (s instanceof PyIfStatement) {
                 PyIfStatement ifStatement = (PyIfStatement) s;
                 return getExecutionCountForElement(document, ifStatement.getIfPart(), fileFeedbackWrapper)

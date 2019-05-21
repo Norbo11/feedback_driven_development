@@ -117,11 +117,14 @@ public class FileFeedbackManager implements Disposable {
             mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
             editor.addEditorMouseMotionListener(mouseMotionListener, this);
 
+
             ActionListener refreshFeedback = (e) -> {
                 LOG.info("Refreshing feedback");
                 FileFeedbackWrapper newFeedback = fetchFeedback();
 
+
                 if (newFeedback != null) {
+                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
                     displayProvider.refreshFeedback(newFeedback);
                     repaintFeedback();
                 }
@@ -187,12 +190,12 @@ public class FileFeedbackManager implements Disposable {
     private FileFeedbackWrapper fetchFeedback() {
         String currentVersion = repository.getCurrentRevision();
         assert currentVersion != null;
-        LOG.debug("Current Version: " + currentVersion);
+        LOG.info("Current Version: " + currentVersion);
 
         FileFeedbackWrapper feedbackWrapper = null;
         try {
             Optional<String> latestAvailableVersion = metricsBackend.determineLastAvailableVersionInBackend(project, repository, currentVersion);
-            LOG.debug("Determined latest available version: " + latestAvailableVersion);
+            LOG.info("Determined latest available version: " + latestAvailableVersion);
 
             if (latestAvailableVersion.isPresent()) {
                 feedbackWrapper = metricsBackend.getMultiVersionFeedback(project, repository, file, currentVersion, latestAvailableVersion.get());
