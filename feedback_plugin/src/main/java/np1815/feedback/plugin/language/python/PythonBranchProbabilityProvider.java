@@ -84,7 +84,7 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
         return executionProbabilities;
     }
 
-    private static int textOffsetToLineNumber(Document document, PsiElement psiElement) {
+    public static int textOffsetToLineNumber(Document document, PsiElement psiElement) {
         return document.getLineNumber(psiElement.getTextOffset());
     }
 

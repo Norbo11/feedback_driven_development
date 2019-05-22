@@ -5,16 +5,13 @@ import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.psi.*;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class PythonAggregatePerformanceProvider {
@@ -124,22 +121,107 @@ public class PythonAggregatePerformanceProvider {
         PyFunction function = ((PyFile) psiFile).findTopLevelFunction("branch");
         assert function != null;
 
-        function.accept(new PyRecursiveElementVisitor() {
-            @Override
-            public void visitPyStatementList(PyStatementList node) {
-                super.visitPyStatementList(node);
+//        function.accept(new PyRecursiveElementVisitor() {
+//            @Override
+//            public void visitPyStatementList(PyStatementList node) {
+//                super.visitPyStatementList(node);
+//
+//                LOG.info("In statement list " + node.getText());
+//            }
+//
+//            @Override
+//            public void visitPyIfStatement(PyIfStatement node) {
+//                super.visitPyIfStatement(node);
+//
+//                LOG.info("In if statement " + node.getText())
+//                ;
+//            }
+//        });
 
-                LOG.info("In statement list " + node.getText());
-            }
+//        SyntaxTraverser.psiApi().children()
+//            SyntaxTraverser.
 
-            @Override
-            public void visitPyIfStatement(PyIfStatement node) {
-                super.visitPyIfStatement(node);
+        PythonBranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, fileDocumentManager);
 
-                LOG.info("In if statement " + node.getText());
-            }
-        });
-
+        List<DistributionEntry> performanceDistributionForElement = getPerformanceDistributionForElement(document, fileFeedbackWrapper, function.getStatementList(), branchProbabilityProvider.getBranchExecutionProbability(fileFeedbackWrapper));
         return null;
+    }
+
+    private class DistributionEntry {
+        private final double probability;
+        private final double sampleTime;
+
+        private DistributionEntry(double probability, double sampleTime) {
+            this.probability = probability;
+            this.sampleTime = sampleTime;
+        }
+    }
+
+    private List<DistributionEntry> getPerformanceDistributionForElement(Document document, FileFeedbackWrapper fileFeedbackWrapper, PsiElement element,
+                                                                         Map<Integer, Double> branchExecutionProbability) {
+        List<DistributionEntry> distribution = new ArrayList<>();
+
+        if (element instanceof PyIfStatement) {
+            PyIfStatement ifStatement = (PyIfStatement) element;
+
+            List<DistributionEntry> ifDistribution = getPerformanceDistributionForElement(document, fileFeedbackWrapper, ifStatement.getIfPart(), branchExecutionProbability);
+            List<DistributionEntry> elseDistribution = getPerformanceDistributionForElement(document, fileFeedbackWrapper, ifStatement.getElsePart(), branchExecutionProbability);
+
+            double ifProbability = branchExecutionProbability.get(PythonBranchProbabilityProvider.textOffsetToLineNumber(document, ifStatement.getIfPart()));
+
+            for (DistributionEntry entry : ifDistribution) {
+                distribution.add(new DistributionEntry(entry.probability * ifProbability, entry.sampleTime));
+            }
+
+            if (ifStatement.getElsePart() != null) {
+                double elseProbability = branchExecutionProbability.get(PythonBranchProbabilityProvider.textOffsetToLineNumber(document, ifStatement.getElsePart()));
+
+                for (DistributionEntry entry : elseDistribution) {
+                    distribution.add(new DistributionEntry(entry.probability * elseProbability, entry.sampleTime));
+                }
+            }
+        }
+
+        else if (element instanceof PyStatementList) {
+            PyStatementList statementList = (PyStatementList) element;
+
+            for (int i = 0; i < statementList.getStatements().length; i++) {
+                PyStatement statement = statementList.getStatements()[i];
+                List<DistributionEntry> currentDistribution = getPerformanceDistributionForElement(document, fileFeedbackWrapper, statement, branchExecutionProbability);
+
+                List<DistributionEntry> newDistribution = new ArrayList<>(distribution);
+                for (DistributionEntry de : currentDistribution) {
+                    if (distribution.size() > 0) {
+                        for (DistributionEntry de2 : distribution) {
+                            newDistribution.add(new DistributionEntry(de.probability * de2.probability, de.sampleTime + de2.sampleTime));
+                        }
+                    } else {
+                        newDistribution = currentDistribution;
+                    }
+                }
+
+                distribution = newDistribution;
+            }
+        }
+
+        else if (element instanceof PyStatement) {
+            int line = PythonBranchProbabilityProvider.textOffsetToLineNumber(document, element);
+            Optional<Double> sampleTime = fileFeedbackWrapper.getGlobalAverageForLine(line);
+
+            if (sampleTime.isPresent()) {
+                DistributionEntry entry = new DistributionEntry(1.0, sampleTime.get());
+                distribution.add(entry);
+            }
+        }
+
+        else if (element instanceof PyStatementListContainer) {
+            PyStatementListContainer pyStatementListContainer = (PyStatementListContainer) element;
+            return getPerformanceDistributionForElement(document, fileFeedbackWrapper, pyStatementListContainer.getStatementList(), branchExecutionProbability);
+        }
+
+         distribution = distribution.stream().collect(Collectors.groupingBy(de -> de.probability, Collectors.summingDouble(de -> de.sampleTime)))
+             .entrySet().stream().map(e -> new DistributionEntry(e.getKey(), e.getValue())).collect(Collectors.toList());
+
+        return distribution;
     }
 }
