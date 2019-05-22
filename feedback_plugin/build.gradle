@@ -43,5 +43,5 @@ patchPluginXml {
 
 runIde {
     jvmArgs = ['-XXaltjvm=dcevm',
-               '-javaagent:/Users/Norbz/Library/Application Support/IntelliJIdea2018.3/hotswap-agent-intellij-plugin/lib/agent/hotswap-agent-1.3.0.jar']
+               '-javaagent:/Users/norbz/Library/Application Support/IntelliJIdea2019.1/hotswap-agent-intellij-plugin/lib/agent/hotswap-agent-1.3.0.jar']
 }
