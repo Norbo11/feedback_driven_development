@@ -39,7 +39,7 @@ import static np1815.feedback.plugin.components.FeedbackDrivenDevelopment.HIGHLI
 import static np1815.feedback.plugin.components.FeedbackDrivenDevelopment.NOTIFICATIONS_GROUP_ERROR;
 
 
-public class FileFeedbackManager implements Disposable {
+public class FileFeedbackManager {
 
     private static final Logger LOG = Logger.getInstance(FileFeedbackManager.class);
 
@@ -112,10 +112,10 @@ public class FileFeedbackManager implements Disposable {
     private void startDisplayingFeedback() {
         try {
             caretListener = new FeedbackCaretListener(this);
-            editor.getCaretModel().addCaretListener(caretListener, this);
+            editor.getCaretModel().addCaretListener(caretListener);
 
             mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
-            editor.addEditorMouseMotionListener(mouseMotionListener, this);
+            editor.addEditorMouseMotionListener(mouseMotionListener);
 
 
             ActionListener refreshFeedback = (e) -> {
@@ -157,6 +157,11 @@ public class FileFeedbackManager implements Disposable {
             if (mouseMotionListener != null) {
                 editor.removeEditorMouseMotionListener(mouseMotionListener);
                 mouseMotionListener = null;
+            }
+
+            if (caretListener != null) {
+                editor.getCaretModel().removeCaretListener(caretListener);
+                caretListener = null;
             }
 
             clearFeedback(editor);
@@ -238,8 +243,8 @@ public class FileFeedbackManager implements Disposable {
         FilePerformanceGutterProvider gutterProvider) {
 
         // TODO: Sometimes breaks UI? look into this
-//        editor.getGutter().registerTextAnnotation(gutterProvider);
-
+        editor.getGutter().registerTextAnnotation(gutterProvider);
+        
         Document document = documentManager.getDocument(file);
         assert document != null;
 
@@ -257,8 +262,4 @@ public class FileFeedbackManager implements Disposable {
         }
     }
 
-    @Override
-    public void dispose() {
-
-    }
 }
