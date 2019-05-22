@@ -33,6 +33,11 @@ public class FileFeedbackDisplayProvider {
 
     public Color getBackgroundColourForLine(int line) {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
+
+        if (!lineGlobalAverage.isPresent()) {
+            return null;
+        }
+
         Optional<Double> scopeGlobalAverage = Optional.empty();
 
         if (feedbackComponent.getState().colourFeedbackRelativeTo == FeedbackColouringOptions.RELATIVE_TO_FILE) {
@@ -47,7 +52,7 @@ public class FileFeedbackDisplayProvider {
             scopeGlobalAverage = aggregatePerformanceProvider.getAggregatePerformanceForCurrentScope(fileFeedbackWrapper, line);
         }
 
-        if (!Stream.of(lineGlobalAverage, scopeGlobalAverage).allMatch(Optional::isPresent)) {
+        if (!scopeGlobalAverage.isPresent()) {
             return null;
         }
 
