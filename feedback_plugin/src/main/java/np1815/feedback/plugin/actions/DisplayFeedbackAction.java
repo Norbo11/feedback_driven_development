@@ -79,9 +79,11 @@ public class DisplayFeedbackAction extends AnAction {
         boolean feedbackDisplaying = feedbackManagers.get(file).toggleFeedback();
 
         if (feedbackDisplaying) {
-            getTemplatePresentation().setIcon(AllIcons.Actions.Pause);
+            event.getPresentation().setIcon(AllIcons.Actions.Pause);
+            event.getPresentation().setText("Pause feedback");
         } else {
-            getTemplatePresentation().setIcon(AllIcons.Actions.QuickfixBulb);
+            event.getPresentation().setIcon(AllIcons.Actions.QuickfixBulb);
+            event.getPresentation().setText("Display feedback");
         }
     }
 }

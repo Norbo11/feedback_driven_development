@@ -4,7 +4,6 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorFontType;
@@ -124,7 +123,6 @@ public class FileFeedbackManager {
 
 
                 if (newFeedback != null) {
-                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
                     displayProvider.refreshFeedback(newFeedback);
                     repaintFeedback();
                 }
@@ -137,8 +135,16 @@ public class FileFeedbackManager {
             }
 
             refreshFeedback.actionPerformed(null);
-        } finally {
             started = true;
+        } catch (Exception e) {
+            Notifications.Bus.notify(new Notification(
+                NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
+                "Could not display feedback",
+                "There was an error: " + e.getMessage(),
+                NotificationType.ERROR
+            ));
+            e.printStackTrace();
+            stopDisplayingFeedback();
         }
     }
 
@@ -148,26 +154,23 @@ public class FileFeedbackManager {
     }
 
     private void stopDisplayingFeedback() {
-        try {
-            if (feedbackDisplayTimer != null) {
-                feedbackDisplayTimer.stop();
-                feedbackDisplayTimer = null;
-            }
-
-            if (mouseMotionListener != null) {
-                editor.removeEditorMouseMotionListener(mouseMotionListener);
-                mouseMotionListener = null;
-            }
-
-            if (caretListener != null) {
-                editor.getCaretModel().removeCaretListener(caretListener);
-                caretListener = null;
-            }
-
-            clearFeedback(editor);
-        } finally {
-            started = false;
+        if (feedbackDisplayTimer != null) {
+            feedbackDisplayTimer.stop();
+            feedbackDisplayTimer = null;
         }
+
+        if (mouseMotionListener != null) {
+            editor.removeEditorMouseMotionListener(mouseMotionListener);
+            mouseMotionListener = null;
+        }
+
+        if (caretListener != null) {
+            editor.getCaretModel().removeCaretListener(caretListener);
+            caretListener = null;
+        }
+
+        clearFeedback(editor);
+        started = false;
     }
 
     /**
@@ -181,7 +184,7 @@ public class FileFeedbackManager {
             startDisplayingFeedback();
         }
 
-        return !started;
+        return started;
     }
 
     /**
@@ -203,7 +206,7 @@ public class FileFeedbackManager {
             LOG.info("Determined latest available version: " + latestAvailableVersion);
 
             if (latestAvailableVersion.isPresent()) {
-                feedbackWrapper = metricsBackend.getMultiVersionFeedback(project, repository, file, currentVersion, latestAvailableVersion.get());
+                feedbackWrapper = metricsBackend.getMultiVersionFeedback(project, repository, file, currentVersion);
             } else {
                 Notifications.Bus.notify(new Notification(
                     NOTIFICATIONS_GROUP_ERROR.getDisplayId(),
