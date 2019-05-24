@@ -68,7 +68,7 @@ public class MetricsBackendService {
         Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations = new HashMap<>();
 
         // Iterate through all versions, translating lines between versions
-        for (String beforeVersion : versions.subList(1, versions.size())) {
+        for (String beforeVersion : new ArrayList<>(versions.subList(1, versions.size()))) {
             LOG.info("Looking at version " + beforeVersion);
             //TODO: Avoid cast
             List<Change> changes = getChangesBetweenVersions(project, file, (GitRepository) repository, beforeVersion, afterVersion);
