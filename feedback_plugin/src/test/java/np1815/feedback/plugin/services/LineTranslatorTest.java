@@ -34,11 +34,7 @@ public class LineTranslatorTest {
             "    print('testChanged')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(1, map.size());
         assertEquals("0", map.get(0).getLineNumberBeforeChange());
@@ -61,11 +57,7 @@ public class LineTranslatorTest {
             "    print('test')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(2, map.size());
         assertTrue(map.containsKey(1));
@@ -90,11 +82,7 @@ public class LineTranslatorTest {
             "    print('test')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(2, map.size());
         assertTrue(map.containsKey(2));
@@ -119,11 +107,7 @@ public class LineTranslatorTest {
             "    print('changed')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(2, map.size());
         assertEquals("0", map.get(0).getLineNumberBeforeChange());
@@ -151,11 +135,7 @@ public class LineTranslatorTest {
             "    print('test1')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(3, map.size());
         assertTrue(map.containsKey(2));
@@ -181,11 +161,7 @@ public class LineTranslatorTest {
             "    print('test')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(2, map.size());
         assertEquals("0", map.get(0).getLineNumberBeforeChange());
@@ -212,52 +188,11 @@ public class LineTranslatorTest {
             "    print('test')\n"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(3, map.size());
         assertTrue(map.containsKey(4));
         assertEquals("1", map.get(4).getLineNumberBeforeChange());
-    }
-
-    @Test
-    public void createMoveDeleteAreIgnored() throws VcsException {
-        MetricsBackendService service = new MetricsBackendService();
-
-        Change change1 = mock(Change.class, RETURNS_DEEP_STUBS);
-        Change change2 = mock(Change.class, RETURNS_DEEP_STUBS);
-        Change change3 = mock(Change.class, RETURNS_DEEP_STUBS);
-        Change change4 = mock(Change.class, RETURNS_DEEP_STUBS);
-
-        // All non-modification changes should be ignored
-        when(change1.getType()).thenReturn(Change.Type.DELETED);
-        when(change2.getType()).thenReturn(Change.Type.NEW);
-        when(change3.getType()).thenReturn(Change.Type.MOVED);
-        when(change4.getType()).thenReturn(Change.Type.MODIFICATION);
-
-        when(change4.getBeforeRevision().getContent()).thenReturn(
-            "def f():\n" +
-                "    print('test')\n"
-        );
-
-        when(change4.getAfterRevision().getContent()).thenReturn(
-            "def f():\n" +
-                "    print('changes1')\n" +
-                "    print('test')\n"
-        );
-
-        List<Change> changes = Arrays.asList(change1, change2, change3, change4);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
-
-        assertEquals(3, map.size());
-        assertTrue(map.containsKey(2));
-        assertEquals("1", map.get(2).getLineNumberBeforeChange());
     }
 
     @Test
@@ -279,11 +214,7 @@ public class LineTranslatorTest {
                 "    print('1')\n"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         // Two of the original lines map to the same thing. One of them is very stale and therefore gets replaced
         assertEquals(3, map.size());
@@ -323,11 +254,7 @@ public class LineTranslatorTest {
             "    print('6')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(8, map.size());
         assertEquals("0", map.get(0).getLineNumberBeforeChange());
@@ -372,11 +299,7 @@ public class LineTranslatorTest {
                 "    print('6')"
         );
 
-        List<Change> changes = Collections.singletonList(change);
-
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(change);
 
         assertEquals(8, map.size());
         assertEquals("0", map.get(0).getLineNumberBeforeChange());

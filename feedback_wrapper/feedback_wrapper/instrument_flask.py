@@ -91,7 +91,6 @@ def instrument_flask(flask_app, feedback_config_filename):
         return flask_handle_exception(e)
 
     flask_app.handle_exception = instrumented_handle_exception
-    # flask_app.logger.addHandler(FeedbackLoggingHandler())
     logging.getLogger().addHandler(FeedbackLoggingHandler())
 
 

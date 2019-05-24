@@ -28,7 +28,6 @@ public class FileFeedbackWrapper {
         this.versionTranslations.put(LOCAL_VERSION, localTranslations);
         this.versionedFeedback.put(LOCAL_VERSION, new FileFeedback().versionExists(false));
 
-        assert this.sortedVersions.size() == this.versionedFeedback.size();
         assert this.sortedVersions.size() == this.versionTranslations.size() + 1;
     }
 

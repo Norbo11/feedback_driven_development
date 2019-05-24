@@ -14,22 +14,26 @@ public class LineTranslator {
 
     /**
      * Translate lines according to a list of changes.
-     * @param changes List of VCS changes - needs to contain a single change of type MODIFICATION
+     * @param change A VCS change
      * @return A map of newLineNumber -> oldLineNumber with the same size as linesToTranslate
      */
-    public static Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(List<Change> changes) throws VcsException {
-        List<Change> modifiedChanges = changes.stream().filter(c -> c.getType() == Change.Type.MODIFICATION).collect(Collectors.toList());
-
-        if (modifiedChanges.size() != 1) {
-            throw new IllegalArgumentException("Expected one modification in list of changes");
-        }
-
-        Change change = modifiedChanges.get(0);
+    public static Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(Change change) throws VcsException {
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
 
         try {
-            String before = change.getBeforeRevision().getContent();
-            String after = change.getAfterRevision().getContent();
+            String before = "";
+            String after = "";
+
+            if (change.getType() == Change.Type.MODIFICATION || change.getType() == Change.Type.MOVED) {
+                before = change.getBeforeRevision().getContent();
+                after = change.getAfterRevision().getContent();
+            } else if (change.getType() == Change.Type.NEW) {
+                before = change.getAfterRevision().getContent();
+                after = change.getAfterRevision().getContent();
+            } else if (change.getType() == Change.Type.DELETED) {
+                before = change.getBeforeRevision().getContent();
+            }
+
             final Diff.Change c = Diff.buildChanges(before, after);
 
             // Translate lines based on the change
@@ -46,6 +50,7 @@ public class LineTranslator {
                     // TODO: Return a list of line numbers which failed to be translated
                 }
             }
+
         } catch (FilesTooBigForDiffException ignored) {
         }
 

@@ -53,9 +53,7 @@ public class MetricsBackendServiceTest extends LightPlatformCodeInsightFixtureTe
 
         List<Change> changes = service.getChangesComparedToLocal(getProject(), virtualFile, "0e43d213d3048105fc2735356e21cff62c96afed");
 
-        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(
-            changes
-        );
+        Map<Integer, TranslatedLineNumber> map = LineTranslator.translateLinesAccordingToChanges(changes.get(0));
 
         assertEquals(1, map.size());
         assertTrue(map.containsKey(1));
