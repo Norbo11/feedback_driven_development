@@ -48,11 +48,10 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
             public void visitPyIfStatement(PyIfStatement ifStatement) {
                 super.visitPyIfStatement(ifStatement);
 
-                List<PyStatementPart> parts = Arrays.asList(
-                    ifStatement.getIfPart(),
-                    ifStatement.getElsePart()
-                );
-                parts.addAll(Arrays.asList(ifStatement.getElifParts()));
+                List<PyStatementPart> parts = new ArrayList<>();
+                parts.add(ifStatement.getIfPart());
+                parts.add(ifStatement.getElsePart());
+                Collections.addAll(parts, ifStatement.getElifParts());
 
                 Map<Integer, Integer> partCounts = new HashMap<>();
 
