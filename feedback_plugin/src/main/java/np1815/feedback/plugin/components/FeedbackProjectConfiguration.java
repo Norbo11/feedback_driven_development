@@ -19,10 +19,7 @@ public class FeedbackProjectConfiguration implements Configurable {
     private final FeedbackDrivenDevelopment feedbackDrivenDevelopmentComponent;
     private final Project project;
     private FeedbackDrivenDevelopment.State initialState;
-
-    private JTextField metricBackendUrlTextfield;
-    private JTextField feedbackConfigPathTextField;
-    private JCheckBox takeBackendUrlFromConfigCheckbox;
+    private FeedbackConfigurationPanel feedbackConfigPanel;
 
     public FeedbackProjectConfiguration(Project project) {
         this.project = project;
@@ -43,7 +40,8 @@ public class FeedbackProjectConfiguration implements Configurable {
     @Nullable
     @Override
     public JComponent createComponent() {
-        return new FeedbackConfigurationPanel(project, feedbackDrivenDevelopmentComponent).getRootComponent();
+        feedbackConfigPanel = new FeedbackConfigurationPanel(project, feedbackDrivenDevelopmentComponent);
+        return feedbackConfigPanel.getRootComponent();
     }
 
     @Override
@@ -59,9 +57,9 @@ public class FeedbackProjectConfiguration implements Configurable {
     @NotNull
     private FeedbackDrivenDevelopment.State getNewState() {
         FeedbackDrivenDevelopment.State state = new FeedbackDrivenDevelopment.State();
-        state.feedbackConfigPath = feedbackConfigPathTextField.getText();
-        state.metricBackendUrl = metricBackendUrlTextfield.getText();
-        state.takeMetricBackendUrlFromConfig = takeBackendUrlFromConfigCheckbox.isSelected();
+        state.feedbackConfigPath = feedbackConfigPanel.getFeedbackConfigPathTextField().getText();
+        state.metricBackendUrl = feedbackConfigPanel.getMetricBackendUrlTextField().getText();
+        state.takeMetricBackendUrlFromConfig = feedbackConfigPanel.getTakeBackendUrlFromConfigCheckBox().isSelected();
         return state;
     }
 }
