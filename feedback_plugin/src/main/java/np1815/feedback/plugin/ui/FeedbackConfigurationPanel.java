@@ -51,4 +51,16 @@ public class FeedbackConfigurationPanel {
         chooseDirectoriesToInstrumentBrowser = new TextFieldWithBrowseButton(feedbackConfigPathTextField);
         chooseDirectoriesToInstrumentBrowser.addBrowseFolderListener(new TextBrowseFolderListener(fileChooserDescriptor, project));
     }
+
+    public JCheckBox getTakeBackendUrlFromConfigCheckBox() {
+        return takeBackendUrlFromConfigCheckBox;
+    }
+
+    public JTextField getMetricBackendUrlTextField() {
+        return metricBackendUrlTextField;
+    }
+
+    public JTextField getFeedbackConfigPathTextField() {
+        return feedbackConfigPathTextField;
+    }
 }
