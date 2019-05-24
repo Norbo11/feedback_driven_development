@@ -1,7 +1,9 @@
 package np1815.feedback.plugin.util.ui;
 
+import com.google.common.collect.Streams;
 import com.intellij.ui.JBColor;
 import np1815.feedback.metricsbackend.model.LineException;
+import np1815.feedback.metricsbackend.model.LogRecord;
 import np1815.feedback.plugin.components.FeedbackColouringOptions;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
@@ -12,6 +14,7 @@ import np1815.feedback.plugin.util.backend.VersionWithLineNumber;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class FileFeedbackDisplayProvider {
@@ -121,7 +124,11 @@ public class FileFeedbackDisplayProvider {
         Optional<Double> lineGlobalAverage = fileFeedbackWrapper.getGlobalAverageForLine(line);
         String part1 = lineGlobalAverage.isPresent() ? getGlobalAverageForLine(line) : "";
         String part2 = branchProbabilities.containsKey(line) ? getBranchProbabilityForLine(line) : "";
-        return part1 + (!part1.isEmpty() && !part2.isEmpty() ? " - " : "") + part2;
+
+        List<LogRecord> logging = fileFeedbackWrapper.getLogging(line);
+        String part3 = logging.size() > 0 ? logging.size() + " log records" : "";
+
+        return Stream.of(part1, part2, part3).filter(p -> !p.equals("")).collect(Collectors.joining(" - "));
     }
 
     public String getExecutionCount(int line) {

@@ -245,7 +245,6 @@ public class FileFeedbackManager {
         FileFeedbackDisplayProvider displayProvider,
         FilePerformanceGutterProvider gutterProvider) {
 
-        // TODO: Sometimes breaks UI? look into this
         editor.getGutter().registerTextAnnotation(gutterProvider);
         
         Document document = documentManager.getDocument(file);
