@@ -33,15 +33,22 @@ public class PythonAggregatePerformanceProvider {
     private Optional<Double> getAggregatePerformanceForScope(FileFeedbackWrapper fileFeedbackWrapper, PsiElement containingScope) {
         Document document = fileDocumentManager.getDocument(file);
 
-        int from = document.getLineNumber(containingScope.getTextRange().getStartOffset());
-        int to = document.getLineNumber(containingScope.getTextRange().getEndOffset());
+        try {
+            int from = document.getLineNumber(containingScope.getTextRange().getStartOffset());
+            int to = document.getLineNumber(containingScope.getTextRange().getEndOffset());
 
-        double totalGlobalAverage = IntStream.rangeClosed(from, to).mapToDouble(i -> fileFeedbackWrapper.getGlobalAverageForLine(i).orElse(0.0)).sum();
-        return Optional.of(totalGlobalAverage);
+            double totalGlobalAverage = IntStream.rangeClosed(from, to).mapToDouble(i -> fileFeedbackWrapper.getGlobalAverageForLine(i).orElse(0.0)).sum();
+            return Optional.of(totalGlobalAverage);
+        } catch (IndexOutOfBoundsException e) {
+            // TODO: File changed in the middle of the call of this function, should handle this properly
+            e.printStackTrace();
+            return Optional.empty();
+        }
     }
 
     public Optional<Double> getAggregatePerformanceForFile(FileFeedbackWrapper fileFeedbackWrapper) {
         PsiFile psiFile = psiManager.findFile(file);
+
         assert psiFile != null;
         return getAggregatePerformanceForScope(fileFeedbackWrapper, psiFile);
     }
@@ -121,28 +128,7 @@ public class PythonAggregatePerformanceProvider {
         PyFunction function = ((PyFile) psiFile).findTopLevelFunction("branch");
         assert function != null;
 
-//        function.accept(new PyRecursiveElementVisitor() {
-//            @Override
-//            public void visitPyStatementList(PyStatementList node) {
-//                super.visitPyStatementList(node);
-//
-//                LOG.info("In statement list " + node.getText());
-//            }
-//
-//            @Override
-//            public void visitPyIfStatement(PyIfStatement node) {
-//                super.visitPyIfStatement(node);
-//
-//                LOG.info("In if statement " + node.getText())
-//                ;
-//            }
-//        });
-
-//        SyntaxTraverser.psiApi().children()
-//            SyntaxTraverser.
-
         PythonBranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, fileDocumentManager);
-
         List<DistributionEntry> performanceDistributionForElement = getPerformanceDistributionForElement(document, fileFeedbackWrapper, function.getStatementList(), branchProbabilityProvider.getBranchExecutionProbability(fileFeedbackWrapper));
         return null;
     }

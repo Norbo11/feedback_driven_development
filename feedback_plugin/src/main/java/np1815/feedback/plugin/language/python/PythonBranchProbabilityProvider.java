@@ -72,9 +72,11 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
 
                 // Compute the execution probability of each if statement branch as a fraction of the total execution count of all branches, as long as
                 // at least one of the branches was executed once
-                if (totalCount != 0) {
+                if (partCounts.values().stream().anyMatch(c -> c > 0)) {
                     for (Map.Entry<Integer, Integer> entry : partCounts.entrySet()) {
-                        executionProbabilities.put(entry.getKey(), entry.getValue() / (double) totalCount);
+                        Integer lineNumber = entry.getKey();
+                        Integer exeuctionCount = entry.getValue();
+                        executionProbabilities.put(lineNumber, exeuctionCount / (double) totalCount);
                     }
                 }
             }
