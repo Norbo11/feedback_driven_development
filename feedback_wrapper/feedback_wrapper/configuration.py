@@ -21,6 +21,9 @@ class FeedbackConfiguration():
         backend_client_config.host = config['metric_backend_url']
         self.metric_handling_api = DefaultApi(ApiClient(backend_client_config))
 
+        self.application_name = config['application_name']
+        flask_app.logger.info(f'Application name: {self.application_name}')
+
         self.git_base_path = (root_path / config['git_base_path']).resolve()
         flask_app.logger.info(f'Git base path: {self.git_base_path}')
 
@@ -34,4 +37,3 @@ class FeedbackConfiguration():
 
         flask_app.logger.info(f'Instrument directories: {[str(d) for d in self.instrument_directories]}')
 
-        self.application_name = config['application_name']

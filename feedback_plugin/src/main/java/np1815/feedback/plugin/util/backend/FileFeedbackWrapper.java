@@ -1,6 +1,7 @@
 package np1815.feedback.plugin.util.backend;
 
 import np1815.feedback.metricsbackend.model.*;
+import np1815.feedback.plugin.model.VersionRecord;
 import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 
 import java.util.*;
@@ -131,5 +132,18 @@ public class FileFeedbackWrapper {
                 .getLineFirstRequest()
             ).sorted((a, b) -> a.getStartTimestamp().compareTo(b.getStartTimestamp()))
             .collect(Collectors.toList());
+    }
+
+    public List<VersionRecord> getVersions(int line) {
+        return collectFeedbackForAllVersions(line).stream()
+            .map(vf -> {
+                FileFeedbackLines feedback = vf.getFileFeedback().getLines().get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange());
+
+                return new VersionRecord(
+                    feedback.getGeneral().getLineFirstRequest(),
+                    vf.getVersionWithLineNumber().getVersion(),
+                    feedback.getGeneral().getExecutionCount()
+                );
+            }).collect(Collectors.toList());
     }
 }

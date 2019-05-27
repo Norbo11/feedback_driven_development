@@ -1,5 +1,8 @@
 package np1815.feedback.plugin.language.python;
 
+import com.intellij.find.findUsages.FindMethodUsagesDialog;
+import com.intellij.find.findUsages.FindUsagesManager;
+import com.intellij.find.findUsages.FindUsagesUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -125,11 +128,20 @@ public class PythonAggregatePerformanceProvider {
         Document document = fileDocumentManager.getDocument(file);
         assert document != null;
 
-        PyFunction function = ((PyFile) psiFile).findTopLevelFunction("branch");
-        assert function != null;
+        psiFile.accept(new PyRecursiveElementVisitor() {
+            @Override
+            public void visitPyFunction(PyFunction node) {
+                super.visitPyFunction(node);
 
-        PythonBranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, fileDocumentManager);
-        List<DistributionEntry> performanceDistributionForElement = getPerformanceDistributionForElement(document, fileFeedbackWrapper, function.getStatementList(), branchProbabilityProvider.getBranchExecutionProbability(fileFeedbackWrapper));
+                LOG.info(node.getName());
+            }
+        });
+
+//        PyFunction function = ((PyFile) psiFile).findTopLevelFunction("branch");
+//        assert function != null;
+//
+//        PythonBranchProbabilityProvider branchProbabilityProvider = new PythonBranchProbabilityProvider(file, psiManager, fileDocumentManager);
+//        List<DistributionEntry> performanceDistributionForElement = getPerformanceDistributionForElement(document, fileFeedbackWrapper, function.getStatementList(), branchProbabilityProvider.getBranchExecutionProbability(fileFeedbackWrapper));
         return null;
     }
 

@@ -59,7 +59,7 @@ public class MetricsBackendService {
         LOG.info("File path: " + path);
 
         String applicationName = config.getApplicationName();
-        List<String> versions = new ArrayList<>(getSortedCommitsUpTillVersion(project, repository, "HEAD", 3));
+        List<String> versions = new ArrayList<>(getSortedCommitsUpTillVersion(project, repository, "HEAD", 10));
 
         Map<String, FileFeedback> versionedFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, versions, path, "beginning_of_version", null);
 

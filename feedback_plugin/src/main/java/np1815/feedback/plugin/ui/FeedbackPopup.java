@@ -1,24 +1,20 @@
 package np1815.feedback.plugin.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBTabbedPane;
 import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
-import np1815.feedback.metricsbackend.model.LineException;
-import np1815.feedback.metricsbackend.model.LogRecord;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
+import np1815.feedback.plugin.ui.table.ExceptionsTableModel;
+import np1815.feedback.plugin.ui.table.LoggingTableModel;
+import np1815.feedback.plugin.ui.table.VersionTableModel;
 import np1815.feedback.plugin.util.DateTimeUtils;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jfree.chart.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
-import java.time.format.DateTimeFormatter;
-import java.time.format.DateTimeParseException;
-import java.time.format.FormatStyle;
-import java.util.List;
 
 public class FeedbackPopup {
 
@@ -43,6 +39,7 @@ public class FeedbackPopup {
     private JBTextField performanceChartFromTextField;
     private JBTextField performanceChartToTextField;
     private JBTabbedPane tabbedPane;
+    private JBTable versionTable;
     private TableModel exceptionsTableModel;
     private PerformanceGraph performanceChart;
 
@@ -81,111 +78,25 @@ public class FeedbackPopup {
         this.performanceChartPanel.addChartMouseListener(performanceChart.getMouseListener(performanceChartPanel));
     }
 
-    public class ExceptionsTableModel extends AbstractTableModel {
-
-        private final List<LineException> exceptions;
-        private final String[] columnNames = {"Time", "Type", "Message"};
-        private final Class[] columnClasses = {String.class, String.class, String.class};
-
-        public ExceptionsTableModel(List<LineException> exceptions) {
-            super();
-
-            this.exceptions = exceptions;
-        }
-
-        @Override
-        public int getRowCount() {
-            return exceptions.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return exceptions.get(rowIndex).getExceptionTime().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
-                case 1:
-                    return exceptions.get(rowIndex).getExceptionType();
-                case 2:
-                    return exceptions.get(rowIndex).getExceptionMessage();
-            }
-            return null;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return columnClasses[columnIndex];
-        }
-    }
-
-    public class LoggingTableModel extends AbstractTableModel {
-
-        private final List<LogRecord> logRecords;
-        private final String[] columnNames = {"Time", "Logger Name", "Log Level", "Message"};
-        private final Class[] columnClasses = {String.class, String.class, String.class, String.class};
-
-        public LoggingTableModel(List<LogRecord> logRecords) {
-            super();
-
-            this.logRecords = logRecords;
-        }
-
-        @Override
-        public int getRowCount() {
-            return logRecords.size();
-        }
-
-        @Override
-        public int getColumnCount() {
-            return columnNames.length;
-        }
-
-        @Override
-        public Object getValueAt(int rowIndex, int columnIndex) {
-            switch (columnIndex) {
-                case 0:
-                    return logRecords.get(rowIndex).getLogTimestamp().format(DateTimeFormatter.ofLocalizedDateTime(FormatStyle.MEDIUM));
-                case 1:
-                    return logRecords.get(rowIndex).getLogger();
-                case 2:
-                    return logRecords.get(rowIndex).getLevel();
-                case 3:
-                    return logRecords.get(rowIndex).getMessage();
-            }
-            return null;
-        }
-
-        @Override
-        public String getColumnName(int column) {
-            return columnNames[column];
-        }
-
-        @Override
-        public Class<?> getColumnClass(int columnIndex) {
-            return columnClasses[columnIndex];
-        }
-    }
-
     public void update() {
+        // General
         lastInstrumentedVersionLabel.setText(displayProvider.getLastInstrumentedVersion(line));
         executionCountLabel.setText(displayProvider.getExecutionCount(line));
         statusLabel.setText(displayProvider.getLineStatus(line));
+        versionTable.setModel(new VersionTableModel(displayProvider.getFileFeedbackWrapper().getVersions(line)));
 
+        // Performance
         globalAverageField.setText(displayProvider.getGlobalAverageForLine(line));
-        exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
-        loggingTable.setModel(new LoggingTableModel(displayProvider.getFileFeedbackWrapper().getLogging(line)));
+        performanceChart.update(displayProvider.getFileFeedbackWrapper());
+
+        // Branches
         branchProbabilityLabel.setText(displayProvider.getBranchProbabilityForLine(line));
 
-        performanceChart.update(displayProvider.getFileFeedbackWrapper());
+        // Exceptions
+        exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
+
+        // Logging
+        loggingTable.setModel(new LoggingTableModel(displayProvider.getFileFeedbackWrapper().getLogging(line)));
     }
 
     public JPanel getRootComponent() {

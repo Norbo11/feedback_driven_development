@@ -123,6 +123,7 @@ public class FileFeedbackManager {
 
 
                 if (newFeedback != null) {
+                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
                     displayProvider.refreshFeedback(newFeedback);
                     repaintFeedback();
                 }
