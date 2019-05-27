@@ -119,8 +119,8 @@ public class FileFeedbackWrapper {
             .collect(Collectors.toList());
     }
 
-    public boolean isLineStale(int line) {
-        return getLatestAvailableVersion(line).map(versionWithLineNumber -> !versionWithLineNumber.getVersion().equals(sortedVersions.get(1))).orElse(false);
+    public Optional<Boolean> isLineStale(int line) {
+        return getLatestAvailableVersion(line).map(versionWithLineNumber -> !versionWithLineNumber.getVersion().equals(sortedVersions.get(1)));
     }
 
     public List<Request> getFirstRequestsForLine(int line) {

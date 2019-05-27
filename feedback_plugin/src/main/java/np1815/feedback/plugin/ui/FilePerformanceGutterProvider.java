@@ -6,6 +6,7 @@ import com.intellij.openapi.editor.TextAnnotationGutterProvider;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorFontType;
+import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,17 +30,16 @@ public class FilePerformanceGutterProvider implements TextAnnotationGutterProvid
     @Nullable
     @Override
     public String getToolTip(int line, Editor editor) {
-//        return feedbackDisplayProvider.getLineStatus(line);
         return null;
     }
 
     @Override
     public EditorFontType getStyle(int line, Editor editor) {
-        if (feedbackDisplayProvider.isLineStale(line)) {
-            return EditorFontType.ITALIC;
+        if (feedbackDisplayProvider.getFileFeedbackWrapper().isLineStale(line).isPresent()) {
+            return feedbackDisplayProvider.getFileFeedbackWrapper().isLineStale(line).get() ? EditorFontType.ITALIC : EditorFontType.BOLD;
         }
 
-        return EditorFontType.BOLD;
+        return EditorFontType.PLAIN;
     }
 
     @Nullable

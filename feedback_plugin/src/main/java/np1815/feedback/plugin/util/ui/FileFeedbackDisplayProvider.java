@@ -123,7 +123,10 @@ public class FileFeedbackDisplayProvider {
         List<LogRecord> logging = fileFeedbackWrapper.getLogging(line);
         String part3 = logging.size() > 0 ? logging.size() + " log records" : "";
 
-        return Stream.of(part1, part2, part3).filter(p -> !p.equals("")).collect(Collectors.joining(" - "));
+        List<LineException> exceptions = fileFeedbackWrapper.getExceptions(line);
+        String part4 = exceptions.size() > 0 ? exceptions.size() + " exceptions" : "";
+
+        return Stream.of(part1, part2, part3, part4).filter(p -> !p.equals("")).collect(Collectors.joining(" - "));
     }
 
     public String getExecutionCount(int line) {
@@ -134,11 +137,11 @@ public class FileFeedbackDisplayProvider {
         return fileFeedbackWrapper;
     }
 
-    public boolean isLineStale(int line) {
-        return fileFeedbackWrapper.isLineStale(line);
-    }
-
     public String getLineStatus(int line) {
-        return isLineStale(line) ? "Stale (Instrumented Version < Checked-Out Version)" : "Recent (Instrumented Version = Checked-Out Version)";
+        if (fileFeedbackWrapper.isLineStale(line).isPresent()) {
+            return fileFeedbackWrapper.isLineStale(line).get() ? "Stale (Instrumented Version < Checked-Out Version)" : "Recent (Instrumented Version = Checked-Out Version)";
+        }
+
+        return "N/A";
     }
 }
