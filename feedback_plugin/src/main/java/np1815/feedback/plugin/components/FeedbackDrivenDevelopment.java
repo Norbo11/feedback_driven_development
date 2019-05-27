@@ -21,6 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
+import java.time.LocalDateTime;
 
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
@@ -31,23 +32,17 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     private final Project project;
 
     public static class State {
-        public String feedbackConfigPath;
-        public String metricBackendUrl;
-        public boolean takeMetricBackendUrlFromConfig;
-        public boolean autoRefresh;
-        public int autoRefreshInterval;
-        public FeedbackColouringOptions colourFeedbackRelativeTo;
+        public String feedbackConfigPath = "";
+        public String metricBackendUrl = "";
+        public boolean takeMetricBackendUrlFromConfig = true;
+        public boolean autoRefresh = true;
+        public int autoRefreshInterval = 5;
+        public FeedbackColouringOptions colourFeedbackRelativeTo = FeedbackColouringOptions.RELATIVE_TO_FUNCTION;
+        public String fromDateTime = "now-1hour";
+        public String toDateTime = "now";
 
         // TODO: Username and password at some point. Use PasswordSafe class
         // https://www.jetbrains.org/intellij/sdk/docs/basics/persisting_sensitive_data.html
-
-        public State() {
-            this.feedbackConfigPath = "";
-            this.metricBackendUrl = "";
-            this.takeMetricBackendUrlFromConfig = true;
-            this.autoRefresh = false;
-            this.autoRefreshInterval = 5;
-        }
 
         @Override
         public boolean equals(Object obj) {
@@ -58,7 +53,9 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
                     && o.takeMetricBackendUrlFromConfig == takeMetricBackendUrlFromConfig
                     && o.autoRefresh == autoRefresh
                     && o.autoRefreshInterval == autoRefreshInterval
-                    && o.colourFeedbackRelativeTo == colourFeedbackRelativeTo;
+                    && o.colourFeedbackRelativeTo == colourFeedbackRelativeTo
+                    && o.fromDateTime.equals(fromDateTime)
+                    && o.toDateTime.equals(toDateTime);
             }
             return false;
         }

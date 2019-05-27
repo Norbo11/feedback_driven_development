@@ -1,14 +1,17 @@
 package np1815.feedback.plugin.listeners;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.event.EditorMouseMotionListener;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
+import com.intellij.openapi.ui.popup.IconButton;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.UIUtil;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.ui.FeedbackPopup;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jetbrains.annotations.NotNull;
@@ -21,6 +24,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
 
     private static final Logger LOG = Logger.getInstance(FeedbackMouseMotionListener.class);
     private static final double REQUIRED_HOVER_SECONDS = 0.5;
+    private final FeedbackDrivenDevelopment feedbackComponent;
     private final FileFeedbackDisplayProvider displayProvider;
 
     private int lineNumberLastHoveredOver;
@@ -28,7 +32,8 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
     private JBPopup popup;
     private FeedbackPopup feedbackPopup;
 
-    public FeedbackMouseMotionListener(FileFeedbackDisplayProvider displayProvider) {
+    public FeedbackMouseMotionListener(FeedbackDrivenDevelopment feedbackComponent, FileFeedbackDisplayProvider displayProvider) {
+        this.feedbackComponent = feedbackComponent;
         this.displayProvider = displayProvider;
         this.lineNumberLastHoveredOver = -1;
     }
@@ -65,14 +70,20 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
             popup.dispose();
         }
 
-        feedbackPopup = new FeedbackPopup(line, displayProvider);
+        feedbackPopup = new FeedbackPopup(feedbackComponent, line, displayProvider);
         displayProvider.addFeedbackChangeListener(feedbackPopup::update);
 
         ComponentPopupBuilder popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(feedbackPopup.getRootComponent(), feedbackPopup.getRootComponent());
+        popupBuilder.setFocusable(true);
+        popupBuilder.setMovable(true);
+        popupBuilder.setRequestFocus(true);
+        popupBuilder.setResizable(true);
+        popupBuilder.setCancelOnClickOutside(true);
+        popupBuilder.setCancelButton(new IconButton("Close", AllIcons.Windows.CloseSmall));
         popupBuilder.setTitle("Feedback Driven Development");
 
         // Remove popup if we move 2 lines away
-        popupBuilder.setCancelOnMouseOutCallback(event -> Math.abs(getLineNumber(editor, event.getPoint()) - line) > 2);
+//        popupBuilder.setCancelOnMouseOutCallback(event -> Math.abs(getLineNumber(editor, event.getPoint()) - line) > 2);
 
         popup = popupBuilder.createPopup();
         popup.show(RelativePoint.fromScreen(point));

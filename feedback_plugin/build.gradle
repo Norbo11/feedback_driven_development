@@ -17,6 +17,7 @@ dependencies {
     implementation group: 'np1815.feedback', name: 'metric_backend_client', version: '0.0.1'
     implementation group: 'org.jfree', name: 'jfreechart', version: '1.5.0'
     implementation group: 'com.google.guava', name: 'guava', version: '27.1-jre'
+    implementation group: 'joda-time', name: 'joda-time', version: '2.10.2'
 
     // YAML
     implementation group: 'com.fasterxml.jackson.dataformat', name: 'jackson-dataformat-yaml', version: '2.9.8'

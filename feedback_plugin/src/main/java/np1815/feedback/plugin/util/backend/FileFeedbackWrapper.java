@@ -40,7 +40,7 @@ public class FileFeedbackWrapper {
     }
 
     public Optional<VersionWithLineNumber> getLatestAvailableVersion(int line) {
-        return collectFeedbackForAllVersions(line).stream().findFirst().map(vf -> vf.getVersionWithLineNumber());
+        return collectFeedbackForAllVersions(line).stream().findFirst().map(VersionedFeedback::getVersionWithLineNumber);
     }
 
     private List<VersionedFeedback> collectFeedbackForAllVersions(int line) {
@@ -93,11 +93,6 @@ public class FileFeedbackWrapper {
         return getLatestAvailableVersion(line).isPresent();
     }
 
-    public Optional<Double> getGlobalAverageForFile() {
-        // TODO: Should return empty if no line in the file was profiled
-        return Optional.ofNullable(versionedFeedback.get(getLatestVersionFeedback().get()).getGlobalAverageForFile());
-    }
-
     public List<LineException> getExceptions(int line) {
         return getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getExceptions());
     }
@@ -114,17 +109,27 @@ public class FileFeedbackWrapper {
         return getLatestVersionAttributeForLine(line, 0, l -> l.getGeneral().getExecutionCount());
     }
 
-    public List<LinePerformanceRequestProfileHistory> getPerformanceHistory(int line) {
+    public List<LineExecution> getPerformanceHistory(int line) {
         return collectFeedbackForAllVersions(line).stream()
             .flatMap(vf -> vf.getFileFeedback().getLines()
                 .get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange())
                 .getPerformance()
                 .getRequestProfileHistory().stream()
-            ).sorted((a, b) -> a.getStartTimestamp().compareTo(b.getStartTimestamp()))
+            ).sorted((a, b) -> a.getProfileStartTimestamp().compareTo(b.getProfileStartTimestamp()))
             .collect(Collectors.toList());
     }
 
     public boolean isLineStale(int line) {
         return getLatestAvailableVersion(line).map(versionWithLineNumber -> !versionWithLineNumber.getVersion().equals(sortedVersions.get(1))).orElse(false);
+    }
+
+    public List<Request> getFirstRequestsForLine(int line) {
+        return collectFeedbackForAllVersions(line).stream()
+            .map(vf -> vf.getFileFeedback().getLines()
+                .get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange())
+                .getGeneral()
+                .getLineFirstRequest()
+            ).sorted((a, b) -> a.getStartTimestamp().compareTo(b.getStartTimestamp()))
+            .collect(Collectors.toList());
     }
 }

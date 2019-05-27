@@ -104,9 +104,6 @@ components:
       properties:
         version_exists:
           type: boolean
-        global_average_for_file:
-          type: number
-          format: double
         lines:
           type: object
           additionalProperties:
@@ -126,6 +123,8 @@ components:
         execution_count:
           type: integer
           format: int32
+        line_first_request:
+          $ref: '#/components/schemas/Request'
     LineExceptions:
       type: array
       items:
@@ -144,14 +143,7 @@ components:
         request_profile_history:
           type: array
           items:
-            type: object
-            properties:
-              start_timestamp:
-                type: string
-                format: date-time
-              sample_time:
-                type: number
-                format: double
+            $ref: '#/components/schemas/LineExecution'
     LineException:
       type: object
       properties:
@@ -245,3 +237,27 @@ components:
           type: string
         log_record:
           $ref: '#/components/schemas/LogRecord'
+    LineExecution:
+      type: object
+      properties:
+        profile_start_timestamp:
+          type: string
+          format: date-time
+        line_number:
+          type: integer
+        sample_time:
+          type: integer
+          format: int64
+    Request:
+      type: object
+      properties:
+        start_timestamp:
+          type: string
+          format: date-time
+        end_timestamp:
+          type: string
+          format: date-time
+        duration:
+          type: number
+          format: double
+

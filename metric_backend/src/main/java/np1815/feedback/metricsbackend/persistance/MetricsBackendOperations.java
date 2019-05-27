@@ -1,9 +1,6 @@
 package np1815.feedback.metricsbackend.persistance;
 
-import np1815.feedback.metricsbackend.model.LineException;
-import np1815.feedback.metricsbackend.model.LineGeneral;
-import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
-import np1815.feedback.metricsbackend.model.LogRecord;
+import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.metricsbackend.persistance.models.LineGlobalPerformance;
 
 import java.time.LocalDateTime;
@@ -30,9 +27,11 @@ public interface MetricsBackendOperations {
 
     public Map<Integer, LineGeneral> getGeneralFeedbackForLines(String applicationName, String version, String filename);
 
-    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename);
+    public Request getFirstRequestForLine(String applicationName, String version, String filename, int line);
 
-    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime historySinceDateTime);
+    public Map<Integer, List<LineExecution>> getPerformanceHistoryForLines(String applicationName, String version, String filename);
+
+    public Map<Integer, List<LineExecution>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime historySinceDateTime);
 
     public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message, LocalDateTime timestamp);
 

@@ -113,7 +113,7 @@ public class FileFeedbackManager {
             caretListener = new FeedbackCaretListener(this);
             editor.getCaretModel().addCaretListener(caretListener);
 
-            mouseMotionListener = new FeedbackMouseMotionListener(displayProvider);
+            mouseMotionListener = new FeedbackMouseMotionListener(feedbackComponent, displayProvider);
             editor.addEditorMouseMotionListener(mouseMotionListener);
 
 

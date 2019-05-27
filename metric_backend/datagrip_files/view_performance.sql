@@ -48,4 +48,16 @@ from "requests"."logging_lines"
    join "requests"."profile"
    on "requests"."profile"."start_timestamp" = "requests"."logging_lines"."profile_start_timestamp"
 -- where "requests"."logging_lines"."filename" = 'playground_application/controllers/uber_controller.py'
-  and "requests"."profile"."application_name" = 'uber_service'
+  and "requests"."profile"."application_name" = 'uber_service';
+
+-- Get all versions of an application and where they were released
+select distinct on (version)
+  requests.profile.start_timestamp
+  start_timestamp,
+  version
+from "requests"."profile_lines"
+   join "requests"."profile"
+   on "requests"."profile"."start_timestamp" = "requests"."profile_lines"."profile_start_timestamp"
+where "requests"."profile"."application_name" = 'ride_service'
+and requests.profile.version = '1c8425a6eb8b8b625bc7f331c5d1fb5696f52bf5'
+order by version, start_timestamp ASC;

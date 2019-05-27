@@ -51,8 +51,8 @@ public class FileFeedbackWrapperTest {
                 .status(LinePerformance.StatusEnum.PROFILED)
                 .globalAverage(100.0)
                 .requestProfileHistory(Arrays.asList(
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(100.0),
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(100.0)
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(100L),
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(100L)
                 ))
             )
         );
@@ -65,8 +65,8 @@ public class FileFeedbackWrapperTest {
                 .status(LinePerformance.StatusEnum.PROFILED)
                 .globalAverage(600.0)
                 .requestProfileHistory(Arrays.asList(
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(500.0),
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(700.0)
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(500L),
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(700L)
                 ))
             )
         );
@@ -80,8 +80,8 @@ public class FileFeedbackWrapperTest {
                 .status(LinePerformance.StatusEnum.PROFILED)
                 .globalAverage(300.0)
                 .requestProfileHistory(Arrays.asList(
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 12, 0)).sampleTime(200.0),
-                    new LinePerformanceRequestProfileHistory().startTimestamp(LocalDateTime.of(1997, 4, 10, 12, 30)).sampleTime(400.0)
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 12, 0)).sampleTime(200L),
+                    new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 12, 30)).sampleTime(400L)
                 ))
             )
         );
@@ -89,12 +89,10 @@ public class FileFeedbackWrapperTest {
         Map<String, FileFeedback> versionedFeedback = new HashMap<>();
         versionedFeedback.put("cccc", new FileFeedback()
             .versionExists(true)
-            .globalAverageForFile(400.0)
             .lines(feedbackLinesCccc));
 
         versionedFeedback.put("bbbb", new FileFeedback()
             .versionExists(true)
-            .globalAverageForFile(700.0)
             .lines(feedbackLinesBbbb));
 
         versionedFeedback.put("aaaa", new FileFeedback()
@@ -123,20 +121,20 @@ public class FileFeedbackWrapperTest {
 
     @Test
     public void performanceRequestHistoryContainsHistoryFromAllVersions() {
-        List<LinePerformanceRequestProfileHistory> performanceHistory = fileFeedbackWrapper.getPerformanceHistory(4);
+        List<LineExecution> performanceHistory = fileFeedbackWrapper.getPerformanceHistory(4);
 
         Assert.assertEquals(4, performanceHistory.size());
 
-        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 11, 0), performanceHistory.get(0).getStartTimestamp());
+        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 11, 0), performanceHistory.get(0).getProfileStartTimestamp());
         Assert.assertEquals(500.0, performanceHistory.get(0).getSampleTime(), 0.0);
 
-        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 11, 30), performanceHistory.get(1).getStartTimestamp());
+        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 11, 30), performanceHistory.get(1).getProfileStartTimestamp());
         Assert.assertEquals(700.0, performanceHistory.get(1).getSampleTime(), 0.0);
 
-        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 12, 0), performanceHistory.get(2).getStartTimestamp());
+        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 12, 0), performanceHistory.get(2).getProfileStartTimestamp());
         Assert.assertEquals(200.0, performanceHistory.get(2).getSampleTime(), 0.0);
 
-        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 12, 30), performanceHistory.get(3).getStartTimestamp());
+        Assert.assertEquals(LocalDateTime.of(1997, 4, 10, 12, 30), performanceHistory.get(3).getProfileStartTimestamp());
         Assert.assertEquals(400.0, performanceHistory.get(3).getSampleTime(), 0.0);
     }
 

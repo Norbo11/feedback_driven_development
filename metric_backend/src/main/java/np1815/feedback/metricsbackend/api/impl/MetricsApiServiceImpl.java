@@ -124,8 +124,13 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             }
 
             Map<Integer, LineGeneral> general = metricsBackendOperations.getGeneralFeedbackForLines(applicationName, version, filename);
+
+            for (Integer line : general.keySet()) {
+                general.get(line).setLineFirstRequest(metricsBackendOperations.getFirstRequestForLine(applicationName, version, filename, line));
+            }
+
             Map<Integer, LineGlobalPerformance> performance = metricsBackendOperations.getGlobalPerformanceForLines(applicationName, version, filename);
-            Map<Integer, List<LinePerformanceRequestProfileHistory>> performanceHistory;
+            Map<Integer, List<LineExecution>> performanceHistory;
 
             if (historySinceType.equals(FeedbackFilterOptions.HistorySinceTypeEnum.BEGINNING_OF_VERSION.toString())) {
                 performanceHistory = metricsBackendOperations.getPerformanceHistoryForLines(applicationName, version, filename);
@@ -140,8 +145,6 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
             Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
             Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
-
-            double globalAverageForFile = performance.values().stream().mapToDouble(LineGlobalPerformance::getAvg).sum();
 
             Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
 
@@ -160,8 +163,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
             FileFeedback fileFeedback = new FileFeedback()
                 .versionExists(versionExists)
-                .lines(lines)
-                .globalAverageForFile(globalAverageForFile);
+                .lines(lines);
 
             multiVersionFileFeedback.put(version, fileFeedback);
         }

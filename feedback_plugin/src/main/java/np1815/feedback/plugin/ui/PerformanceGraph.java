@@ -1,9 +1,11 @@
 package np1815.feedback.plugin.ui;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.JBColor;
-import np1815.feedback.metricsbackend.model.LinePerformanceRequestProfileHistory;
+import np1815.feedback.metricsbackend.model.LineExecution;
+import np1815.feedback.metricsbackend.model.Request;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
+import np1815.feedback.plugin.util.DateTimeUtils;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import org.jfree.chart.*;
 import org.jfree.chart.axis.DateAxis;
@@ -11,39 +13,41 @@ import org.jfree.chart.axis.ValueAxis;
 import org.jfree.chart.entity.ChartEntity;
 import org.jfree.chart.plot.ValueMarker;
 import org.jfree.chart.plot.XYPlot;
-import org.jfree.chart.renderer.category.StandardBarPainter;
-import org.jfree.chart.renderer.xy.XYItemRenderer;
 import org.jfree.chart.renderer.xy.XYLineAndShapeRenderer;
+import org.jfree.chart.title.LegendTitle;
 import org.jfree.chart.title.TextTitle;
-import org.jfree.chart.title.Title;
+import org.jfree.chart.ui.RectangleEdge;
 import org.jfree.chart.ui.RectangleInsets;
 import org.jfree.data.time.Millisecond;
 import org.jfree.data.time.TimeSeries;
 import org.jfree.data.time.TimeSeriesCollection;
+import org.joda.time.format.PeriodFormatter;
+import org.joda.time.format.PeriodFormatterBuilder;
 
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.Rectangle2D;
 import java.text.DateFormat;
 import java.time.*;
-import java.time.temporal.TemporalAmount;
 import java.util.Collections;
 import java.util.Date;
 import java.util.List;
-import java.util.Optional;
 import java.util.stream.Collectors;
 
 public class PerformanceGraph {
 
     private static final Logger LOG = Logger.getInstance(PerformanceGraph.class);
+    private static final TextTitle NO_PERFORMANCE_AVAILABLE_SUBTITLE = new TextTitle("No performance history available");
 
     private final TimeSeriesCollection performanceDataset;
     private final JFreeChart performanceChart;
     private final TimeSeries sampleTimeSeries;
     private final TimeSeries averageSampleTimeSeries;
+    private final FeedbackDrivenDevelopment feedbackComponent;
     private final int line;
 
-    public PerformanceGraph(int line) {
+    public PerformanceGraph(FeedbackDrivenDevelopment feedbackComponent, int line) {
+        this.feedbackComponent = feedbackComponent;
         this.line = line;
         this.performanceDataset = new TimeSeriesCollection();
         this.sampleTimeSeries = new TimeSeries("Sample Time");
@@ -117,6 +121,25 @@ public class PerformanceGraph {
         //        rend.setShadowYOffset( 0 );
         //        rend.setShadowPaint( Color.decode( "#C0C0C0"));
         //        rend.setMaximumBarWidth( 0.1);
+
+        // Legend
+        LegendItemSource[] sources = performanceChart.getLegend().getSources();
+        performanceChart.removeLegend();
+
+        LegendTitle legend = new LegendTitle(new LegendItemSource() {
+            @Override
+            public LegendItemCollection getLegendItems() {
+                LegendItemCollection legendItemCollection = new LegendItemCollection();
+                for (LegendItemSource source : sources) {
+                    legendItemCollection.addAll(source.getLegendItems());
+                }
+                legendItemCollection.add(new LegendItem("New Version", JBColor.YELLOW));
+                return legendItemCollection;
+            }
+        });
+
+        legend.setPosition(RectangleEdge.BOTTOM);
+        performanceChart.addLegend(legend);
     }
 
     public ChartMouseListener getMouseListener(ChartPanel chartPanel) {
@@ -148,25 +171,39 @@ public class PerformanceGraph {
     }
 
     public void update(FileFeedbackWrapper feedbackWrapper) {
-        //TODO: Include in display settings
+        LocalDateTime from = DateTimeUtils.parseDateTimeString(feedbackComponent.getState().fromDateTime).orElse(LocalDateTime.MIN);
+        LocalDateTime to = DateTimeUtils.parseDateTimeString(feedbackComponent.getState().toDateTime).orElse(LocalDateTime.MAX);
 
-        List<LinePerformanceRequestProfileHistory> history = feedbackWrapper.getPerformanceHistory(line).stream().filter(h -> h.getStartTimestamp()
-                .isAfter(LocalDateTime.now(ZoneId.of("UTC")).minus(Duration.ofHours(1)))).collect(Collectors.toList());
+        List<LineExecution> history = feedbackWrapper.getPerformanceHistory(line).stream().filter(h ->
+               h.getProfileStartTimestamp().isAfter(from)
+            && h.getProfileStartTimestamp().isBefore(to)).collect(Collectors.toList());
+
+        // TODO: Possible setting to allow domain range to stretch beyond the first and last point
+        // performanceChart.getXYPlot().getDomainAxis().setRange(from.toInstant(ZoneOffset.UTC).toEpochMilli(), to.toInstant(ZoneOffset.UTC).toEpochMilli());
+
+        performanceChart.getXYPlot().clearDomainMarkers();
+        sampleTimeSeries.clear();
+        averageSampleTimeSeries.clear();
+        performanceChart.removeSubtitle(NO_PERFORMANCE_AVAILABLE_SUBTITLE);
 
         if (history.size() > 0) {
-            for (LinePerformanceRequestProfileHistory h : history) {
+            for (LineExecution h : history) {
                 double average =
                     history.stream().filter(s ->
-                        s.getStartTimestamp().isBefore(h.getStartTimestamp()) || s.getStartTimestamp().isEqual(h.getStartTimestamp()))
-                    .mapToDouble(s -> s.getSampleTime()).average().orElse(0.0);
+                        s.getProfileStartTimestamp().isBefore(h.getProfileStartTimestamp()) || s.getProfileStartTimestamp().isEqual(h.getProfileStartTimestamp()))
+                    .mapToDouble(LineExecution::getSampleTime).average().orElse(0.0);
 
                 if (average != 0.0) {
-                    averageSampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getStartTimestamp().toInstant(ZoneOffset.UTC))), average);
+                    averageSampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getProfileStartTimestamp().toInstant(ZoneOffset.UTC))), average);
                 }
-                sampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getStartTimestamp().toInstant(ZoneOffset.UTC))), h.getSampleTime());
+                sampleTimeSeries.addOrUpdate(new Millisecond(Date.from(h.getProfileStartTimestamp().toInstant(ZoneOffset.UTC))), h.getSampleTime());
+            }
+
+            for (Request request : feedbackWrapper.getFirstRequestsForLine(line)) {
+                performanceChart.getXYPlot().addDomainMarker(new ValueMarker(request.getStartTimestamp().toInstant(ZoneOffset.UTC).toEpochMilli(), JBColor.YELLOW, new BasicStroke(2)));
             }
         } else {
-            performanceChart.setSubtitles(Collections.singletonList(new TextTitle("No performance history available")));
+            performanceChart.addSubtitle(NO_PERFORMANCE_AVAILABLE_SUBTITLE);
         }
     }
 }

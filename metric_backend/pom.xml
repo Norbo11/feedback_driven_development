@@ -142,7 +142,7 @@
                 ApiException.java,ApiOriginFilter.java,ApiResponseMessage.java,JacksonJsonProvider.java,LocalDateProvider.java,MetricsApi.java,MetricsApiService.java,NotFoundException.java,OffsetDateTimeProvider.java,RFC3339DateFormat.java,StringUtil.java
               </supportingFilesToGenerate>
 
-              <skipIfSpecIsUnchanged>true</skipIfSpecIsUnchanged>
+              <skipIfSpecIsUnchanged>false</skipIfSpecIsUnchanged>
 
               <configOptions>
                 <sourceFolder>java</sourceFolder>

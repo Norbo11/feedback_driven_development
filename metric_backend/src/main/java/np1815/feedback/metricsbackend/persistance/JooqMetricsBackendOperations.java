@@ -177,16 +177,33 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename) {
+    public Request getFirstRequestForLine(String applicationName, String version, String filename, int line) {
+        return dslContextFactory.create()
+            .select(
+                PROFILE.START_TIMESTAMP,
+                PROFILE.END_TIMESTAMP,
+                PROFILE.DURATION
+            )
+            .distinctOn(PROFILE.VERSION)
+            .from(PROFILE_LINES)
+            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
+            .where(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .and(PROFILE_LINES.LINE_NUMBER.eq(line))
+            .fetchOneInto(Request.class);
+    }
+
+    @Override
+    public Map<Integer, List<LineExecution>> getPerformanceHistoryForLines(String applicationName, String version, String filename) {
         return getPerformanceHistory(applicationName, version, filename, null);
     }
 
     @Override
-    public Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime since) {
+    public Map<Integer, List<LineExecution>> getPerformanceHistoryForLines(String applicationName, String version, String filename, LocalDateTime since) {
         return getPerformanceHistory(applicationName, version, filename, since);
     }
 
-    private Map<Integer, List<LinePerformanceRequestProfileHistory>> getPerformanceHistory(String applicationName, String version, String filename, LocalDateTime since) {
+    private Map<Integer, List<LineExecution>> getPerformanceHistory(String applicationName, String version, String filename, LocalDateTime since) {
         SelectConditionStep<Record3<LocalDateTime, Integer, Long>> query = dslContextFactory.create()
             .select(
                 PROFILE.START_TIMESTAMP,
@@ -205,7 +222,11 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
 
         return query
             .fetch()
-            .intoGroups(PROFILE_LINES.LINE_NUMBER, LinePerformanceRequestProfileHistory.class);
+            .intoGroups(PROFILE_LINES.LINE_NUMBER, r -> new LineExecution()
+                .profileStartTimestamp(r.get(PROFILE.START_TIMESTAMP))
+                .lineNumber(r.get(PROFILE_LINES.LINE_NUMBER))
+                .sampleTime(r.get(PROFILE_LINES.SAMPLE_TIME))
+            );
     }
 
     @Override

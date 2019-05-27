@@ -77,11 +77,6 @@ public class FileFeedbackDisplayProvider {
         return latestVersion.isPresent() ? latestVersion.get().getVersion() : "Line Not Instrumented";
     }
 
-    public String getGlobalAverageForFile(int line) {
-        Optional<Double> globalAverageForFile = fileFeedbackWrapper.getGlobalAverageForFile();
-        return globalAverageForFile.isPresent() ? String.format("%.0fms", globalAverageForFile.get()) : "File Not Profiled";
-    }
-
     public String getGlobalAverageForLine(int line) {
         Optional<Double> globalAverageForLine = fileFeedbackWrapper.getGlobalAverageForLine(line);
         return globalAverageForLine.isPresent() ? String.format("%.0fms", globalAverageForLine.get()) : "Line Not Profiled";

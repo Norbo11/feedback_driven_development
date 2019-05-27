@@ -1,16 +1,22 @@
 package np1815.feedback.plugin.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBTabbedPane;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
 import np1815.feedback.metricsbackend.model.LineException;
 import np1815.feedback.metricsbackend.model.LogRecord;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
+import np1815.feedback.plugin.util.DateTimeUtils;
 import np1815.feedback.plugin.util.ui.FileFeedbackDisplayProvider;
 import org.jfree.chart.*;
 
 import javax.swing.*;
 import javax.swing.table.*;
 import java.time.format.DateTimeFormatter;
+import java.time.format.DateTimeParseException;
 import java.time.format.FormatStyle;
 import java.util.List;
 
@@ -20,6 +26,7 @@ public class FeedbackPopup {
 
     private final int line;
     private final FileFeedbackDisplayProvider displayProvider;
+    private final FeedbackDrivenDevelopment feedbackComponent;
     private JPanel rootComponent;
     private JPanel performance;
     private JPanel exceptions;
@@ -33,17 +40,43 @@ public class FeedbackPopup {
     private ChartPanel performanceChartPanel;
     private JBTable loggingTable;
     private JLabel statusLabel;
+    private JBTextField performanceChartFromTextField;
+    private JBTextField performanceChartToTextField;
+    private JBTabbedPane tabbedPane;
     private TableModel exceptionsTableModel;
     private PerformanceGraph performanceChart;
 
-    public FeedbackPopup(int line, FileFeedbackDisplayProvider displayProvider) {
+    public FeedbackPopup(FeedbackDrivenDevelopment feedbackComponent, int line, FileFeedbackDisplayProvider displayProvider) {
+        this.feedbackComponent = feedbackComponent;
         this.line = line;
         this.displayProvider = displayProvider;
+
+        performanceChartFromTextField.setText(feedbackComponent.getState().fromDateTime);
+        performanceChartToTextField.setText(feedbackComponent.getState().toDateTime);
+
+        this.performanceChartFromTextField.addActionListener(e -> {
+            if (DateTimeUtils.parseDateTimeString(performanceChartFromTextField.getText()).isPresent()) {
+                feedbackComponent.getState().fromDateTime = this.performanceChartFromTextField.getText();
+                performanceChart.update(displayProvider.getFileFeedbackWrapper());
+            } else {
+                performanceChartFromTextField.setText("Invalid Format");
+            }
+        });
+
+        this.performanceChartToTextField.addActionListener(e -> {
+            if (DateTimeUtils.parseDateTimeString(performanceChartToTextField.getText()).isPresent()) {
+                feedbackComponent.getState().toDateTime = this.performanceChartToTextField.getText();
+                performanceChart.update(displayProvider.getFileFeedbackWrapper());
+            } else {
+                performanceChartToTextField.setText("Invalid Format");
+            }
+        });
+
         update();
     }
 
     private void createUIComponents() {
-        this.performanceChart = new PerformanceGraph(line);
+        this.performanceChart = new PerformanceGraph(feedbackComponent, line);
         this.performanceChartPanel = new ChartPanel(performanceChart.getPerformanceChart());
         this.performanceChartPanel.addChartMouseListener(performanceChart.getMouseListener(performanceChartPanel));
     }
@@ -151,6 +184,7 @@ public class FeedbackPopup {
         exceptionsTable.setModel(new ExceptionsTableModel(displayProvider.getExceptions(line)));
         loggingTable.setModel(new LoggingTableModel(displayProvider.getFileFeedbackWrapper().getLogging(line)));
         branchProbabilityLabel.setText(displayProvider.getBranchProbabilityForLine(line));
+
         performanceChart.update(displayProvider.getFileFeedbackWrapper());
     }
 
