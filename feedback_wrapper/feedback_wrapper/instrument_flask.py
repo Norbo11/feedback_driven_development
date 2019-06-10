@@ -81,6 +81,8 @@ def instrument_end(flask_app):
             if return_code == -2:
                 flask_app.logger.error(f'Request possibly ran for too short')
 
+            if return_code == 1:
+                flask_app.logger.error(f'Check that PyFlame has ptrace permissions')
             return
 
         _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
