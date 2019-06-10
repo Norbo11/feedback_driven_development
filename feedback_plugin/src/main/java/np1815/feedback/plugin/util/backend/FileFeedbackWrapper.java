@@ -107,7 +107,7 @@ public class FileFeedbackWrapper {
     }
 
     public Integer getExecutionCount(int line) {
-        return getLatestVersionAttributeForLine(line, 0, l -> l.getGeneral().getExecutionCount());
+        return getLatestVersionAttributeForLine(line, 0, l -> l.getGeneral().getProfileCount());
     }
 
     public List<LineExecution> getPerformanceHistory(int line) {
@@ -142,7 +142,7 @@ public class FileFeedbackWrapper {
                 return new VersionRecord(
                     feedback.getGeneral().getLineFirstRequest(),
                     vf.getVersionWithLineNumber().getVersion(),
-                    feedback.getGeneral().getExecutionCount()
+                    feedback.getGeneral().getProfileCount()
                 );
             }).collect(Collectors.toList());
     }

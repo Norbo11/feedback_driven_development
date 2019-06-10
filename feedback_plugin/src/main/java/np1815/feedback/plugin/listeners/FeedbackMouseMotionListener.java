@@ -79,6 +79,7 @@ public class FeedbackMouseMotionListener implements EditorMouseMotionListener {
         popupBuilder.setRequestFocus(true);
         popupBuilder.setResizable(true);
         popupBuilder.setCancelOnClickOutside(true);
+//        popupBuilder.setCancelOnWindowDeactivation(true);
         popupBuilder.setCancelButton(new IconButton("Close", AllIcons.Windows.CloseSmall));
         popupBuilder.setTitle("Feedback Driven Development");
 

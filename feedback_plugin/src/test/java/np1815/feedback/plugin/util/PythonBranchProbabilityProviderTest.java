@@ -28,9 +28,9 @@ public class PythonBranchProbabilityProviderTest extends LightPlatformCodeInsigh
         this.branchProbabilityProvider = new PythonBranchProbabilityProvider(mainFile, getPsiManager(), FileDocumentManager.getInstance());
 
         Map<String, FileFeedbackLines> feedbackMap = new HashMap<>();
-        feedbackMap.put("7", new FileFeedbackLines().general(new LineGeneral().executionCount(3)));
-        feedbackMap.put("11", new FileFeedbackLines().general(new LineGeneral().executionCount(9)));
-        feedbackMap.put("15", new FileFeedbackLines().general(new LineGeneral().executionCount(8)));
+        feedbackMap.put("7", new FileFeedbackLines().general(new LineGeneral().profileCount(3)));
+        feedbackMap.put("11", new FileFeedbackLines().general(new LineGeneral().profileCount(9)));
+        feedbackMap.put("15", new FileFeedbackLines().general(new LineGeneral().profileCount(8)));
 
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
 

@@ -48,7 +48,7 @@ public class MetricsBackendService {
         return ServiceManager.getService(MetricsBackendService.class);
     }
 
-    public FileFeedbackWrapper getMultiVersionFeedback(Project project, Repository repository, VirtualFile file, String currentVersion) throws IOException,
+    public FileFeedbackWrapper getMultiVersionFeedback(Project project, GitRepository repository, VirtualFile file, String currentVersion) throws IOException,
         VcsException {
 
         FeedbackDrivenDevelopment feedback = FeedbackDrivenDevelopment.getInstance(project);
@@ -67,32 +67,30 @@ public class MetricsBackendService {
 
         Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations = new HashMap<>();
 
-        // Iterate through all versions, translating lines between versions
-        for (String beforeVersion : new ArrayList<>(versions.subList(1, versions.size()))) {
-            LOG.info("Looking at version " + beforeVersion);
-            //TODO: Avoid cast
-            List<Change> changes = getChangesBetweenVersions(project, file, (GitRepository) repository, beforeVersion, afterVersion);
-
-            //TODO: Clean up
-            assert changes.size() <= 1;
-            if (changes.size() == 1) {
-                Map<Integer, TranslatedLineNumber> translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes.get(0));
-
-                versionTranslations.put(afterVersion, translatedLineNumbers);
-            } else {
-//                Map<Integer, TranslatedLineNumber> translatedLineNumbers
-//                versionTranslations.put(afterVersion, translatedLineNumbers);
-                //TODO: Figure out if this is the right thing to do
-                versions.remove(beforeVersion);
-            }
-            afterVersion = beforeVersion;
-        }
-
         List<Change> localChanges = getChangesComparedToLocal(project, file, versions.get(0));
         assert localChanges.size() == 1;
         assert localChanges.get(0).getType() == Change.Type.MODIFICATION;
 
         Map<Integer, TranslatedLineNumber> localTranslations = LineTranslator.translateLinesAccordingToChanges(localChanges.get(0));
+        Map<Integer, TranslatedLineNumber> previousTranslatedLineNumbers = localTranslations;
+
+        // Iterate through all versions, translating lines between versions
+        for (String beforeVersion : new ArrayList<>(versions.subList(1, versions.size()))) {
+            List<Change> changes = getChangesBetweenVersions(project, file, repository, beforeVersion, afterVersion);
+
+            Map<Integer, TranslatedLineNumber> translatedLineNumbers;
+
+            assert changes.size() <= 1;
+            if (changes.size() == 1) {
+                translatedLineNumbers = LineTranslator.translateLinesAccordingToChanges(changes.get(0));
+            } else {
+                translatedLineNumbers = previousTranslatedLineNumbers;
+            }
+            versionTranslations.put(afterVersion, translatedLineNumbers);
+
+            previousTranslatedLineNumbers = translatedLineNumbers;
+            afterVersion = beforeVersion;
+        }
 
         return new FileFeedbackWrapper(versions, versionedFeedback, versionTranslations, localTranslations);
     }

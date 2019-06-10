@@ -120,9 +120,12 @@ components:
     LineGeneral:
       type: object
       properties:
-        execution_count:
+        profile_count:
           type: integer
-          format: int32
+        exception_count:
+          type: integer
+        logging_count:
+          type: integer
         line_first_request:
           $ref: '#/components/schemas/Request'
     LineExceptions:

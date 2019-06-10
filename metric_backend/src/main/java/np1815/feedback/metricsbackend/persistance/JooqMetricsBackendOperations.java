@@ -1,11 +1,13 @@
 package np1815.feedback.metricsbackend.persistance;
 
+import com.google.common.collect.Sets;
 import np1815.feedback.metricsbackend.api.impl.DslContextFactory;
 import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.metricsbackend.persistance.models.LineGlobalPerformance;
 import org.jooq.*;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -160,7 +162,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
 
     @Override
     public Map<Integer, LineGeneral> getGeneralFeedbackForLines(String applicationName, String version, String filename) {
-        return dslContextFactory.create()
+        Map<Integer, Record2<Integer, Integer>> profileCount = dslContextFactory.create()
             .select(PROFILE_LINES.LINE_NUMBER,
                 count(PROFILE.START_TIMESTAMP).as("count")
             )
@@ -171,9 +173,48 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.VERSION.eq(version))
             .groupBy(PROFILE_LINES.FILE_NAME, PROFILE_LINES.LINE_NUMBER)
             .fetch()
-            .intoMap(PROFILE_LINES.LINE_NUMBER, r -> new LineGeneral()
-                .executionCount(r.get("count", Integer.class))
-            );
+            .intoMap(PROFILE_LINES.LINE_NUMBER);
+
+        Map<Integer, Record2<Integer, Integer>> exceptionCount = dslContextFactory.create()
+            .select(EXCEPTION_FRAMES.LINE_NUMBER,
+                count(EXCEPTION.ID).as("count")
+            )
+            .from(EXCEPTION_FRAMES)
+            .join(EXCEPTION).on(EXCEPTION.ID.eq(EXCEPTION_FRAMES.EXCEPTION_ID))
+            .join(PROFILE).on(EXCEPTION.PROFILE_START_TIMESTAMP.eq(PROFILE.START_TIMESTAMP))
+            .where(EXCEPTION_FRAMES.FILENAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .groupBy(EXCEPTION_FRAMES.FILENAME, EXCEPTION_FRAMES.LINE_NUMBER)
+            .fetch()
+            .intoMap(EXCEPTION_FRAMES.LINE_NUMBER);
+
+        Map<Integer, Record2<Integer, Integer>> logCount = dslContextFactory.create()
+            .select(LOGGING_LINES.LINE_NUMBER,
+                count(LOGGING_LINES.ID).as("count")
+            )
+            .from(LOGGING_LINES)
+            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(LOGGING_LINES.PROFILE_START_TIMESTAMP))
+            .where(LOGGING_LINES.FILENAME.eq(filename))
+            .and(PROFILE.APPLICATION_NAME.eq(applicationName))
+            .and(PROFILE.VERSION.eq(version))
+            .groupBy(LOGGING_LINES.FILENAME, LOGGING_LINES.LINE_NUMBER)
+            .fetch()
+            .intoMap(LOGGING_LINES.LINE_NUMBER);
+
+        Map<Integer, LineGeneral> generalFeedback = new HashMap<>();
+
+        Set<Integer> lines = Sets.union(logCount.keySet(), Sets.union(profileCount.keySet(), exceptionCount.keySet()));
+
+        for (int line : lines) {
+            LineGeneral general = new LineGeneral();
+            general.setProfileCount(profileCount.containsKey(line) ? profileCount.get(line).get("count", Integer.class) : 0);
+            general.setLoggingCount(logCount.containsKey(line) ? logCount.get(line).get("count", Integer.class) : 0);
+            general.setExceptionCount(exceptionCount.containsKey(line) ? exceptionCount.get(line).get("count", Integer.class) : 0);
+            generalFeedback.put(line, general);
+        }
+
+        return generalFeedback;
     }
 
     @Override
@@ -185,11 +226,17 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 PROFILE.DURATION
             )
             .distinctOn(PROFILE.VERSION)
-            .from(PROFILE_LINES)
-            .join(PROFILE).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
+            .from(PROFILE)
+            .leftJoin(PROFILE_LINES).on(PROFILE.START_TIMESTAMP.eq(PROFILE_LINES.PROFILE_START_TIMESTAMP))
+            .leftJoin(LOGGING_LINES).on(PROFILE.START_TIMESTAMP.eq(LOGGING_LINES.PROFILE_START_TIMESTAMP))
+            .leftJoin(EXCEPTION).on(PROFILE.START_TIMESTAMP.eq(EXCEPTION.PROFILE_START_TIMESTAMP))
+            .leftJoin(EXCEPTION_FRAMES).on(EXCEPTION.ID.eq(EXCEPTION_FRAMES.EXCEPTION_ID))
             .where(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
-            .and(PROFILE_LINES.LINE_NUMBER.eq(line))
+            .and(PROFILE_LINES.LINE_NUMBER.eq(line)
+                .or(LOGGING_LINES.LINE_NUMBER.eq(line)
+                .or(EXCEPTION_FRAMES.LINE_NUMBER.eq(line)))
+            )
             .fetchOneInto(Request.class);
     }
 

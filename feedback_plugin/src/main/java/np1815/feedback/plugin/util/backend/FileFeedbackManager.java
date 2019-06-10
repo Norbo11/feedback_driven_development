@@ -16,6 +16,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ui.UIUtil;
+import git4idea.repo.GitRepository;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.language.python.PythonAggregatePerformanceProvider;
 import np1815.feedback.plugin.listeners.FeedbackCaretListener;
@@ -46,7 +47,7 @@ public class FileFeedbackManager {
     private final Project project;
     private final Editor editor;
     private final VirtualFile file;
-    private final Repository repository;
+    private final GitRepository repository;
     private final MarkupModel markupModel;
     private final FileDocumentManager documentManager;
     private final PsiManager psiManager;
@@ -69,14 +70,14 @@ public class FileFeedbackManager {
      * @param project The project which we operate on, required for most IntelliJ calls
      * @param editor The editor which we want to highlight
      * @param file The file for which to fetch feedback
-     * @param repository The VCS repository for this file
+     * @param repository The git repository for this file
      * @param documentManager The document manager providing file contents for this file
      */
     public FileFeedbackManager(MetricsBackendService metricsBackend,
                                Project project,
                                Editor editor,
                                VirtualFile file,
-                               Repository repository,
+                               GitRepository repository,
                                FileDocumentManager documentManager,
                                PsiManager psiManager
                                ) {
@@ -123,7 +124,7 @@ public class FileFeedbackManager {
 
 
                 if (newFeedback != null) {
-                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
+//                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
                     displayProvider.refreshFeedback(newFeedback);
                     repaintFeedback();
                 }

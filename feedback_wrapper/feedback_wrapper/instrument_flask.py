@@ -1,207 +1,95 @@
-import argparse
-import subprocess
-import logging
-import os
-import signal
-import sys
-import pathlib
-import traceback
 import threading
+import traceback
+from multiprocessing import Process
 
-from flask import request
-from typing import List
 from datetime import datetime
 
-from metric_backend_client.models.pyflame_profile import PyflameProfile
-from metric_backend_client.models.new_line_exception import NewLineException
-from metric_backend_client.models.new_line_exception_frames import NewLineExceptionFrames
-from metric_backend_client.models.new_log_record import NewLogRecord
-from metric_backend_client.models.log_record import LogRecord
-
 from feedback_wrapper.configuration import FeedbackConfiguration
+from feedback_wrapper.instrument_exceptions import instrument_exceptions
+from feedback_wrapper.instrument_logs import instrument_logs
+from feedback_wrapper.utils import generate_flamegraph
+from feedback_wrapper.send_feedback import send_feedback
+from feedback_wrapper.instrument_performance import start_pyflame, stop_pyflame
 
-app = None
+from flask import request, after_this_request, _app_ctx_stack
+
 feedback_config = None
-instrumentation_metadata = None
-PYFLAME_ARGS = {
-    'abi': 36, # Without this, error code 1 is returned
-    'seconds': 9999,
-    'rate': 0.001, # Default is 0.01
-}
 
 
 class InstrumentationMetadata(object):
 
-    def __init__(self, request=None, pyflame_process=None, start_time=None):
-        self.request = request
-        self.pyflame_process = pyflame_process
-        self.start_time = start_time
-        self.response = None
+    def __init__(self):
+        self.request = None
+        self.pyflame_process = None
+        self.start_time = None
+        self.end_time = None
         self.stack_summary = None
         self.exception = None
         self.logging_lines = []
 
 
-class FeedbackLoggingHandler(logging.Handler):
-
-    def __init__(self):
-        super().__init__()
-        self.list = []
-        self.previous_request = None
-
-    def emit(self, record):
-
-        if request and instrumentation_metadata:
-            # New request? Reset list of logging records
-            if self.previous_request != request:
-                instrumentation_metadata.logging_lines = []
-
-            instrumentation_metadata.logging_lines.append(record)
-            self.previous_request = request
-
-
 def instrument_flask(flask_app, feedback_config_filename):
-    global app, feedback_config
-    app = flask_app
-    feedback_config = FeedbackConfiguration(flask_app, feedback_config_filename)
+    if flask_app.config['DEBUG']:
+        flask_app.logger.warning("You are currently running in debug mode. We force PRESERVE_CONTEXT_ON_EXCEPTION = False, "
+                                 "so your debugger may not work.")
 
+    # This ensures that the request is always popped and the instrumentation_end function is always called
+    flask_app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
+
+    global feedback_config
+    feedback_config = FeedbackConfiguration(flask_app, feedback_config_filename)
+    instrument_requests(flask_app)
+    instrument_exceptions(flask_app)
+    instrument_logs()
+
+
+def instrument_requests(flask_app):
     @flask_app.before_request
     def before():
-        from flask import request, after_this_request
-        global instrumentation_metadata
+        instrumentation_metadata = InstrumentationMetadata()
+        _app_ctx_stack.top.instrumentation_metadata = instrumentation_metadata
+        instrument_start(flask_app, request)
 
-        instrumentation_metadata = pyflame_profile_start(request)
-
-        @after_this_request
-        def after(response):
-            instrumentation_metadata.response = response
-            return pyflame_profile_end()
-
-    flask_handle_exception = flask_app.handle_exception
-
-    def instrumented_handle_exception(e):
-        _, _, tb = sys.exc_info()
-        stack_summary = traceback.extract_tb(tb)
-
-        instrumentation_metadata.exception = e
-        instrumentation_metadata.stack_summary = stack_summary
-
-        pyflame_profile_end()
-
-        return flask_handle_exception(e)
-
-    flask_app.handle_exception = instrumented_handle_exception
-    logging.getLogger().addHandler(FeedbackLoggingHandler())
+    @flask_app.teardown_request
+    def after(exception):
+        instrument_end(flask_app)
 
 
-def pyflame_profile_start(request):
+def instrument_start(flask_app, request):
     start_time = datetime.now()
-
-    app.logger.info(f'Start thread ID: {threading.get_ident()}')
+    flask_app.logger.info(f'Start thread ID: {threading.get_ident()}')
 
     try:
-        pid = os.getpid()
-
-        # TODO: Run forever instead of 10 seconds
-        # TODO: Don't hardcode ABI
-        # TODO: Use pyspy
-        # TODO: Look into the effects of "idle" time
-        # TODO: Look into the effects of rate
-        command = f"pyflame-bleeding " \
-            f"--threads " \
-            f"--exclude-idle " \
-            f"--abi {PYFLAME_ARGS['abi']} " \
-            f"--rate {PYFLAME_ARGS['rate']} " \
-            f"--seconds {PYFLAME_ARGS['seconds']} " \
-            f"-p {pid} "
-            # f"--flamechart "
-
-        app.logger.info(f'Running {command}')
-        process = subprocess.Popen(command.split(' '), stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-        app.logger.info(f'Ran')
+        process = start_pyflame()
     except Exception as ex:
         process = None
-        app.logger.error(f'Error while starting instrumentation: ' + str(ex))
+        flask_app.logger.error(f'Error while starting instrumentation: ' + str(ex))
 
-    return InstrumentationMetadata(request=request, pyflame_process=process, start_time=start_time)
+    _app_ctx_stack.top.instrumentation_metadata.request = request
+    _app_ctx_stack.top.instrumentation_metadata.pyflame_process = process
+    _app_ctx_stack.top.instrumentation_metadata.start_time = start_time
 
 
-def pyflame_profile_end():
+def instrument_end(flask_app):
     try:
-        def kill_process():
-            app.logger.info("Sending SIGINT to pyflame")
-            instrumentation_metadata.pyflame_process.send_signal(signal.SIGINT)
-
-            try:
-                stdout, stderr = instrumentation_metadata.pyflame_process.communicate(timeout=0.1)
-                return stdout, stderr
-            except subprocess.TimeoutExpired as e:
-                return kill_process()
-
-        stdout, stderr = kill_process()
-        return_code = instrumentation_metadata.pyflame_process.poll()
-        app.logger.info(f'Finished')
+        stdout, stderr, return_code = stop_pyflame()
+        flask_app.logger.info(f'PyFlame stopped')
 
         if return_code != 0:
-            app.logger.error(f'pyflame returned status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
+            flask_app.logger.error(f'pyflame returned non-zero status code {return_code}: \nstdout: {stdout}\nstderr: {stderr}')
 
             if return_code == -2:
-                app.logger.error(f'Request possibly ran for too short')
+                flask_app.logger.error(f'Request possibly ran for too short')
 
-            return instrumentation_metadata.response
+            return
 
-        instrumentation_metadata.end_time = datetime.now()
+        _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
 
-        exception = None
-        if instrumentation_metadata.exception is not None:
-            frames = [NewLineExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
-                      for f in instrumentation_metadata.stack_summary]
-
-            exception = NewLineException(exception_type=type(instrumentation_metadata.exception).__name__,
-                                         exception_message=str(instrumentation_metadata.exception),
-                                         frames=frames)
-
-        logging_lines = [NewLogRecord(log_record=LogRecord(log_timestamp=datetime.fromtimestamp(record.created),
-                                                           logger=record.name,
-                                                           level=record.levelname,
-                                                           message=record.msg.format(record.args)),
-                                      line_number=record.lineno,
-                                      filename=record.pathname) for record in instrumentation_metadata.logging_lines]
-
-        pyflame_profile = PyflameProfile(application_name=feedback_config.application_name,
-                                         version=feedback_config.current_version,
-                                         start_timestamp=instrumentation_metadata.start_time,
-                                         end_timestamp=instrumentation_metadata.end_time,
-                                         pyflame_output=stdout,
-                                         base_path=str(feedback_config.source_base_path),
-                                         instrument_directories=[str(d) for d in feedback_config.instrument_directories],
-                                         exception=exception,
-                                         logging_lines=logging_lines)
-
-        added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
-        app.logger.info("Recorded profile")
-
-        generate_flamegraph(feedback_config.git_base_path, stdout, added_profile_response.id)
+        send_feedback_process = Process(target=send_feedback, args=(feedback_config, _app_ctx_stack.top.instrumentation_metadata, stdout))
+        send_feedback_process.start()
+        flask_app.logger.info("Queued feedback sending process")
     except Exception as ex:
-        app.logger.error("Error while terminating instrumentation: " + str(ex))
+        flask_app.logger.error("Error while terminating instrumentation: " + str(ex))
+        traceback.print_exc()
 
-    return instrumentation_metadata.response
 
-
-def generate_flamegraph(directory, pyflame_output, profile_id):
-    command = 'flamegraph.pl'
-    process = subprocess.Popen(command.split(' '), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, universal_newlines=True)
-    stdout, stderr = process.communicate(input=pyflame_output)
-
-    filename = os.path.join(directory, 'flamegraphs', f'{profile_id}.svg')
-    with open(filename, 'w') as file:
-        file.write(stdout)
-
-    filename = os.path.join(directory, 'flamegraphs', f'{profile_id}.txt')
-    with open(filename, 'w') as file:
-        file.write(pyflame_output)
-
-    app.logger.info(f'Wrote flamegraph to: {filename}')
-
-if __name__ == "__main__":
-    main()

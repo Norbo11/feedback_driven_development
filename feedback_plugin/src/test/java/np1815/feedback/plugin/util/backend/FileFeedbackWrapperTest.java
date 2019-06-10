@@ -44,7 +44,7 @@ public class FileFeedbackWrapperTest {
 
         Map<String, FileFeedbackLines> feedbackLinesBbbb = new HashMap<>();
         feedbackLinesBbbb.put("1", new FileFeedbackLines()
-            .general(new LineGeneral().executionCount(2))
+            .general(new LineGeneral().profileCount(2))
             .exceptions(new ArrayList<>())
             .logging(new ArrayList<>())
             .performance(new LinePerformance()
@@ -58,7 +58,7 @@ public class FileFeedbackWrapperTest {
         );
 
         feedbackLinesBbbb.put("2", new FileFeedbackLines()
-            .general(new LineGeneral().executionCount(2))
+            .general(new LineGeneral().profileCount(2))
             .exceptions(new ArrayList<>())
             .logging(new ArrayList<>())
             .performance(new LinePerformance()
@@ -73,7 +73,7 @@ public class FileFeedbackWrapperTest {
 
         Map<String, FileFeedbackLines> feedbackLinesCccc = new HashMap<>();
         feedbackLinesCccc.put("3", new FileFeedbackLines()
-            .general(new LineGeneral().executionCount(2))
+            .general(new LineGeneral().profileCount(2))
             .exceptions(new ArrayList<>())
             .logging(new ArrayList<>())
             .performance(new LinePerformance()

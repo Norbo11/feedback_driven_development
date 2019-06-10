@@ -2,6 +2,7 @@ package np1815.feedback.plugin.actions;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
+import com.intellij.facet.FacetManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -14,6 +15,7 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
+import git4idea.repo.GitRepository;
 import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.util.backend.FileFeedbackManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -70,10 +72,11 @@ public class DisplayFeedbackAction extends AnAction {
         // A repository is a IntelliJ abstraction over a version control system
         Repository repository = VcsRepositoryManager.getInstance(project).getRepositoryForFile(file);
         assert repository != null;
+        assert repository instanceof GitRepository;
 
         //TODO: Test effect with multiple editors editing the same file
         if (!feedbackManagers.containsKey(file)) {
-            feedbackManagers.put(file, new FileFeedbackManager(metricsBackend, project, editor, file, repository, fileDocumentManager, psiManager));
+            feedbackManagers.put(file, new FileFeedbackManager(metricsBackend, project, editor, file, (GitRepository) repository, fileDocumentManager, psiManager));
         }
 
         boolean feedbackDisplaying = feedbackManagers.get(file).toggleFeedback();

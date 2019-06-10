@@ -61,3 +61,26 @@ from "requests"."profile_lines"
 where "requests"."profile"."application_name" = 'ride_service'
 and requests.profile.version = '1c8425a6eb8b8b625bc7f331c5d1fb5696f52bf5'
 order by version, start_timestamp ASC;
+
+select distinct on ("requests"."profile"."version")
+    "requests"."profile"."start_timestamp", "requests"."profile"."end_timestamp", "requests"."profile"."duration"
+from "requests"."profile"
+    left join "requests"."profile_lines" on "requests"."profile"."start_timestamp" = "requests"."profile_lines"."profile_start_timestamp"
+    left join "requests"."logging_lines" on "requests"."profile"."start_timestamp" = "requests"."logging_lines"."profile_start_timestamp"
+    left join "requests"."exception" on "requests"."profile"."start_timestamp" = "requests"."exception"."profile_start_timestamp"
+    left join "requests"."exception_frames" on "requests"."exception"."id" = "requests"."exception_frames"."exception_id"
+where ("requests"."profile"."application_name" = 'ride_service'
+           and "requests"."profile"."version" = 'b0da819a5f3039a1631e43655413147c8238b64b'
+           and ("requests"."profile_lines"."line_number" = 145)
+                    or "requests"."logging_lines"."line_number" = 145
+                    or "requests"."exception_frames"."line_number" = 145)
+
+select "requests"."exception_frames"."line_number",
+   count("requests"."exception".profile_start_timestamp) as "exception_count"
+from "requests"."profile"
+    join "requests".exception on profile.start_timestamp = exception.profile_start_timestamp
+    join "requests".exception_frames on exception.id = exception_frames.exception_id
+where ("requests"."exception_frames"."filename" = 'playground_application/controllers/uber_controller.py'
+   and "requests"."profile"."application_name" = 'ride_service'
+   and "requests"."profile"."version" = 'b0da819a5f3039a1631e43655413147c8238b64b')
+group by "requests"."exception_frames"."filename", "requests"."exception_frames"."line_number"

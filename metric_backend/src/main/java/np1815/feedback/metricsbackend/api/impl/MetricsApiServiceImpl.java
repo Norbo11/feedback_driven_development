@@ -146,13 +146,13 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
             Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
 
-            Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
+//            Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
 
-            Map<String, FileFeedbackLines> lines = allLineNumbers.stream()
+            Map<String, FileFeedbackLines> lines = general.keySet().stream()
                 .collect(Collectors.toMap(
                     k -> k.toString(),
                     k -> new FileFeedbackLines()
-                        .general(general.getOrDefault(k, new LineGeneral().executionCount(0)))
+                        .general(general.getOrDefault(k, new LineGeneral().profileCount(0).loggingCount(0).exceptionCount(0)))
                         .performance(new LinePerformance()
                             .globalAverage(performance.containsKey(k) ? performance.get(k).getAvg() : null)
                             .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)

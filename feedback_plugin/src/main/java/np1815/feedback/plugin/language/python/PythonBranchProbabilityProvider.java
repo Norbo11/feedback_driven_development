@@ -63,6 +63,8 @@ public class PythonBranchProbabilityProvider implements BranchProbabilityProvide
 
                 int totalCount = partCounts.values().stream().mapToInt(i -> i).sum();
 
+                // TODO: We should do the below thing always, instead of just for if-statements with no else
+
                 // If the else part is null, that means that we might never enter any branches of the if statement at all, and thus we should consider the
                 // probability relative to the parent of the if statement
                 if (ifStatement.getElsePart() == null) {

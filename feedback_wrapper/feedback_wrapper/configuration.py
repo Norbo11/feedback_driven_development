@@ -16,6 +16,8 @@ class FeedbackConfiguration():
         with (root_path / feedback_config_filepath).open('r') as config_file:
             config = yaml.load(config_file, Loader=CLoader)
 
+        flask_app.logger.info(f'Read config from: {root_path / feedback_config_filepath}')
+
         # TODO: Validate config
         backend_client_config = Configuration()
         backend_client_config.host = config['metric_backend_url']
