@@ -7,6 +7,8 @@ from feedback_wrapper.utils import generate_flamegraph
 
 
 def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
+    generate_flamegraph(feedback_config.git_base_path, pyflame_output, str(instrumentation_metadata.start_time))
+
     exception = None
     if instrumentation_metadata.exception is not None:
         frames = [NewLineExceptionFrames(filename=f.filename, line_number=f.lineno, function_name=f.name)
@@ -33,8 +35,5 @@ def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
                                      exception=exception,
                                      logging_lines=logging_lines)
 
-    added_profile_response = feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
-    generate_flamegraph(feedback_config.git_base_path, pyflame_output, added_profile_response.id)
+    feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
     current_app.logger.info("Feedback sent")
-
-    return added_profile_response
