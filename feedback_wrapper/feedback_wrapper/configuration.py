@@ -23,6 +23,9 @@ class FeedbackConfiguration():
         backend_client_config.host = config['metric_backend_url']
         self.metric_handling_api = DefaultApi(ApiClient(backend_client_config))
 
+        self.enable = config['enable'] if hasattr(config, 'enable') else True
+        self.send_to_backend = config['send_to_backend'] if hasattr(config, 'send_to_backend') else True
+
         self.application_name = config['application_name']
         flask_app.logger.info(f'Application name: {self.application_name}')
 
