@@ -4,15 +4,7 @@ import subprocess
 
 from flask import current_app, _app_ctx_stack
 
-
-PYFLAME_ARGS = {
-    'abi': 36, # Without this, error code 1 is returned
-    'seconds': 9999,
-    'rate': 0.001, # Default is 0.01
-}
-
-
-def start_pyflame():
+def start_pyflame(pyflame_args):
     pid = os.getpid()
     # TODO: Run forever instead of 10 seconds
     # TODO: Don't hardcode ABI
@@ -22,9 +14,9 @@ def start_pyflame():
     command = f"pyflame-bleeding " \
         f"--threads " \
         f"--exclude-idle " \
-        f"--abi {PYFLAME_ARGS['abi']} " \
-        f"--rate {PYFLAME_ARGS['rate']} " \
-        f"--seconds {PYFLAME_ARGS['seconds']} " \
+        f"--abi {pyflame_args['abi']} " \
+        f"--rate {pyflame_args['rate']} " \
+        f"--seconds {pyflame_args['seconds']} " \
         f"-p {pid} "
     # f"--flamechart "
     current_app.logger.info(f'Running {command}')

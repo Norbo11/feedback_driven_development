@@ -64,7 +64,7 @@ def instrument_start(flask_app, request):
     flask_app.logger.info(f'Start thread ID: {threading.get_ident()}')
 
     try:
-        process = start_pyflame()
+        process = start_pyflame(feedback_config.pyflame_args)
     except Exception as ex:
         process = None
         flask_app.logger.error(f'Error while starting instrumentation: ' + str(ex))
