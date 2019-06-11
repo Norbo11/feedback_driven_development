@@ -7,10 +7,11 @@ from metric_backend_client.api_client import ApiClient
 from metric_backend_client.api.default_api import DefaultApi
 from feedback_wrapper.version_provider import get_current_version
 
+
 PYFLAME_ARGS = {
-    'abi': 36, # Without this, error code 1 is returned
+    'abi': 36,        # Without this, error code 1 is returned
     'seconds': 9999,
-    'rate': 0.01, # Default is 0.01
+    'rate': 0.01,     # Default is 0.01
 }
 
 
@@ -31,6 +32,9 @@ class FeedbackConfiguration():
         self.metric_handling_api = DefaultApi(ApiClient(backend_client_config))
 
         self.enable = config['enable'] if 'enable' in config else True
+        self.instrument_performance = config['instrument_performance'] if 'instrument_performance' in config else True
+        self.instrument_exceptions = config['instrument_exceptions'] if 'insturment_exceptions' in config else True
+        self.instrument_logs = config['instrument_logs'] if 'instrument_logs' in config else True
         self.send_to_backend = config['send_to_backend'] if 'send_to_backend' in config else True
         self.pyflame_args = dict(PYFLAME_ARGS)
 
