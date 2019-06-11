@@ -29,6 +29,12 @@ class InstrumentationMetadata(object):
 
 
 def instrument_flask(flask_app, feedback_config_filename):
+    global feedback_config
+    feedback_config = FeedbackConfiguration(flask_app, feedback_config_filename)
+
+    if not feedback_config.enable:
+        return
+
     if flask_app.config['DEBUG']:
         flask_app.logger.warning("You are currently running in debug mode. We force PRESERVE_CONTEXT_ON_EXCEPTION = False, "
                                  "so your debugger may not work.")
@@ -36,8 +42,6 @@ def instrument_flask(flask_app, feedback_config_filename):
     # This ensures that the request is always popped and the instrumentation_end function is always called
     flask_app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
 
-    global feedback_config
-    feedback_config = FeedbackConfiguration(flask_app, feedback_config_filename)
     instrument_requests(flask_app)
     instrument_exceptions(flask_app)
     instrument_logs()
@@ -87,9 +91,10 @@ def instrument_end(flask_app):
 
         _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
 
-        send_feedback_process = Process(target=send_feedback, args=(feedback_config, _app_ctx_stack.top.instrumentation_metadata, stdout))
-        send_feedback_process.start()
-        flask_app.logger.info("Queued feedback sending process")
+        if feedback_config.send_to_backend:
+            send_feedback_process = Process(target=send_feedback, args=(feedback_config, _app_ctx_stack.top.instrumentation_metadata, stdout))
+            send_feedback_process.start()
+            flask_app.logger.info("Queued feedback sending process")
     except Exception as ex:
         flask_app.logger.error("Error while terminating instrumentation: " + str(ex))
         traceback.print_exc()
