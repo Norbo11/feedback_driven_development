@@ -1,10 +1,12 @@
 package np1815.feedback.metricsbackend.profile.parsing;
 
+import com.google.common.base.Splitter;
 import np1815.feedback.metricsbackend.profile.Profile;
 import np1815.feedback.metricsbackend.profile.ProfiledLineKey;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -21,7 +23,7 @@ public class RawPyflameParser implements PyflameParser {
         Path base = Paths.get(basePath);
         Profile profile = new Profile();
 
-        String[] lines = input.split("\n");
+        List<String> lines = Splitter.on("\n").trimResults().omitEmptyStrings().splitToList(input);
 
         int totalSamples = 0;
 

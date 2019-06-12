@@ -30,4 +30,13 @@ public class TestFlaskPyflameParser {
         Assertions.assertEquals(15, profile.getProfileForLine("app/my_app_main.py", 4).getNumberOfSamples());
         Assertions.assertEquals(22, profile.getProfileForLine("app/my_app_main.py", 10).getNumberOfSamples());
     }
+
+    @Test
+    public void testEmptyInput() {
+        String input = "";
+
+        Profile profile = flaskPyflameParser.parseFlamegraph(input, "/");
+        Assertions.assertEquals(0, profile.getTotalSamples());
+        Assertions.assertEquals(0, profile.numberOfUniqueLines());
+    }
 }
