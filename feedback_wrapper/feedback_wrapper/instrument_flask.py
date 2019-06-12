@@ -23,6 +23,7 @@ class InstrumentationMetadata(object):
     def __init__(self):
         self.request = None
         self.pyflame_process = None
+        self.pyflame_output_file_stdout = None
         self.start_time = None
         self.end_time = None
         self.start_time_with_instrumentation = None
@@ -48,13 +49,15 @@ def instrument_flask(flask_app, feedback_config_filename):
     flask_app.config['PRESERVE_CONTEXT_ON_EXCEPTION'] = False
 
     instrument_requests(flask_app)
+    flask_app.logger.info("Requests instrumented")
 
     if feedback_config.instrument_exceptions:
         instrument_exceptions(flask_app)
+        flask_app.logger.info("Exceptions instrumented")
 
     if feedback_config.instrument_logs:
         instrument_logs()
-
+        flask_app.logger.info("Logs instrumented")
 
 def instrument_requests(flask_app):
     @flask_app.before_request
@@ -115,6 +118,10 @@ def instrument_end(flask_app):
                     flask_app.logger.error(f'Check that PyFlame has ptrace permissions')
                 return
 
+            if feedback_config.save_flamegraph:
+                filename = str(_app_ctx_stack.top.instrumentation_metadata.start_time)
+                generate_flamegraph(feedback_config.git_base_path, stdout, filename)
+
         if feedback_config.send_to_backend:
             send_feedback_process = Process(target=send_feedback, args=(feedback_config, _app_ctx_stack.top.instrumentation_metadata, stdout))
             send_feedback_process.start()
@@ -122,5 +129,7 @@ def instrument_end(flask_app):
     except Exception as ex:
         flask_app.logger.error("Error while terminating instrumentation: " + str(ex))
         traceback.print_exc()
+    finally:
+        _app_ctx_stack.top.instrumentation_metadata.pyflame_output_file_stdout.close()
 
     _app_ctx_stack.top.instrumentation_metadata.end_time_with_instrumentation = datetime.now()
