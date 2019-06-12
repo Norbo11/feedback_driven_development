@@ -33,8 +33,9 @@ class FeedbackConfiguration():
 
         self.enable = config['enable'] if 'enable' in config else True
         self.instrument_performance = config['instrument_performance'] if 'instrument_performance' in config else True
-        self.instrument_exceptions = config['instrument_exceptions'] if 'insturment_exceptions' in config else True
+        self.instrument_exceptions = config['instrument_exceptions'] if 'instrument_exceptions' in config else True
         self.instrument_logs = config['instrument_logs'] if 'instrument_logs' in config else True
+        self.save_flamegraph = config['save_flamegraph'] if 'save_flamegraph' in config else True
         self.send_to_backend = config['send_to_backend'] if 'send_to_backend' in config else True
         self.pyflame_args = dict(PYFLAME_ARGS)
 
