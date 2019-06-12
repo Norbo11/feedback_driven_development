@@ -1,5 +1,6 @@
 import threading
 import traceback
+import json
 from multiprocessing import Process
 
 from datetime import datetime
@@ -10,6 +11,7 @@ from feedback_wrapper.instrument_logs import instrument_logs
 from feedback_wrapper.utils import generate_flamegraph
 from feedback_wrapper.send_feedback import send_feedback
 from feedback_wrapper.instrument_performance import start_pyflame, stop_pyflame
+from playground_application.models.number import Number
 
 from flask import request, after_this_request, _app_ctx_stack
 
@@ -23,9 +25,12 @@ class InstrumentationMetadata(object):
         self.pyflame_process = None
         self.start_time = None
         self.end_time = None
+        self.start_time_with_instrumentation = None
+        self.end_time_with_instrumentation = None
         self.stack_summary = None
         self.exception = None
         self.logging_lines = []
+        self.instrumentation_stopped = False
 
 
 def instrument_flask(flask_app, feedback_config_filename):
@@ -57,16 +62,31 @@ def instrument_requests(flask_app):
         instrumentation_metadata = InstrumentationMetadata()
         _app_ctx_stack.top.instrumentation_metadata = instrumentation_metadata
         instrument_start(flask_app, request)
+        _app_ctx_stack.top.instrumentation_metadata.start_time = datetime.now()
+
+    @flask_app.after_request
+    def after(response):
+        _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
+        instrument_end(flask_app)
+        metadata = _app_ctx_stack.top.instrumentation_metadata
+        response = flask_app.response_class(
+            response=json.dumps({
+                "request_time": (metadata.end_time_with_instrumentation - metadata.start_time_with_instrumentation).total_seconds(),
+                "controller_time": float(response.data.decode().strip())
+            }),
+            status=200,
+            mimetype='application/json'
+        )
+        return response
 
     @flask_app.teardown_request
     def after(exception):
-        instrument_end(flask_app)
+        if not _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped:
+            instrument_end(flask_app)
 
 
 def instrument_start(flask_app, request):
-    start_time = datetime.now()
-    flask_app.logger.info(f'Start thread ID: {threading.get_ident()}')
-
+    _app_ctx_stack.top.instrumentation_metadata.start_time_with_instrumentation = datetime.now()
     process = None
     try:
         if feedback_config.instrument_performance:
@@ -76,13 +96,11 @@ def instrument_start(flask_app, request):
 
     _app_ctx_stack.top.instrumentation_metadata.request = request
     _app_ctx_stack.top.instrumentation_metadata.pyflame_process = process
-    _app_ctx_stack.top.instrumentation_metadata.start_time = start_time
+    _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped = True
 
 
 def instrument_end(flask_app):
     try:
-        _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
-
         if feedback_config.instrument_performance:
             stdout, stderr, return_code = stop_pyflame()
             flask_app.logger.info(f'PyFlame stopped')
@@ -105,4 +123,4 @@ def instrument_end(flask_app):
         flask_app.logger.error("Error while terminating instrumentation: " + str(ex))
         traceback.print_exc()
 
-
+    _app_ctx_stack.top.instrumentation_metadata.end_time_with_instrumentation = datetime.now()
