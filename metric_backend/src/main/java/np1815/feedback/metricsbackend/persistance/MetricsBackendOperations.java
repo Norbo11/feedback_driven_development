@@ -36,4 +36,8 @@ public interface MetricsBackendOperations {
     public void addLoggingLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, String logger, String level, String message, LocalDateTime timestamp);
 
     public Map<Integer, List<LogRecord>> getLoggingRecordsForLines(String applicationName, String version, String filename);
+
+    public void addRequestParam(LocalDateTime profileStartTimestamp, String value, String type, String name);
+
+    public List<Request> getRequests(String applicationName, String version);
 }

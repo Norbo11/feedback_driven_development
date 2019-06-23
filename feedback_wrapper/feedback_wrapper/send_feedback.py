@@ -2,7 +2,7 @@ from datetime import datetime
 
 from flask import current_app
 
-from metric_backend_client import NewLineExceptionFrames, NewLineException, NewLogRecord, LogRecord, PyflameProfile
+from metric_backend_client import NewLineExceptionFrames, NewLineException, NewLogRecord, LogRecord, PyflameProfile, NewRequestParam
 from feedback_wrapper.utils import generate_flamegraph
 
 
@@ -15,6 +15,10 @@ def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
         exception = NewLineException(exception_type=type(instrumentation_metadata.exception).__name__,
                                      exception_message=str(instrumentation_metadata.exception),
                                      frames=frames)
+
+    request_params = [NewRequestParam(name=name, value=str(value), type=type(value).__name__) for name, value in instrumentation_metadata.request.args.items()]
+    print(request_params)
+
 
     logging_lines = [NewLogRecord(log_record=LogRecord(log_timestamp=datetime.fromtimestamp(record.created),
                                                        logger=record.name,
@@ -31,7 +35,9 @@ def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
                                      base_path=str(feedback_config.source_base_path),
                                      instrument_directories=[str(d) for d in feedback_config.instrument_directories],
                                      exception=exception,
-                                     logging_lines=logging_lines)
+                                     logging_lines=logging_lines,
+                                     request_params=request_params
+                                     )
 
     feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)
     current_app.logger.info("Feedback sent")

@@ -11,7 +11,6 @@ from feedback_wrapper.instrument_logs import instrument_logs
 from feedback_wrapper.utils import generate_flamegraph
 from feedback_wrapper.send_feedback import send_feedback
 from feedback_wrapper.instrument_performance import start_pyflame, stop_pyflame
-from playground_application.models.number import Number
 
 from flask import request, after_this_request, _app_ctx_stack
 
@@ -76,7 +75,6 @@ def instrument_requests(flask_app):
 
     @flask_app.teardown_request
     def after_teardoown(exception):
-        print(_app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped)
         if not _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped:
             _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
             instrument_end(flask_app)
@@ -88,6 +86,7 @@ def instrument_start(flask_app, request):
     try:
         if feedback_config.instrument_performance:
             process = start_pyflame(feedback_config.pyflame_args)
+
     except Exception as ex:
         flask_app.logger.error(f'Error while starting instrumentation: ' + str(ex))
 
@@ -110,7 +109,8 @@ def instrument_end(flask_app):
 
                 if return_code == 1:
                     flask_app.logger.error(f'Check that PyFlame has ptrace permissions')
-                return
+
+                stdout = ""
 
             if feedback_config.save_flamegraph:
                 filename = str(_app_ctx_stack.top.instrumentation_metadata.start_time)

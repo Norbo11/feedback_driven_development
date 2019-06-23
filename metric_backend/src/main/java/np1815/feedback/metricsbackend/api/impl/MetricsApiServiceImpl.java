@@ -1,6 +1,5 @@
 package np1815.feedback.metricsbackend.api.impl;
 
-import com.google.common.collect.Sets;
 import np1815.feedback.metricsbackend.api.ApiResponseMessage;
 import np1815.feedback.metricsbackend.api.MetricsApiService;
 import np1815.feedback.metricsbackend.api.NotFoundException;
@@ -39,7 +38,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
         metricsBackendOperations.addApplicationIfDoesntExist(pyflameProfile.getApplicationName());
 
-        LocalDateTime addedProfileId = metricsBackendOperations.addProfile(
+        LocalDateTime profileStartTimestamp = metricsBackendOperations.addProfile(
             pyflameProfile.getApplicationName(),
             pyflameProfile.getVersion(),
             pyflameProfile.getStartTimestamp(),
@@ -52,7 +51,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             long sampleTime = Math.round(fractionSpent * duration.toMillis());
 
             metricsBackendOperations.addProfileLine(
-                addedProfileId,
+                profileStartTimestamp,
                 line.getFilePath(),
                 line.getLineNumber() - 1, // Pyflame starts counting lines from 1, IntelliJ counts from 0, want DB to be consistent with IntelliJ,
                 line.getNumberOfSamples(),
@@ -63,7 +62,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
         if (pyflameProfile.getException() != null) {
             int addedExceptionId = metricsBackendOperations.addException(
-                addedProfileId,
+                profileStartTimestamp,
                 pyflameProfile.getException().getExceptionType(),
                 pyflameProfile.getException().getExceptionMessage()
             );
@@ -85,7 +84,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             String relativePath = Paths.get(pyflameProfile.getBasePath()).relativize(Paths.get(newLogRecord.getFilename())).toString();
             if (PathUtil.pathMatchesAnyGlob(relativePath, pyflameProfile.getInstrumentDirectories())) {
                 metricsBackendOperations.addLoggingLine(
-                    addedProfileId,
+                    profileStartTimestamp,
                     relativePath,
                     newLogRecord.getLineNumber() - 1,
                     record.getLogger(),
@@ -96,7 +95,15 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             }
         }
 
-        return Response.ok().entity(new AddedEntityResponse().id(addedProfileId)).build();
+        for (NewRequestParam newRequestParam : pyflameProfile.getRequestParams()) {
+            metricsBackendOperations.addRequestParam(
+                profileStartTimestamp,
+                newRequestParam.getValue(),
+                newRequestParam.getType(),
+                newRequestParam.getName());
+        }
+
+        return Response.ok().entity(new AddedEntityResponse().id(profileStartTimestamp)).build();
     }
 
     @Override
@@ -145,8 +152,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
             Map<Integer, List<LineException>> exceptions = metricsBackendOperations.getExceptionsFeedbackForLines(applicationName, version, filename);
             Map<Integer, List<LogRecord>> loggingRecords = metricsBackendOperations.getLoggingRecordsForLines(applicationName, version, filename);
-
-//            Set<Integer> allLineNumbers = Sets.union(loggingRecords.keySet(), Sets.union(general.keySet(), Sets.union(performance.keySet(), exceptions.keySet())));
+            List<Request> requests = metricsBackendOperations.getRequests(applicationName, version);
 
             Map<String, FileFeedbackLines> lines = general.keySet().stream()
                 .collect(Collectors.toMap(
@@ -154,7 +160,6 @@ public class MetricsApiServiceImpl extends MetricsApiService {
                     k -> new FileFeedbackLines()
                         .general(general.getOrDefault(k, new LineGeneral().profileCount(0).loggingCount(0).exceptionCount(0)))
                         .performance(new LinePerformance()
-                            .globalAverage(performance.containsKey(k) ? performance.get(k).getAvg() : null)
                             .status(performance.containsKey(k) ? performance.get(k).getStatus() : LinePerformance.StatusEnum.NOT_PROFILED)
                             .requestProfileHistory(performanceHistory.getOrDefault(k, new ArrayList<>())))
                         .exceptions(exceptions.getOrDefault(k, new ArrayList<>()))
@@ -163,7 +168,8 @@ public class MetricsApiServiceImpl extends MetricsApiService {
 
             FileFeedback fileFeedback = new FileFeedback()
                 .versionExists(versionExists)
-                .lines(lines);
+                .lines(lines)
+                .requests(requests);
 
             multiVersionFileFeedback.put(version, fileFeedback);
         }

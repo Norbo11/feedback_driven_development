@@ -317,4 +317,48 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.VERSION.eq(version))
             .fetchGroups(LOGGING_LINES.LINE_NUMBER, LogRecord.class);
     }
+
+    @Override
+    public void addRequestParam(LocalDateTime profileStartTimestamp, String value, String type, String name) {
+        dslContextFactory.create()
+            .insertInto(REQUEST_PARAMS)
+            .columns(
+                REQUEST_PARAMS.REQUEST_START_TIMESTAMP,
+                REQUEST_PARAMS.NAME,
+                REQUEST_PARAMS.VALUE,
+                REQUEST_PARAMS.TYPE
+            )
+            .values(
+                profileStartTimestamp,
+                name,
+                value,
+                type
+            )
+            .execute();
+    }
+
+    @Override
+    public List<Request> getRequests(String applicationName, String version) {
+        DSLContext dslContext = dslContextFactory.create();
+        List<Request> requests = dslContext
+            .select(
+                PROFILE.START_TIMESTAMP,
+                PROFILE.END_TIMESTAMP,
+                PROFILE.DURATION
+            ).from(PROFILE)
+            .where(PROFILE.APPLICATION_NAME.eq(applicationName).and(PROFILE.VERSION.eq(version)))
+            .fetchInto(Request.class);
+
+        requests.forEach(r -> {
+            List<NewRequestParam> requestParams = dslContext.select(
+                REQUEST_PARAMS.NAME,
+                REQUEST_PARAMS.VALUE,
+                REQUEST_PARAMS.TYPE
+            ).from(REQUEST_PARAMS).fetchInto(NewRequestParam.class);
+
+            r.setRequestParams(requestParams);
+        });
+
+        return requests;
+    }
 }

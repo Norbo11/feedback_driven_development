@@ -104,6 +104,10 @@ components:
       properties:
         version_exists:
           type: boolean
+        requests:
+          type: array
+          items:
+            $ref: '#/components/schemas/Request'
         lines:
           type: object
           additionalProperties:
@@ -140,9 +144,6 @@ components:
           enum:
             - not_profiled
             - profiled
-        global_average:
-          type: number
-          format: double
         request_profile_history:
           type: array
           items:
@@ -200,6 +201,10 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NewLogRecord'
+        request_params:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewRequestParam'
     AddedEntityResponse:
       type: object
       properties:
@@ -263,4 +268,16 @@ components:
         duration:
           type: number
           format: double
-
+        request_params:
+          type: array
+          items:
+            $ref: '#/components/schemas/NewRequestParam'
+    NewRequestParam:
+      type: object
+      properties:
+        name:
+          type: string
+        value:
+          type: string
+        type:
+          type: string
