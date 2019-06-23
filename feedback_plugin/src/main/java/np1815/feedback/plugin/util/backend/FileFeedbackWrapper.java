@@ -128,7 +128,7 @@ public class FileFeedbackWrapper {
 
         if (fileFeedback.getLines().containsKey(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange())) {
             T applied = function.apply(fileFeedback.getLines().get(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange()));
-            return applied.stream().filter(i -> getFilterPredicate(version).test(startTimestampFunction.apply(i))).collect(Collectors.toList());
+            return applied.stream().filter(i -> getFilterPredicate(versionWithLineNumber.getVersion()).test(startTimestampFunction.apply(i))).collect(Collectors.toList());
         }
 
         return valueIfNotPresent;
@@ -175,9 +175,9 @@ public class FileFeedbackWrapper {
     }
 
     @NotNull
-    private Predicate<LocalDateTime> getFilterPredicate(Optional<VersionWithLineNumber> version) {
+    private Predicate<LocalDateTime> getFilterPredicate(String version) {
         return startTimestamp -> {
-                Request request = versionedFeedback.get(version.get().getVersion()).getRequests().stream().filter(
+                Request request = versionedFeedback.get(version).getRequests().stream().filter(
                         r2 -> startTimestamp.equals(r2.getStartTimestamp())).findAny()
                         .orElseThrow(() -> new AssertionError("Request not present in overall request list"));
 

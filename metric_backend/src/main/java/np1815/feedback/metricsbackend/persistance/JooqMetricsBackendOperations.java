@@ -360,7 +360,8 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 REQUEST_PARAMS.NAME,
                 REQUEST_PARAMS.VALUE,
                 REQUEST_PARAMS.TYPE
-            ).from(REQUEST_PARAMS).fetchInto(NewRequestParam.class);
+            ).from(REQUEST_PARAMS).where(REQUEST_PARAMS.REQUEST_START_TIMESTAMP.eq(r.getStartTimestamp()))
+            .fetchInto(NewRequestParam.class);
 
             r.setRequestParams(requestParams);
         });
