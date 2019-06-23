@@ -1,5 +1,6 @@
 package np1815.feedback.plugin.components;
 
+import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.PropertyNamingStrategy;
 import com.fasterxml.jackson.dataformat.yaml.YAMLFactory;
@@ -12,9 +13,11 @@ import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.metricsbackend.api.DefaultApi;
 import np1815.feedback.metricsbackend.client.ApiClient;
 import np1815.feedback.plugin.config.FeedbackWrapperConfiguration;
+import np1815.feedback.plugin.util.backend.FileFeedbackManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,6 +25,10 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Paths;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 
 @State(name = "FeedbackDrivenDevelopment")
 public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentStateComponent<FeedbackDrivenDevelopment.State> {
@@ -30,6 +37,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     public static final int HIGHLIGHTER_LAYER = HighlighterLayer.SELECTION - 1;
 
     private final Project project;
+    private final Map<VirtualFile, FileFeedbackManager> feedbackManagers;
+    private final List<Runnable> multiFileFeedbackChangeListeners;
 
     public static class State {
         public String feedbackConfigPath = "";
@@ -67,6 +76,8 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
 
     public FeedbackDrivenDevelopment(Project project) {
         this.project = project;
+        this.feedbackManagers = new HashMap<>();
+        this.multiFileFeedbackChangeListeners = new ArrayList<>();
     }
 
     public static FeedbackDrivenDevelopment getInstance(Project project) {
@@ -87,6 +98,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
 
         // Feedback config format is snake_case, as per Python standards
         mapper.setPropertyNamingStrategy(PropertyNamingStrategy.SNAKE_CASE);
+        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         try {
             feedbackWrapperConfiguration = mapper.readValue(new File(state.feedbackConfigPath), FeedbackWrapperConfiguration.class);
 
@@ -138,5 +150,20 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
         return client.defaultApi();
     }
 
+    public Map<VirtualFile, FileFeedbackManager> getFeedbackManagers() {
+        return feedbackManagers;
+    }
+
+    public void addMultiFileFeedbackChangeListener(Runnable runnable) {
+        multiFileFeedbackChangeListeners.add(runnable);
+    }
+
+    public void removeMultiFileFeedbackChangeListener(Runnable runnable) {
+        multiFileFeedbackChangeListeners.remove(runnable);
+    }
+
+    public List<Runnable> getMultiFileFeedbackChangeListeners() {
+        return multiFileFeedbackChangeListeners;
+    }
 }
 

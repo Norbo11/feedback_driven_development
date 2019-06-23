@@ -59,6 +59,7 @@ def instrument_flask(flask_app, feedback_config_filename):
         instrument_logs()
         flask_app.logger.info("Logs instrumented")
 
+
 def instrument_requests(flask_app):
     @flask_app.before_request
     def before():
@@ -68,23 +69,16 @@ def instrument_requests(flask_app):
         _app_ctx_stack.top.instrumentation_metadata.start_time = datetime.now()
 
     @flask_app.after_request
-    def after(response):
+    def after_request(response):
         _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
         instrument_end(flask_app)
-        metadata = _app_ctx_stack.top.instrumentation_metadata
-        response = flask_app.response_class(
-            response=json.dumps({
-                "request_time": (metadata.end_time_with_instrumentation - metadata.start_time_with_instrumentation).total_seconds(),
-                "controller_time": float(response.data.decode().strip())
-            }),
-            status=200,
-            mimetype='application/json'
-        )
         return response
 
     @flask_app.teardown_request
-    def after(exception):
+    def after_teardoown(exception):
+        print(_app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped)
         if not _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped:
+            _app_ctx_stack.top.instrumentation_metadata.end_time = datetime.now()
             instrument_end(flask_app)
 
 
@@ -99,7 +93,7 @@ def instrument_start(flask_app, request):
 
     _app_ctx_stack.top.instrumentation_metadata.request = request
     _app_ctx_stack.top.instrumentation_metadata.pyflame_process = process
-    _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped = True
+    _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped = False
 
 
 def instrument_end(flask_app):
@@ -133,3 +127,4 @@ def instrument_end(flask_app):
         _app_ctx_stack.top.instrumentation_metadata.pyflame_output_file_stdout.close()
 
     _app_ctx_stack.top.instrumentation_metadata.end_time_with_instrumentation = datetime.now()
+    _app_ctx_stack.top.instrumentation_metadata.instrumentation_stopped = True

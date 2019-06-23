@@ -8,6 +8,7 @@ import np1815.feedback.plugin.components.FeedbackColouringOptions;
 import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.language.BranchProbabilityProvider;
 import np1815.feedback.plugin.language.python.PythonAggregatePerformanceProvider;
+import np1815.feedback.plugin.util.RegressionItem.RegressionItem;
 import np1815.feedback.plugin.util.backend.FileFeedbackWrapper;
 import np1815.feedback.plugin.util.backend.VersionWithLineNumber;
 
@@ -111,6 +112,10 @@ public class FileFeedbackDisplayProvider {
         this.branchProbabilities = branchProbabilityProvider.getBranchExecutionProbability(newFeedback);
 
         for (Runnable runnable : feedbackChangeListeners) {
+            runnable.run();
+        }
+
+        for (Runnable runnable : feedbackComponent.getMultiFileFeedbackChangeListeners()) {
             runnable.run();
         }
     }

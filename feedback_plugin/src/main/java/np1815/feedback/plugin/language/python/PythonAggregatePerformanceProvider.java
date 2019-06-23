@@ -107,10 +107,15 @@ public class PythonAggregatePerformanceProvider {
         assert document != null;
 
         PsiElement elementAtLine = psiFile.findElementAt(document.getLineStartOffset(line));
-        assert elementAtLine != null;
+        if (elementAtLine == null) {
+            return Optional.empty();
+        }
 
         PyFunction containingFunction = (PyFunction) PsiTreeUtil.findFirstParent(elementAtLine, e -> e instanceof PyFunction);
-        assert containingFunction != null;
+        if (containingFunction == null) {
+            //TODO: Lines inside module instead of the function will not work
+            return Optional.empty();
+        }
 
         return getAggregatePerformanceForScope(fileFeedbackWrapper, containingFunction);
     }

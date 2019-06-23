@@ -2,40 +2,34 @@ package np1815.feedback.plugin.actions;
 
 import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.repo.VcsRepositoryManager;
-import com.intellij.facet.FacetManager;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiManager;
 import git4idea.repo.GitRepository;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.services.MetricsBackendService;
 import np1815.feedback.plugin.util.backend.FileFeedbackManager;
 import com.intellij.openapi.diagnostic.Logger;
 
 
-import java.util.HashMap;
 import java.util.Map;
 
 public class DisplayFeedbackAction extends AnAction {
 
     private static final Logger LOG = Logger.getInstance(DisplayFeedbackAction.class);
 
-    private final Map<VirtualFile, FileFeedbackManager> feedbackManagers;
     private final MetricsBackendService metricsBackend;
 
     public DisplayFeedbackAction() {
         super();
 
         this.metricsBackend = MetricsBackendService.getInstance();
-        this.feedbackManagers = new HashMap<>();
     }
 
     @Override
@@ -44,7 +38,16 @@ public class DisplayFeedbackAction extends AnAction {
         Editor editor = event.getData(CommonDataKeys.EDITOR_EVEN_IF_INACTIVE);
         VirtualFile file = event.getData(CommonDataKeys.VIRTUAL_FILE);
 
-        event.getPresentation().setEnabled(project != null && editor != null && file != null);
+        boolean enabled = project != null && editor != null && file != null;
+        event.getPresentation().setEnabled(enabled);
+
+        if (enabled) {
+            FileFeedbackManager manager = FeedbackDrivenDevelopment.getInstance(project).getFeedbackManagers().get(file);
+            updateIcon(event, manager != null && manager.isStarted());
+        } else {
+            event.getPresentation().setIcon(AllIcons.Actions.QuickfixBulb);
+            event.getPresentation().setText("Click on the desired editor first");
+        }
     }
 
     @Override
@@ -74,6 +77,8 @@ public class DisplayFeedbackAction extends AnAction {
         assert repository != null;
         assert repository instanceof GitRepository;
 
+        Map<VirtualFile, FileFeedbackManager> feedbackManagers = FeedbackDrivenDevelopment.getInstance(project).getFeedbackManagers();
+
         //TODO: Test effect with multiple editors editing the same file
         if (!feedbackManagers.containsKey(file)) {
             feedbackManagers.put(file, new FileFeedbackManager(metricsBackend, project, editor, file, (GitRepository) repository, fileDocumentManager, psiManager));
@@ -81,6 +86,10 @@ public class DisplayFeedbackAction extends AnAction {
 
         boolean feedbackDisplaying = feedbackManagers.get(file).toggleFeedback();
 
+        updateIcon(event, feedbackDisplaying);
+    }
+
+    private void updateIcon(AnActionEvent event, boolean feedbackDisplaying) {
         if (feedbackDisplaying) {
             event.getPresentation().setIcon(AllIcons.Actions.Pause);
             event.getPresentation().setText("Pause feedback");

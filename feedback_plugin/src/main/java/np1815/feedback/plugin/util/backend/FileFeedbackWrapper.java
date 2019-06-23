@@ -2,6 +2,7 @@ package np1815.feedback.plugin.util.backend;
 
 import np1815.feedback.metricsbackend.model.*;
 import np1815.feedback.plugin.model.VersionRecord;
+import np1815.feedback.plugin.util.RegressionItem.RegressionItem;
 import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
 
 import java.util.*;
@@ -36,12 +37,32 @@ public class FileFeedbackWrapper {
         return versionTranslations.get(LOCAL_VERSION);
     }
 
-    private Optional<String> getLatestVersionFeedback() {
+    private Optional<String> getLatestVersion() {
         return sortedVersions.stream().filter(v -> versionedFeedback.get(v).getVersionExists()).findFirst();
     }
 
+    public Set<Integer> getLineNumbersForLatestAvailableVersion() {
+        Optional<String> latest = getLatestVersion();
+
+        if (latest.isPresent()) {
+            return versionedFeedback.get(latest.get()).getLines().keySet().stream().map(Integer::valueOf).collect(Collectors.toSet());
+        }
+
+        return Collections.emptySet();
+    }
+
+    public Optional<VersionWithLineNumber> getNthAvailableVersion(int line, int n) {
+        List<VersionedFeedback> feedback = collectFeedbackForAllVersions(line);
+
+        if (feedback.size() > n) {
+            return Optional.ofNullable(feedback.get(n).getVersionWithLineNumber());
+        } else {
+            return Optional.empty();
+        }
+    }
+
     public Optional<VersionWithLineNumber> getLatestAvailableVersion(int line) {
-        return collectFeedbackForAllVersions(line).stream().findFirst().map(VersionedFeedback::getVersionWithLineNumber);
+        return getNthAvailableVersion(line, 0);
     }
 
     private List<VersionedFeedback> collectFeedbackForAllVersions(int line) {
@@ -74,13 +95,17 @@ public class FileFeedbackWrapper {
     }
 
     private <T> T getLatestVersionAttributeForLine(int line, T valueIfNotPresent, Function<FileFeedbackLines, T> function) {
-        Optional<VersionWithLineNumber> latestVersion = getLatestAvailableVersion(line);
+        return getNthVersionAttributeForLine(line, 0, valueIfNotPresent, function);
+    }
 
-        if (!latestVersion.isPresent()) {
+    private <T> T getNthVersionAttributeForLine(int line, int n, T valueIfNotPresent, Function<FileFeedbackLines, T> function) {
+        Optional<VersionWithLineNumber> version = getNthAvailableVersion(line, n);
+
+        if (!version.isPresent()) {
             return valueIfNotPresent;
         }
 
-        VersionWithLineNumber versionWithLineNumber = latestVersion.get();
+        VersionWithLineNumber versionWithLineNumber = version.get();
         FileFeedback fileFeedback = versionedFeedback.get(versionWithLineNumber.getVersion());
 
         if (fileFeedback.getLines().containsKey(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange())) {
@@ -88,6 +113,28 @@ public class FileFeedbackWrapper {
         }
 
         return valueIfNotPresent;
+    }
+
+    public List<RegressionItem> getRegressions() {
+        List<RegressionItem> regressionItems = new ArrayList<>();
+
+        for (int line : getLineNumbersForLatestAvailableVersion()) {
+            List<LineExecution> current = getNthVersionAttributeForLine(line, 0, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory());
+            List<LineExecution> previous = getNthVersionAttributeForLine(line, 1, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory());
+
+            double currentMean = current.stream().mapToDouble(LineExecution::getSampleTime).average().orElse(0.0);
+            double previousMean = previous.stream().mapToDouble(LineExecution::getSampleTime).average().orElse(0.0);
+
+            if (previousMean == 0.0) {
+                continue;
+            }
+
+            // TODO: do t-test
+            double change = (currentMean - previousMean) / previousMean;
+            regressionItems.add(new RegressionItem(line, change));
+        }
+
+        return regressionItems;
     }
 
     public boolean containsFeedbackForLine(int line) {

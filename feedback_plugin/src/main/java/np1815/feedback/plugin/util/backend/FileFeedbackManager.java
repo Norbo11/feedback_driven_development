@@ -117,17 +117,34 @@ public class FileFeedbackManager {
             mouseMotionListener = new FeedbackMouseMotionListener(feedbackComponent, displayProvider);
             editor.addEditorMouseMotionListener(mouseMotionListener);
 
-
             ActionListener refreshFeedback = (e) -> {
-                LOG.info("Refreshing feedback");
-                FileFeedbackWrapper newFeedback = fetchFeedback();
+                LOG.info("Refreshing feedback...");
+                long totalDuration = 0;
 
+                long startTime = System.currentTimeMillis();
+                FileFeedbackWrapper newFeedback = fetchFeedback();
+                long endTime = System.currentTimeMillis();
+                long duration = endTime - startTime;
+                totalDuration += duration;
+                LOG.info("Fetched feedback in " + (duration) + "ms");
 
                 if (newFeedback != null) {
-//                    functionPerformanceProvider.getFeedbackForFunctionsInFile(newFeedback);
+                    startTime = System.currentTimeMillis();
                     displayProvider.refreshFeedback(newFeedback);
+                    endTime = System.currentTimeMillis();
+                    duration = endTime - startTime;
+                    totalDuration += duration;
+                    LOG.info("Processed feedback in " + (duration) + "ms");
+
+                    startTime = System.currentTimeMillis();
                     repaintFeedback();
+                    endTime = System.currentTimeMillis();
+                    duration = endTime - startTime;
+                    totalDuration += duration;
+                    LOG.info("Repainted feedback in " + (duration) + "ms");
                 }
+
+                LOG.info("Feedback refreshed (total " + duration + "ms)");
             };
 
             if (feedbackComponent.getState().autoRefresh) {
@@ -266,4 +283,15 @@ public class FileFeedbackManager {
         }
     }
 
+    public VirtualFile getFile() {
+        return file;
+    }
+
+    public FileFeedbackDisplayProvider getDisplayProvider() {
+        return displayProvider;
+    }
+
+    public boolean isStarted() {
+        return started;
+    }
 }

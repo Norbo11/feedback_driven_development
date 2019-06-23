@@ -57,12 +57,14 @@ public class MetricsBackendService {
 
         String path = getMetricBackendPath(file, feedback);
         LOG.info("File path: " + path);
+        LOG.info("Application name: " + feedback.getFeedbackWrapperConfiguration().getApplicationName());
 
         String applicationName = config.getApplicationName();
         List<String> versions = new ArrayList<>(getSortedCommitsUpTillVersion(project, repository, "HEAD", 10));
 
         Map<String, FileFeedback> versionedFeedback = feedback.getApiClient().getFeedbackForFile(applicationName, versions, path, "beginning_of_version", null);
 
+        long startTime = System.currentTimeMillis();
         String afterVersion = versions.get(0);
 
         Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations = new HashMap<>();
@@ -76,7 +78,11 @@ public class MetricsBackendService {
 
         // Iterate through all versions, translating lines between versions
         for (String beforeVersion : new ArrayList<>(versions.subList(1, versions.size()))) {
+            long startTime2 = System.currentTimeMillis();
+            long startTime3 = System.currentTimeMillis();
             List<Change> changes = getChangesBetweenVersions(project, file, repository, beforeVersion, afterVersion);
+            long endTime3 = System.currentTimeMillis();
+            LOG.info("Changes fetched in " + (endTime3 - startTime3) + "ms");
 
             Map<Integer, TranslatedLineNumber> translatedLineNumbers;
 
@@ -90,7 +96,12 @@ public class MetricsBackendService {
 
             previousTranslatedLineNumbers = translatedLineNumbers;
             afterVersion = beforeVersion;
+            long endTime2 = System.currentTimeMillis();
+            LOG.info("Translation map for [" + beforeVersion + "->" + afterVersion + "] created for " + file + " in " + (endTime2 - startTime2) + "ms");
         }
+
+        long endTime = System.currentTimeMillis();
+        LOG.info("All lines translated in " + (endTime - startTime) + "ms");
 
         return new FileFeedbackWrapper(versions, versionedFeedback, versionTranslations, localTranslations);
     }

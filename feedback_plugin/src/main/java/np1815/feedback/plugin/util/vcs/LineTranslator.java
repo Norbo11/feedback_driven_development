@@ -1,16 +1,20 @@
 package np1815.feedback.plugin.util.vcs;
 
 import com.google.common.base.Splitter;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.util.diff.Diff;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import np1815.feedback.plugin.actions.DisplayFeedbackAction;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 public class LineTranslator {
+    public static final Logger LOG = Logger.getInstance(LineTranslator.class);
 
     /**
      * Translate lines according to a list of changes.
@@ -18,6 +22,7 @@ public class LineTranslator {
      * @return A map of newLineNumber -> oldLineNumber with the same size as linesToTranslate
      */
     public static Map<Integer, TranslatedLineNumber> translateLinesAccordingToChanges(Change change) throws VcsException {
+        long startTime = System.currentTimeMillis();
         Map<Integer, TranslatedLineNumber> translatedLineNumbers = new HashMap<>();
 
         try {
@@ -53,6 +58,9 @@ public class LineTranslator {
 
         } catch (FilesTooBigForDiffException ignored) {
         }
+
+        long endTime = System.currentTimeMillis();
+        LOG.info("Lines translated in " + (endTime - startTime) + "ms");
 
         return translatedLineNumbers;
     }

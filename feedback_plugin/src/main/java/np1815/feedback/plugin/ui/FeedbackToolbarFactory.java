@@ -14,13 +14,18 @@ public class FeedbackToolbarFactory implements ToolWindowFactory {
     public void createToolWindowContent(@NotNull Project project, @NotNull ToolWindow toolWindow) {
         FeedbackToolbar feedbackToolbar = new FeedbackToolbar(project, toolWindow);
         FeedbackConfigurationPanel feedbackConfigurationPanel = new FeedbackConfigurationPanel(project, FeedbackDrivenDevelopment.getInstance(project));
+        FeedbackRegressionsPanel feedbackRegressionsPanel = new FeedbackRegressionsPanel(FeedbackDrivenDevelopment.getInstance(project));
+        FeedbackFiltersPanel feedbackFiltersPanel = new FeedbackFiltersPanel(FeedbackDrivenDevelopment.getInstance(project));
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
+
         Content displaySettings = contentFactory.createContent(feedbackToolbar.getRootComponent(), "Display Settings", false);
-        Content feedbackConfiguration = contentFactory.createContent(feedbackConfigurationPanel.getRootComponent(), "Feedback Configuration", false);
+        Content regressionsList = contentFactory.createContent(feedbackRegressionsPanel.getRootComponent(), "Regressions & Improvements", false);
+        Content filters = contentFactory.createContent(feedbackFiltersPanel.getRootComponent(), "Filters", false);
 
         toolWindow.getContentManager().addContent(displaySettings);
-        toolWindow.getContentManager().addContent(feedbackConfiguration);
+        toolWindow.getContentManager().addContent(regressionsList);
+        toolWindow.getContentManager().addContent(filters);
     }
 
     @Override
