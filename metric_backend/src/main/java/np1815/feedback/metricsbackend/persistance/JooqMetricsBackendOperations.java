@@ -47,21 +47,23 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     }
 
     @Override
-    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration) {
+    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, String urlRule, long duration) {
         return dslContextFactory.create().insertInto(PROFILE)
             .columns(
                 PROFILE.APPLICATION_NAME,
                 PROFILE.VERSION,
                 PROFILE.DURATION,
                 PROFILE.START_TIMESTAMP,
-                PROFILE.END_TIMESTAMP
+                PROFILE.END_TIMESTAMP,
+                PROFILE.URL_RULE
             )
             .values(
                 applicationName,
                 version,
                 duration,
                 startTime,
-                endTime
+                endTime,
+                urlRule
             )
             .returningResult(PROFILE.START_TIMESTAMP)
             .fetchOne()
@@ -142,8 +144,9 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     public Map<Integer, List<LineException>> getExceptionsFeedbackForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(
-                EXCEPTION_FRAMES.LINE_NUMBER,
+                PROFILE.START_TIMESTAMP,
                 PROFILE.END_TIMESTAMP,
+                EXCEPTION_FRAMES.LINE_NUMBER,
                 EXCEPTION.EXCEPTION_TYPE,
                 EXCEPTION.EXCEPTION_MESSAGE
             )
@@ -154,6 +157,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .and(PROFILE.APPLICATION_NAME.eq(applicationName))
             .and(PROFILE.VERSION.eq(version))
             .fetchGroups(EXCEPTION_FRAMES.LINE_NUMBER, r -> new LineException()
+                .profileStartTimestamp(r.get(PROFILE.START_TIMESTAMP))
                 .exceptionTime(r.get(PROFILE.END_TIMESTAMP))
                 .exceptionType(r.get(EXCEPTION.EXCEPTION_TYPE))
                 .exceptionMessage(r.get(EXCEPTION.EXCEPTION_MESSAGE))
@@ -304,6 +308,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
     public Map<Integer, List<LogRecord>> getLoggingRecordsForLines(String applicationName, String version, String filename) {
         return dslContextFactory.create()
             .select(
+                LOGGING_LINES.PROFILE_START_TIMESTAMP,
                 LOGGING_LINES.LINE_NUMBER,
                 LOGGING_LINES.LOG_TIMESTAMP,
                 LOGGING_LINES.LEVEL,
@@ -344,7 +349,8 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
             .select(
                 PROFILE.START_TIMESTAMP,
                 PROFILE.END_TIMESTAMP,
-                PROFILE.DURATION
+                PROFILE.DURATION,
+                PROFILE.URL_RULE
             ).from(PROFILE)
             .where(PROFILE.APPLICATION_NAME.eq(applicationName).and(PROFILE.VERSION.eq(version)))
             .fetchInto(Request.class);

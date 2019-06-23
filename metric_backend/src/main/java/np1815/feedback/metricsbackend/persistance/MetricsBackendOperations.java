@@ -11,7 +11,7 @@ import java.util.Set;
 public interface MetricsBackendOperations {
     public void addProfileLine(LocalDateTime profileStartTimestamp, String filePath, int lineNumber, int numberOfSamples, long sampleTime, String functionName);
 
-    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, long duration);
+    public LocalDateTime addProfile(String applicationName, String version, LocalDateTime startTime, LocalDateTime endTime, String urlRule, long duration);
 
     public Set<String> getApplicationVersions(String applicationName);
 

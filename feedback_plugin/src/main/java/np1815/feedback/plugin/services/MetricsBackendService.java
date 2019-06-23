@@ -103,7 +103,7 @@ public class MetricsBackendService {
         long endTime = System.currentTimeMillis();
         LOG.info("All lines translated in " + (endTime - startTime) + "ms");
 
-        return new FileFeedbackWrapper(versions, versionedFeedback, versionTranslations, localTranslations);
+        return new FileFeedbackWrapper(feedback.getFilters(), versions, versionedFeedback, versionTranslations, localTranslations);
     }
 
     /**

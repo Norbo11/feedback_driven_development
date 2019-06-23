@@ -15,7 +15,7 @@ public class FeedbackToolbarFactory implements ToolWindowFactory {
         FeedbackToolbar feedbackToolbar = new FeedbackToolbar(project, toolWindow);
         FeedbackConfigurationPanel feedbackConfigurationPanel = new FeedbackConfigurationPanel(project, FeedbackDrivenDevelopment.getInstance(project));
         FeedbackRegressionsPanel feedbackRegressionsPanel = new FeedbackRegressionsPanel(FeedbackDrivenDevelopment.getInstance(project));
-        FeedbackFiltersPanel feedbackFiltersPanel = new FeedbackFiltersPanel(FeedbackDrivenDevelopment.getInstance(project));
+        FeedbackFiltersPanel feedbackFiltersPanel = new FeedbackFiltersPanel(project, FeedbackDrivenDevelopment.getInstance(project));
 
         ContentFactory contentFactory = ContentFactory.SERVICE.getInstance();
 

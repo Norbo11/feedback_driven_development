@@ -1,19 +1,27 @@
 package np1815.feedback.plugin.util.backend;
 
 import np1815.feedback.metricsbackend.model.*;
+import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.model.VersionRecord;
+import np1815.feedback.plugin.util.FeedbackFilter;
 import np1815.feedback.plugin.util.RegressionItem.RegressionItem;
 import np1815.feedback.plugin.util.vcs.TranslatedLineNumber;
+import org.jetbrains.annotations.NotNull;
 
+import java.time.LocalDateTime;
 import java.util.*;
 import java.util.List;
 import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class FileFeedbackWrapper {
 
     private static final String LOCAL_VERSION = "#LOCAL#";
     private final List<String> sortedVersions;
+    private final Map<Integer, TranslatedLineNumber> localTranslations;
+    private final Map<String, FeedbackFilter> filters;
     private final Map<String, FileFeedback> versionedFeedback;
     private final Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations;
 
@@ -21,10 +29,20 @@ public class FileFeedbackWrapper {
                                Map<String, FileFeedback> versionedFeedback,
                                Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations,
                                Map<Integer, TranslatedLineNumber> localTranslations) {
+        this(Collections.emptyMap(), sortedVersions, versionedFeedback, versionTranslations, localTranslations);
+    }
+
+    public FileFeedbackWrapper(Map<String, FeedbackFilter> filters,
+                               List<String> sortedVersions,
+                               Map<String, FileFeedback> versionedFeedback,
+                               Map<String, Map<Integer, TranslatedLineNumber>> versionTranslations,
+                               Map<Integer, TranslatedLineNumber> localTranslations) {
+        this.filters = filters;
 
         this.versionedFeedback = versionedFeedback;
         this.versionTranslations = versionTranslations;
         this.sortedVersions = new ArrayList<>(sortedVersions);
+        this.localTranslations = localTranslations;
 
         this.sortedVersions.add(0, LOCAL_VERSION);
         this.versionTranslations.put(LOCAL_VERSION, localTranslations);
@@ -94,11 +112,11 @@ public class FileFeedbackWrapper {
         return feedbacks;
     }
 
-    private <T> T getLatestVersionAttributeForLine(int line, T valueIfNotPresent, Function<FileFeedbackLines, T> function) {
-        return getNthVersionAttributeForLine(line, 0, valueIfNotPresent, function);
+    private <T extends List<V>, V> List<V> getLatestVersionAttributeForLine(int line, T valueIfNotPresent, Function<FileFeedbackLines, T> function, Function<V, LocalDateTime> startTimestampFunction) {
+        return getNthVersionAttributeForLine(line, 0, valueIfNotPresent, function, startTimestampFunction);
     }
 
-    private <T> T getNthVersionAttributeForLine(int line, int n, T valueIfNotPresent, Function<FileFeedbackLines, T> function) {
+    private <T extends List<V>, V> List<V> getNthVersionAttributeForLine(int line, int n, T valueIfNotPresent, Function<FileFeedbackLines, T> function, Function<V, LocalDateTime> startTimestampFunction) {
         Optional<VersionWithLineNumber> version = getNthAvailableVersion(line, n);
 
         if (!version.isPresent()) {
@@ -109,7 +127,8 @@ public class FileFeedbackWrapper {
         FileFeedback fileFeedback = versionedFeedback.get(versionWithLineNumber.getVersion());
 
         if (fileFeedback.getLines().containsKey(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange())) {
-            return function.apply(fileFeedback.getLines().get(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange()));
+            T applied = function.apply(fileFeedback.getLines().get(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange()));
+            return applied.stream().filter(i -> getFilterPredicate(version).test(startTimestampFunction.apply(i))).collect(Collectors.toList());
         }
 
         return valueIfNotPresent;
@@ -119,8 +138,8 @@ public class FileFeedbackWrapper {
         List<RegressionItem> regressionItems = new ArrayList<>();
 
         for (int line : getLineNumbersForLatestAvailableVersion()) {
-            List<LineExecution> current = getNthVersionAttributeForLine(line, 0, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory());
-            List<LineExecution> previous = getNthVersionAttributeForLine(line, 1, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory());
+            List<LineExecution> current = getNthVersionAttributeForLine(line, 0, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory(), p -> p.getProfileStartTimestamp());
+            List<LineExecution> previous = getNthVersionAttributeForLine(line, 1, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory(), p -> p.getProfileStartTimestamp());
 
             double currentMean = current.stream().mapToDouble(LineExecution::getSampleTime).average().orElse(0.0);
             double previousMean = previous.stream().mapToDouble(LineExecution::getSampleTime).average().orElse(0.0);
@@ -142,19 +161,33 @@ public class FileFeedbackWrapper {
     }
 
     public List<LineException> getExceptions(int line) {
-        return getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getExceptions());
+        return getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getExceptions(), e -> e.getProfileStartTimestamp());
     }
 
     public List<LogRecord> getLogging(int line) {
-        return getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getLogging());
+        return getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getLogging(), l -> l.getProfileStartTimestamp());
     }
 
     public Optional<Double> getGlobalAverageForLine(int line) {
-        return getLatestVersionAttributeForLine(line, Optional.empty(), l -> Optional.ofNullable(l.getPerformance().getGlobalAverage()));
+        List<LineExecution> filteredHistory = getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory(), p -> p.getProfileStartTimestamp());
+        OptionalDouble average = filteredHistory.stream().mapToLong(f -> f.getSampleTime()).average();
+        return average.isPresent() ? Optional.of(average.getAsDouble()) : Optional.empty();
+    }
+
+    @NotNull
+    private Predicate<LocalDateTime> getFilterPredicate(Optional<VersionWithLineNumber> version) {
+        return startTimestamp -> {
+                Request request = versionedFeedback.get(version.get().getVersion()).getRequests().stream().filter(
+                        r2 -> startTimestamp.equals(r2.getStartTimestamp())).findAny()
+                        .orElseThrow(() -> new AssertionError("Request not present in overall request list"));
+
+                return filters.values().stream().allMatch(f-> f.testRequest(request));
+            };
     }
 
     public Integer getExecutionCount(int line) {
-        return getLatestVersionAttributeForLine(line, 0, l -> l.getGeneral().getProfileCount());
+        List<LineExecution> filteredHistory = getLatestVersionAttributeForLine(line, new ArrayList<>(), l -> l.getPerformance().getRequestProfileHistory(), p -> p.getProfileStartTimestamp());
+        return filteredHistory.size();
     }
 
     public List<LineExecution> getPerformanceHistory(int line) {
@@ -192,5 +225,19 @@ public class FileFeedbackWrapper {
                     feedback.getGeneral().getProfileCount()
                 );
             }).collect(Collectors.toList());
+    }
+
+    public List<String> getEndpointNames() {
+        Optional<String> latestVersion = getLatestVersion();
+        return latestVersion.map(s -> versionedFeedback.get(s).getRequests().stream().map(
+            Request::getUrlRule
+        ).distinct().collect(Collectors.toList())).orElse(Collections.emptyList());
+    }
+
+    public List<String> getRequestParameterNames(String urlRule) {
+        Optional<String> latestVersion = getLatestVersion();
+        return latestVersion.map(s -> versionedFeedback.get(s).getRequests().stream().filter(r -> r.getUrlRule().equals(urlRule)).flatMap(
+            r -> r.getRequestParams().stream().map(NewRequestParam::getName)
+        ).distinct().collect(Collectors.toList())).orElse(Collections.emptyList());
     }
 }

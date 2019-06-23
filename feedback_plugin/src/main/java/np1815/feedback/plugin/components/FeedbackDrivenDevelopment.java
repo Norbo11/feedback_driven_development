@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import np1815.feedback.metricsbackend.api.DefaultApi;
 import np1815.feedback.metricsbackend.client.ApiClient;
 import np1815.feedback.plugin.config.FeedbackWrapperConfiguration;
+import np1815.feedback.plugin.util.FeedbackFilter;
 import np1815.feedback.plugin.util.backend.FileFeedbackManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     private final Project project;
     private final Map<VirtualFile, FileFeedbackManager> feedbackManagers;
     private final List<Runnable> multiFileFeedbackChangeListeners;
+    private HashMap<String, FeedbackFilter> filters;
 
     public static class State {
         public String feedbackConfigPath = "";
@@ -77,6 +79,7 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     public FeedbackDrivenDevelopment(Project project) {
         this.project = project;
         this.feedbackManagers = new HashMap<>();
+        this.filters = new HashMap<>();
         this.multiFileFeedbackChangeListeners = new ArrayList<>();
     }
 
@@ -165,5 +168,16 @@ public class FeedbackDrivenDevelopment implements ProjectComponent, PersistentSt
     public List<Runnable> getMultiFileFeedbackChangeListeners() {
         return multiFileFeedbackChangeListeners;
     }
+
+    public HashMap<String, FeedbackFilter> getFilters() {
+        return filters;
+    }
+
+    public void repaintAllFeedback() {
+        for (FileFeedbackManager manager : feedbackManagers.values()) {
+            manager.repaintFeedback();
+        }
+    }
+
 }
 

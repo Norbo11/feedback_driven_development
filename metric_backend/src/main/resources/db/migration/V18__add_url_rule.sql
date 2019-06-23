@@ -1,0 +1,1 @@
+ALTER TABLE requests.profile ADD COLUMN url_rule TEXT;

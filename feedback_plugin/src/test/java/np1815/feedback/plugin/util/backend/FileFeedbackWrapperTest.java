@@ -49,7 +49,6 @@ public class FileFeedbackWrapperTest {
             .logging(new ArrayList<>())
             .performance(new LinePerformance()
                 .status(LinePerformance.StatusEnum.PROFILED)
-                .globalAverage(100.0)
                 .requestProfileHistory(Arrays.asList(
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(100L),
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(100L)
@@ -63,7 +62,6 @@ public class FileFeedbackWrapperTest {
             .logging(new ArrayList<>())
             .performance(new LinePerformance()
                 .status(LinePerformance.StatusEnum.PROFILED)
-                .globalAverage(600.0)
                 .requestProfileHistory(Arrays.asList(
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 0)).sampleTime(500L),
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 11, 30)).sampleTime(700L)
@@ -78,7 +76,6 @@ public class FileFeedbackWrapperTest {
             .logging(new ArrayList<>())
             .performance(new LinePerformance()
                 .status(LinePerformance.StatusEnum.PROFILED)
-                .globalAverage(300.0)
                 .requestProfileHistory(Arrays.asList(
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 12, 0)).sampleTime(200L),
                     new LineExecution().profileStartTimestamp(LocalDateTime.of(1997, 4, 10, 12, 30)).sampleTime(400L)

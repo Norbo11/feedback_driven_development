@@ -151,6 +151,9 @@ components:
     LineException:
       type: object
       properties:
+        profile_start_timestamp:
+          type: string
+          format: date-time
         exception_type:
           type: string
         exception_message:
@@ -165,6 +168,9 @@ components:
     LogRecord:
       type: object
       properties:
+        profile_start_timestamp:
+          type: string
+          format: date-time
         log_timestamp:
           type: string
           format: date-time
@@ -205,6 +211,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NewRequestParam'
+        url_rule:
+          type: string
     AddedEntityResponse:
       type: object
       properties:
@@ -272,6 +280,8 @@ components:
           type: array
           items:
             $ref: '#/components/schemas/NewRequestParam'
+        url_rule:
+          type: string
     NewRequestParam:
       type: object
       properties:

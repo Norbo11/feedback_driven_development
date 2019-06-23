@@ -17,8 +17,6 @@ def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
                                      frames=frames)
 
     request_params = [NewRequestParam(name=name, value=str(value), type=type(value).__name__) for name, value in instrumentation_metadata.request.args.items()]
-    print(request_params)
-
 
     logging_lines = [NewLogRecord(log_record=LogRecord(log_timestamp=datetime.fromtimestamp(record.created),
                                                        logger=record.name,
@@ -36,7 +34,8 @@ def send_feedback(feedback_config, instrumentation_metadata, pyflame_output):
                                      instrument_directories=[str(d) for d in feedback_config.instrument_directories],
                                      exception=exception,
                                      logging_lines=logging_lines,
-                                     request_params=request_params
+                                     request_params=request_params,
+                                     url_rule=str(instrumentation_metadata.request.url_rule)
                                      )
 
     feedback_config.metric_handling_api.add_pyflame_profile(pyflame_profile)

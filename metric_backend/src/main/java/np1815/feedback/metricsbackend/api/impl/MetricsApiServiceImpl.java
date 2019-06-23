@@ -43,6 +43,7 @@ public class MetricsApiServiceImpl extends MetricsApiService {
             pyflameProfile.getVersion(),
             pyflameProfile.getStartTimestamp(),
             pyflameProfile.getEndTimestamp(),
+            pyflameProfile.getUrlRule(),
             duration.toMillis()
         );
 
