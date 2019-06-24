@@ -241,6 +241,7 @@ public class JooqMetricsBackendOperations implements MetricsBackendOperations {
                 .or(LOGGING_LINES.LINE_NUMBER.eq(line)
                 .or(EXCEPTION_FRAMES.LINE_NUMBER.eq(line)))
             )
+            .orderBy(PROFILE.VERSION, PROFILE.START_TIMESTAMP)
             .fetchOneInto(Request.class);
     }
 
