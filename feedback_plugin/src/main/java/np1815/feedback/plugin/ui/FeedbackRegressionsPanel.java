@@ -14,6 +14,9 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.TreePath;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -67,6 +70,20 @@ public class FeedbackRegressionsPanel {
         treeModel = new DefaultTreeModel(top);
         regressionTree = new Tree(treeModel);
         regressionTree.setRootVisible(false);
+
+        regressionTree.addMouseListener(new MouseAdapter() {
+            public void mousePressed(MouseEvent e) {
+                int selRow = regressionTree.getRowForLocation(e.getX(), e.getY());
+                TreePath selPath = regressionTree.getPathForLocation(e.getX(), e.getY());
+                if (selRow != -1) {
+                    if (e.getClickCount() == 2) {
+                        DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode) selPath.getLastPathComponent();
+                        RegressionItem item = (RegressionItem) treeNode.getUserObject();
+                        //TODO: Jump to line
+                    }
+                }
+            }
+        });
     }
 
     public void update() {

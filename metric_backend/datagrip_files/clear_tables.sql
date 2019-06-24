@@ -4,3 +4,4 @@ delete from requests.exception;
 delete from requests.profile_lines;
 delete from requests.profile;
 delete from requests.application;
+delete from requests.request_params;

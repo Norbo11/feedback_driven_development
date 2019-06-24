@@ -1,7 +1,6 @@
 package np1815.feedback.plugin.util.backend;
 
 import np1815.feedback.metricsbackend.model.*;
-import np1815.feedback.plugin.components.FeedbackDrivenDevelopment;
 import np1815.feedback.plugin.model.VersionRecord;
 import np1815.feedback.plugin.util.FeedbackFilter;
 import np1815.feedback.plugin.util.RegressionItem.RegressionItem;
@@ -128,10 +127,15 @@ public class FileFeedbackWrapper {
 
         if (fileFeedback.getLines().containsKey(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange())) {
             T applied = function.apply(fileFeedback.getLines().get(versionWithLineNumber.getLineNumber().getLineNumberBeforeChange()));
-            return applied.stream().filter(i -> getFilterPredicate(versionWithLineNumber.getVersion()).test(startTimestampFunction.apply(i))).collect(Collectors.toList());
+            return filterFeedbackList(applied, versionWithLineNumber.getVersion(), startTimestampFunction).collect(Collectors.toList());
         }
 
         return valueIfNotPresent;
+    }
+
+    @NotNull
+    private <T extends List<V>, V> Stream<V> filterFeedbackList(T list, String version, Function<V, LocalDateTime> startTimestampFunction) {
+        return list.stream().filter(i -> getFilterPredicate(version).test(startTimestampFunction.apply(i)));
     }
 
     public List<RegressionItem> getRegressions() {
@@ -192,10 +196,11 @@ public class FileFeedbackWrapper {
 
     public List<LineExecution> getPerformanceHistory(int line) {
         return collectFeedbackForAllVersions(line).stream()
-            .flatMap(vf -> vf.getFileFeedback().getLines()
+            .flatMap(vf ->
+                filterFeedbackList(vf.getFileFeedback().getLines()
                 .get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange())
                 .getPerformance()
-                .getRequestProfileHistory().stream()
+                .getRequestProfileHistory(), vf.getVersionWithLineNumber().getVersion(), p -> p.getProfileStartTimestamp())
             ).sorted((a, b) -> a.getProfileStartTimestamp().compareTo(b.getProfileStartTimestamp()))
             .collect(Collectors.toList());
     }
@@ -206,11 +211,16 @@ public class FileFeedbackWrapper {
 
     public List<Request> getFirstRequestsForLine(int line) {
         return collectFeedbackForAllVersions(line).stream()
-            .map(vf -> vf.getFileFeedback().getLines()
-                .get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange())
-                .getGeneral()
-                .getLineFirstRequest()
-            ).sorted((a, b) -> a.getStartTimestamp().compareTo(b.getStartTimestamp()))
+            .map(vf -> {
+                Request lineFirstRequest = vf.getFileFeedback().getLines()
+                    .get(vf.getVersionWithLineNumber().getLineNumber().getLineNumberBeforeChange())
+                    .getGeneral()
+                    .getLineFirstRequest();
+
+                return getFilterPredicate(vf.getVersionWithLineNumber().getVersion()).test(lineFirstRequest.getStartTimestamp()) ? lineFirstRequest : null;
+            })
+            .filter(Objects::nonNull)
+            .sorted((a, b) -> a.getStartTimestamp().compareTo(b.getStartTimestamp()))
             .collect(Collectors.toList());
     }
 
