@@ -42,7 +42,7 @@ public class FeedbackRegressionsPanel {
 
                 if (userObject instanceof RegressionItem) {
                     RegressionItem regressionItem = (RegressionItem) userObject;
-                    append(regressionItem.getLineNumber() + ": " + FormatUtils.formatPercentage(Math.abs(regressionItem.getIncrease())) +
+                    append((regressionItem.getLineNumber() + 1) + ": " + FormatUtils.formatPercentage(Math.abs(regressionItem.getIncrease())) +
                         (regressionItem.getIncrease() > 0 ? " increase" : " decrease") + " in mean execution time");
                     setIcon(regressionItem.getIncrease() > 0 ? AllIcons.General.ArrowUp : AllIcons.General.ArrowDown);
                     setForeground(regressionItem.getIncrease() > 0 ? JBColor.red : JBColor.green.darker());
@@ -115,6 +115,10 @@ public class FeedbackRegressionsPanel {
         }
 
         treeModel.reload();
+
+        for (int i = 0; i < regressionTree.getRowCount(); i++) {
+            regressionTree.expandRow(i);
+        }
     }
 
     public JComponent getRootComponent() {
