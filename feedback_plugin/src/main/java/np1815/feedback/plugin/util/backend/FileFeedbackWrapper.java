@@ -154,7 +154,10 @@ public class FileFeedbackWrapper {
 
             // TODO: do t-test
             double change = (currentMean - previousMean) / previousMean;
-            regressionItems.add(new RegressionItem(line, change));
+
+            if (Math.abs(change) > 0.3) {
+                regressionItems.add(new RegressionItem(line, change));
+            }
         }
 
         return regressionItems;
